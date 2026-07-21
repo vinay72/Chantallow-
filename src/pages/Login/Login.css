@@ -1,0 +1,638 @@
+@import url('https://fonts.googleapis.com/css2?family=Marcellus&display=swap');
+
+/* ------------------------------- Base / Reset ------------------------------- */
+
+/* Type roles:
+   - Headings  -> 'Marcellus', sans-serif
+   - Body/small -> 'Lufga', sans-serif */
+
+.ctw-page {
+  font-family: 'Lufga', sans-serif;
+  color: #1C1C1A;
+  background: #FFFFFF;
+  min-height: 100vh;
+  text-align: left;
+}
+
+.ctw-page * {
+  box-sizing: border-box;
+}
+
+.ctw-btn {
+  font-family: 'Lufga', sans-serif;
+  cursor: pointer;
+  border: none;
+  transition: all .25s ease;
+}
+
+.ctw-underline-link {
+  position: relative;
+  text-decoration: none;
+  color: inherit;
+}
+
+.ctw-underline-link::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: -2px;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width .3s ease;
+}
+
+.ctw-underline-link:hover::after {
+  width: 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctw-page * {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* --------------------------------- Header --------------------------------- */
+
+.ctw-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: #EDF8F3;
+}
+
+.ctw-header-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 22px 48px;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ctw-header-logo img {
+  height: 40px;
+  display: block;
+}
+
+.ctw-nav {
+  display: flex;
+  gap: 40px;
+  align-items: center;
+}
+
+.ctw-nav-link {
+  font-size: 15px;
+  font-family: 'Lufga', sans-serif;
+  color: #1C1C1A;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ctw-nav-plus {
+  font-size: 12px;
+}
+
+.ctw-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 22px;
+}
+
+.ctw-login-link {
+  font-size: 14px;
+  font-family: 'Lufga', sans-serif;
+  color: #1C1C1A;
+  text-decoration: none;
+  border-bottom: 1px solid #1C1C1A;
+  line-height: 1.3;
+}
+
+.ctw-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+}
+
+.ctw-menu-btn {
+  display: none;
+}
+
+@media (max-width: 960px) {
+  .ctw-nav {
+    display: none;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    width: 100%;
+    padding: 12px 0 0;
+  }
+
+  .ctw-nav.is-open {
+    display: flex;
+  }
+
+  .ctw-menu-btn {
+    display: flex;
+  }
+}
+
+/* ---------------------------- Sign In Section ---------------------------- */
+
+.ctw-signin-section {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: #FFFFFF;
+}
+
+@media (max-width: 992px) {
+  .ctw-signin-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Left panel */
+
+.ctw-signin-left {
+  background: #EDF8F3;
+  display: flex;
+  align-items: left;
+  padding: 80px 40px;
+}
+
+.ctw-signin-form-wrap {
+  width: 100%;
+  max-width: 460px;
+  text-align: left;
+}
+
+.ctw-signin-title {
+  font-size: 34px;
+  font-weight: 500;
+  font-family: 'Marcellus', sans-serif;
+  margin: 0 0 8px;
+  color: #1C1C1A;
+  text-align: left;
+}
+
+.ctw-signin-subtitle {
+  font-size: 15px;
+  font-family: 'Lufga', sans-serif;
+  color: #6B6B62;
+  margin: 0 0 24px;
+  text-align: left;
+}
+
+.ctw-social-row {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.ctw-social-btn {
+  flex: 1 1 190px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: #fff;
+  border: 1px solid #DDE3D6;
+  border-radius: 6px;
+  padding: 13px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: 'Lufga', sans-serif;
+  color: #1C1C1A;
+  transition: background .2s ease;
+}
+
+.ctw-social-btn:hover {
+  background: #F3F3EE;
+}
+
+.ctw-divider-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.ctw-divider-line {
+  flex: 1;
+  height: 1px;
+  background: #DDE3D6;
+}
+
+.ctw-divider-text {
+  font-size: 13px;
+  font-family: 'Lufga', sans-serif;
+  color: #8A8A80;
+}
+
+.ctw-field {
+  margin-bottom: 20px;
+}
+
+.ctw-field-password {
+  margin-bottom: 12px;
+}
+
+.ctw-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Lufga', sans-serif;
+  margin-bottom: 8px;
+  text-align: left;
+}
+
+.ctw-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #DDE3D6;
+  border-radius: 6px;
+  background: transparent;
+  font-size: 14px;
+  font-family: 'Lufga', sans-serif;
+  color: #1C1C1A;
+  text-align: left;
+}
+
+.ctw-input::placeholder {
+  color: #8A8A80;
+  font-family: 'Lufga', sans-serif;
+}
+
+.ctw-input:focus {
+  outline: none;
+  border-color: #41705B;
+}
+
+.ctw-password-wrap {
+  position: relative;
+}
+
+.ctw-password-wrap .ctw-input {
+  padding-right: 44px;
+}
+
+.ctw-eye-btn {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #8ea5c8;
+  display: flex;
+}
+
+.ctw-form-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ctw-checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13.5px;
+  font-family: 'Lufga', sans-serif;
+  color: #5A5A52;
+}
+
+.ctw-forgot-link {
+  font-size: 13.5px;
+  font-family: 'Lufga', sans-serif;
+  color: #1C1C1A;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.ctw-signin-btn {
+  width: 100%;
+  background: transparent;
+  border: 1.5px solid #1C1C1A;
+  color: #1C1C1A;
+  padding: 16px 0;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Lufga', sans-serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ctw-signin-btn:hover {
+  background: #2D2E2F;
+  color: #fff;
+}
+
+.ctw-signup-text {
+  margin-top: 20px;
+  font-size: 14.5px;
+  font-family: 'Lufga', sans-serif;
+  color: #5A5A52;
+  text-align: left;
+}
+
+.ctw-signup-link {
+  color: #41705B;
+  font-weight: 600;
+  font-family: 'Lufga', sans-serif;
+  text-decoration: none;
+}
+
+/* Right panel — banner slider */
+
+.ctw-signin-right {
+  position: relative;
+  min-height: 480px;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+  /* Placeholder while the banner images are commented out — remove once real images are wired back in */
+  background-color: #41705B;
+  background-size: cover;
+  background-position: center;
+  transition: background-image .5s ease;
+}
+
+@media (min-width: 992px) {
+  .ctw-signin-right {
+    min-height: auto;
+  }
+}
+
+.ctw-signin-right-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0) 40%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+.ctw-signin-right-content {
+  position: relative;
+  z-index: 1;
+  padding: 0 56px 64px;
+  color: #fff;
+  width: 100%;
+}
+
+.ctw-signin-quote {
+  font-size: clamp(26px, 3vw, 38px);
+  font-weight: 400;
+  line-height: 1.3;
+  font-family: 'Marcellus', sans-serif;
+  max-width: 620px;
+  margin: 0 0 28px;
+  text-align: left;
+}
+
+.ctw-signin-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.ctw-signin-name {
+  font-size: 20px;
+  font-weight: 600;
+  font-family: 'Lufga', sans-serif;
+  margin: 0 0 8px;
+}
+
+.ctw-stars-row {
+  display: flex;
+  gap: 4px;
+}
+
+.ctw-arrow-group {
+  display: flex;
+  gap: 12px;
+}
+
+.ctw-arrow-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.18);
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background .2s ease;
+}
+
+.ctw-arrow-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* -------------------------------- Footer -------------------------------- */
+
+.ctw-footer {
+  background: #FFFFFF;
+  color: #1C1C1A;
+  padding: 72px 24px 24px;
+  border-top: 1px solid #F0EEE4;
+}
+
+.ctw-footer-grid {
+  max-width: 1360px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  margin-bottom: 48px;
+  text-align: left;
+}
+
+@media (max-width: 900px) {
+  .ctw-footer-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 560px) {
+  .ctw-footer-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.ctw-footer-logo {
+  margin-bottom: 24px;
+}
+
+.ctw-footer-logo img {
+  height: 40px;
+  width: auto;
+  display: block;
+}
+
+.ctw-footer-address-line {
+  font-size: 13.5px;
+  font-family: 'Lufga', sans-serif;
+  line-height: 2;
+  color: #5A5A52;
+  margin: 0 0 6px;
+}
+
+.ctw-footer-address-line:last-of-type {
+  margin: 0 0 24px;
+}
+
+.ctw-footer-address-line strong {
+  color: #1C1C1A;
+}
+
+.ctw-footer-newsletter-title {
+  font-size: 14.5px;
+  font-weight: 700;
+  font-family: 'Lufga', sans-serif;
+  margin: 0 0 12px;
+}
+
+.ctw-newsletter-form {
+  display: flex;
+  background: #EAF5EA;
+  border-radius: 30px;
+  overflow: hidden;
+}
+
+.ctw-newsletter-input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  padding: 14px 20px;
+  color: #1C1C1A;
+  font-size: 13.5px;
+  font-family: 'Lufga', sans-serif;
+  outline: none;
+}
+
+.ctw-newsletter-submit {
+  background: transparent;
+  border: none;
+  width: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.ctw-footer-heading {
+  font-size: 20px;
+  font-weight: 500;
+  font-family: 'Marcellus', sans-serif;
+  color: #1C1C1A;
+  margin: 0 0 22px;
+}
+
+.ctw-footer-post {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 20px;
+  align-items: flex-start;
+}
+
+.ctw-footer-post-thumb {
+  width: 76px;
+  height: 76px;
+  border-radius: 4px;
+  background: #F4F1E6;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.ctw-footer-post-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.ctw-footer-post-body {
+  padding-top: 6px;
+}
+
+.ctw-footer-post-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1C1C1A;
+  margin-bottom: 6px;
+  font-family: 'Lufga', sans-serif;
+}
+
+.ctw-footer-post-date {
+  font-size: 14px;
+  color: #9A9A90;
+  font-family: 'Lufga', sans-serif;
+}
+
+.ctw-footer-link {
+  display: block;
+  font-size: 15px;
+  font-family: 'Lufga', sans-serif;
+  color: #2D2E2F;
+  margin-bottom: 14px;
+  text-decoration: none;
+}
+
+.ctw-footer-social-link {
+  display: block;
+  font-size: 14.5px;
+  font-family: 'Lufga', sans-serif;
+  color: #3A3A36;
+  margin-bottom: 14px;
+  text-decoration: none;
+}
+
+.ctw-footer-bottom {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding-top: 24px;
+  border-top: 1px solid #F0EEE4;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  font-size: 13.5px;
+  color: #5A5A52;
+}
+
+.ctw-footer-copyright {
+  font-family: 'Lufga', sans-serif;
+  margin: 0;
+}
+
+.ctw-footer-brand {
+  color: #41705B;
+  font-weight: 600;
+}
+
+.ctw-footer-payments {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ctw-footer-payments img {
+  height: 24px;
+  display: block;
+}

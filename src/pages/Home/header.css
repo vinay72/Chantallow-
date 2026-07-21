@@ -1,0 +1,122 @@
+.ctw-header {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  min-height: 90px;
+  background: #FFFFFF;
+}
+
+.ctw-header-logo {
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  flex-shrink: 0;
+}
+
+.ctw-header-logo img {
+  height: 44px;
+  width: auto;
+  display: block;
+}
+
+.ctw-nav {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;   /* was center — pushes links right */
+  align-content: center;
+  row-gap: 24px;
+  padding: 12px 0;
+  padding-right: 40px;  
+}
+
+.ctw-nav-link {
+  display: inline-block;
+  
+  color: var(--white);
+  font-size: 16px;
+  padding: 28px 23px;
+  font-family: var(--font-family-base);
+  font-weight: 400;
+  
+  position: relative;
+  line-height: 24px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color .25s ease;
+}
+
+.ctw-nav-link:hover {
+  color: #41705B;
+}
+
+.ctw-nav-link .ctw-star {
+  font-size: 11px;
+  color: #8A8A80;
+}
+
+:root {
+  --right-panel-width: 395px;  /* set this to the width of the mint panel below */
+}
+
+.ctw-header-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;   /* keeps content hugging the right */
+  gap: 18px;
+  background: #EDF8F3;
+  padding: 0 34px;
+  flex-shrink: 0;
+  width: var(--right-panel-width);   /* ← the actual fix */
+  box-sizing: border-box;            /* so padding doesn't add extra width */
+}
+
+.ctw-login {
+  font-family: 'Marcellus', serif;
+  font-size: 16px;
+  /* margin-right: 30px; */
+  line-height: 1.25;
+  color: #1C1C1A;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.ctw-icon-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+}
+
+.ctw-menu-btn {
+  display: none;
+}
+
+@media (max-width: 991px) {
+  .ctw-nav {
+    display: none;
+    position: absolute;
+    top: 90px;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    background: #fff;
+    padding: 24px;
+    border-bottom: 1px solid #ECEAE0;
+  }
+
+  .ctw-nav.is-open {
+    display: flex;
+  }
+
+  .ctw-login {
+    display: none;
+  }
+
+  .ctw-menu-btn {
+    display: flex;
+  }
+}
