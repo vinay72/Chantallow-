@@ -1,17 +1,22 @@
+/* Fonts used by the original theme — add to index.html <head> if not already loaded:
+   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"> */
 
 :root {
   --sc-bg: #eaf3ec;
-  --sc-bg-header: #eef6f0;
+  --sc-bg-header: #ffffff;
   --sc-green-dark: #17392c;
   --sc-green: #2f6a4f;
+  --sc-banner-green: #2c5c4b;
+  --sc-brand: #8a6a4f;      /* logo brown */
+  --sc-accent: #b08d5f;     /* sparkle gold */
   --sc-ink: #1c2620;
   --sc-muted: #6b7770;
   --sc-line: #cfe0d5;
   --sc-white: #ffffff;
   --sc-black: #111111;
   --sc-radius: 2px;
-  --sc-font-body: "Roboto", Arial, sans-serif;
-  --sc-font-display: "DM Sans", Georgia, serif;
+  --sc-font-body: "Poppins", "Roboto", Arial, sans-serif;
+  --sc-font-display: "Playfair Display", Georgia, serif;
 }
 
 .sc-page {
@@ -27,13 +32,12 @@
 /* ---------------- Header ---------------- */
 .sc-header {
   background: var(--sc-bg-header);
-  border-bottom: 1px solid var(--sc-line);
 }
 
 .sc-header__bar {
-  max-width: 1320px;
+  max-width: 1600px;
   margin: 0 auto;
-  padding: 18px 32px;
+  padding: 22px 60px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -41,42 +45,78 @@
   flex-wrap: wrap;
 }
 
+/* Logo */
 .sc-logo {
-  font-family: var(--sc-font-display);
-  font-size: 22px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--sc-green-dark);
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   text-decoration: none;
+  color: var(--sc-brand);
 }
 
+.sc-logo__mark {
+  display: inline-flex;
+  color: var(--sc-brand);
+}
+
+.sc-logo__text {
+  font-family: var(--sc-font-body);
+  font-size: 26px;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sc-brand);
+  line-height: 1;
+}
+
+/* Nav */
 .sc-nav {
   display: flex;
-  gap: 28px;
+  align-items: center;
+  justify-content: center;
+  gap: 42px;
+  flex: 1 1 420px;
   flex-wrap: wrap;
+  row-gap: 18px;
 }
 
 .sc-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   color: var(--sc-ink);
   text-decoration: none;
-  font-size: 14.5px;
-  font-weight: 500;
+  font-size: 17px;
+  font-weight: 400;
+  transition: color 0.2s ease;
 }
 
 .sc-nav a:hover {
-  color: var(--sc-green);
+  color: var(--sc-brand);
 }
 
+.sc-sparkle {
+  color: var(--sc-accent);
+  flex-shrink: 0;
+}
+
+/* Actions */
 .sc-header__actions {
   display: flex;
   align-items: center;
-  gap: 18px;
+  gap: 26px;
 }
 
 .sc-login-link {
   color: var(--sc-ink);
   text-decoration: underline;
-  font-size: 14px;
+  text-underline-offset: 3px;
+  font-size: 16px;
+  line-height: 1.45;
+}
+
+.sc-login-link:hover {
+  color: var(--sc-brand);
 }
 
 .sc-icon-btn {
@@ -87,18 +127,18 @@
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  padding: 4px;
+  padding: 2px;
 }
 
 .sc-icon-btn:hover {
-  color: var(--sc-green);
+  color: var(--sc-brand);
 }
 
 .sc-badge {
   position: absolute;
   top: -6px;
   right: -8px;
-  background: var(--sc-green-dark);
+  background: var(--sc-brand);
   color: var(--sc-white);
   font-size: 10px;
   line-height: 1;
@@ -106,26 +146,51 @@
   border-radius: 50%;
 }
 
+@media (max-width: 1200px) {
+  .sc-header__bar {
+    padding: 20px 28px;
+  }
+  .sc-nav {
+    gap: 28px;
+  }
+}
+
 /* ---------------- Banner ---------------- */
+/* The image comes in from the JSX as --sc-banner-img.
+   ::before holds the photo, ::after lays the green tint over it,
+   so the heading stays crisp and untinted. */
 .sc-banner {
-  background-color: var(--sc-green-dark);
-  background-size: cover;
-  background-position: center;
   position: relative;
+  isolation: isolate;
+  background-color: var(--sc-banner-green);
+  overflow: hidden;
 }
 
 .sc-banner::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(10, 35, 25, 0.55), rgba(10, 35, 25, 0.75));
+  z-index: -2;
+  background-image: var(--sc-banner-img);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: saturate(0.7) brightness(1.05);
+}
+
+.sc-banner::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: linear-gradient(180deg, rgba(28, 68, 55, 0.55) 0%, rgba(20, 52, 42, 0.62) 100%);
 }
 
 .sc-banner__inner {
   position: relative;
   max-width: 1320px;
   margin: 0 auto;
-  padding: 90px 32px;
+  padding: 110px 32px;
   text-align: center;
   color: var(--sc-white);
 }
@@ -133,20 +198,36 @@
 .sc-banner__inner h1 {
   font-family: var(--sc-font-display);
   font-weight: 400;
-  font-size: 64px;
-  margin: 0 0 12px;
+  font-size: 88px;
+  line-height: 1.05;
+  margin: 0 0 18px;
 }
 
 .sc-breadcrumb {
   display: flex;
+  align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 14px;
-  opacity: 0.85;
+  gap: 14px;
+  font-size: 16px;
+  letter-spacing: 0.01em;
 }
 
 .sc-breadcrumb__sep {
-  opacity: 0.6;
+  display: inline-flex;
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.sc-breadcrumb__sep .sc-sparkle {
+  color: inherit;
+}
+
+@media (max-width: 768px) {
+  .sc-banner__inner {
+    padding: 70px 24px;
+  }
+  .sc-banner__inner h1 {
+    font-size: 52px;
+  }
 }
 
 /* ---------------- Content layout ---------------- */
@@ -183,7 +264,7 @@
 
 .sc-table thead th {
   text-align: left;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 600;
   padding: 0 12px 16px;
   border-bottom: 1px solid var(--sc-line);
@@ -199,6 +280,10 @@
   vertical-align: middle;
 }
 
+.sc-td-img {
+  width: 110px;
+}
+
 .sc-td-img img {
   width: 76px;
   height: 92px;
@@ -207,10 +292,14 @@
   border: 1px solid var(--sc-line);
 }
 
+.sc-td-name {
+  text-align: left;
+}
+
 .sc-item-title {
   display: block;
   font-family: var(--sc-font-display);
-  font-size: 17px;
+  font-size: 18px;
   margin-bottom: 6px;
   color: var(--sc-green-dark);
 }
@@ -226,6 +315,9 @@
 
 .sc-td-price,
 .sc-td-subtotal {
+  font-family: -apple-system, "Segoe UI", Roboto, "Poppins", Arial, Helvetica, sans-serif !important;
+  font-variant-numeric: lining-nums proportional-nums !important;
+  font-feature-settings: "lnum" 1, "pnum" 1 !important;
   font-size: 14px;
   white-space: nowrap;
 }
@@ -256,6 +348,9 @@
   height: 32px;
   border: none;
   text-align: center;
+  font-family: -apple-system, "Segoe UI", Roboto, "Poppins", Arial, Helvetica, sans-serif !important;
+  font-variant-numeric: lining-nums proportional-nums !important;
+  font-feature-settings: "lnum" 1, "pnum" 1 !important;
   font-size: 14px;
   color: var(--sc-ink);
   background: var(--sc-white);
@@ -338,7 +433,7 @@
   background: transparent;
   padding: 13px 26px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -351,9 +446,14 @@
 }
 
 /* ---------------- Summary sidebar ---------------- */
+.sc-summary-col {
+  position: sticky;
+  top: 24px;
+}
+
 .sc-summary-title {
   font-family: var(--sc-font-display);
-  font-size: 22px;
+  font-size: 24px;
   margin: 0 0 18px;
   color: var(--sc-green-dark);
 }
@@ -373,7 +473,7 @@
   background: transparent;
   padding: 14px;
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
@@ -389,8 +489,10 @@
   display: flex;
   gap: 14px;
   align-items: flex-start;
+  background: var(--sc-bg);
   border: 1px solid var(--sc-line);
-  padding: 14px;
+  border-radius: var(--sc-radius);
+  padding: 16px;
 }
 
 .sc-perk__icon {
@@ -412,7 +514,7 @@
 .sc-perk__eyebrow {
   display: block;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--sc-green);
   letter-spacing: 0.06em;
   margin-bottom: 2px;
@@ -447,12 +549,14 @@
   border-top: 1px solid var(--sc-line);
   padding-top: 16px;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .sc-total-amount {
   font-family: var(--sc-font-display);
-  font-size: 20px;
+  font-variant-numeric: lining-nums proportional-nums !important;
+  font-feature-settings: "lnum" 1, "pnum" 1 !important;
+  font-size: 22px;
   color: var(--sc-green-dark);
 }
 
@@ -463,7 +567,7 @@
   color: var(--sc-white);
   padding: 15px;
   font-size: 13.5px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -513,8 +617,12 @@
 }
 
 .sc-logo--footer {
-  display: inline-block;
+  display: inline-flex;
   margin-bottom: 16px;
+}
+
+.sc-logo--footer .sc-logo__text {
+  font-size: 22px;
 }
 
 .sc-address {
@@ -528,7 +636,7 @@
 
 .sc-address span {
   color: var(--sc-ink);
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .sc-subscribe h6 {
@@ -612,13 +720,6 @@
 
 .sc-footer__bottom {
   border-top: 1px solid var(--sc-line);
-}
-
-.sc-footer__bottom > * {
-  max-width: 1320px;
-}
-
-.sc-footer__bottom {
   display: flex;
   flex-wrap: wrap;
   gap: 16px;
@@ -639,4 +740,12 @@
 
 .sc-payment img {
   height: 22px;
+}
+
+/* Accessibility */
+.sc-page a:focus-visible,
+.sc-page button:focus-visible,
+.sc-page input:focus-visible {
+  outline: 2px solid var(--sc-brand);
+  outline-offset: 2px;
 }
