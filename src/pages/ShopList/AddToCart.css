@@ -1,5 +1,8 @@
 /* Fonts used by the original theme — add to index.html <head> if not already loaded:
-   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet"> */
+   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Poppins:wght@300;400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
+   Note: "Lufga" is NOT on Google Fonts — it's a commercial/licensed font. You'll need to
+   self-host it (via @font-face with your own .woff2 files) or swap it for a similar
+   free alternative (e.g. "Sora" or "General Sans") if you don't have a license for it. */
 
 :root {
   --sc-bg: #eaf3ec;
@@ -7,8 +10,10 @@
   --sc-green-dark: #17392c;
   --sc-green: #2f6a4f;
   --sc-banner-green: #2c5c4b;
-  --sc-brand: #8a6a4f;      /* logo brown */
-  --sc-accent: #b08d5f;     /* sparkle gold */
+  --sc-brand: #8a6a4f;
+  /* logo brown */
+  --sc-accent: #b08d5f;
+  /* sparkle gold */
   --sc-ink: #1c2620;
   --sc-muted: #6b7770;
   --sc-line: #cfe0d5;
@@ -82,6 +87,7 @@
   transition: color 0.2s ease;
 }
 
+
 .sc-nav a:hover {
   color: var(--sc-brand);
 }
@@ -141,6 +147,7 @@
   .sc-header__bar {
     padding: 20px 28px;
   }
+
   .sc-nav {
     gap: 28px;
   }
@@ -216,6 +223,7 @@
   .sc-banner__inner {
     padding: 70px 24px;
   }
+
   .sc-banner__inner h1 {
     font-size: 52px;
   }
@@ -255,16 +263,21 @@
 
 .sc-table thead th {
   text-align: left;
-  font-size: 15px;
-  font-weight: 600;
-  padding: 0 12px 16px;
+  font-family: "Lufga", sans-serif;
+  font-size: 16px;
+  -webkit-text-stroke: 0.4px currentColor;
+
+  font-weight: 700;
+  padding: 0 0 20px 15px;
+
   border-bottom: 1px solid var(--sc-line);
-  color: var(--sc-ink);
+  color: #24262b;
 }
 
 .sc-table tbody tr {
   border-bottom: 1px solid var(--sc-line);
 }
+
 
 .sc-table td {
   padding: 20px 12px;
@@ -289,19 +302,25 @@
 
 .sc-item-title {
   display: block;
-  font-family: var(--sc-font-display);
-  font-size: 18px;
-  margin-bottom: 6px;
-  color: var(--sc-green-dark);
+
+  color: #2D2E2F;
+  font-size: 20px;
+  font-family: "Marcellus", sans-serif;
+  font-weight: 400;
+
 }
 
 .sc-item-attrs {
   list-style: none;
   margin: 0;
   padding: 0;
-  font-size: 12.5px;
-  color: var(--sc-muted);
+
   line-height: 1.6;
+
+  font-size: 13px;
+  font-family: var(--font-family-base);
+  color: #666666;
+  font-weight: 400;
 }
 
 .sc-td-price,
@@ -444,18 +463,18 @@
 
 .sc-summary-title {
   font-family: var(--sc-font-display);
-  font-size: 24px;
-  margin: 0 0 18px;
+  font-size: 20px;
+  margin: 0 0 14px;
   color: var(--sc-green-dark);
 }
 
 .sc-summary-card {
   border: 1px solid var(--sc-line);
   background: var(--sc-white);
-  padding: 24px;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 16px;
 }
 
 .sc-bank-offer {
@@ -478,12 +497,17 @@
 
 .sc-perk {
   display: flex;
-  gap: 14px;
+  gap: 12px;
   align-items: flex-start;
   background: var(--sc-bg);
   border: 1px solid var(--sc-line);
   border-radius: var(--sc-radius);
-  padding: 16px;
+  padding: 14px;
+  text-align: left;
+}
+
+.sc-perk>div {
+  text-align: left;
 }
 
 .sc-perk__icon {
@@ -504,24 +528,30 @@
 
 .sc-perk__eyebrow {
   display: block;
+  font-family: "Lufga", sans-serif;
   font-size: 11px;
   font-weight: 600;
   color: var(--sc-green);
   letter-spacing: 0.06em;
   margin-bottom: 2px;
+  text-align: left;
 }
 
 .sc-perk__title {
   margin: 0;
+  font-family: "Marcellus", serif;
   font-size: 15px;
   color: var(--sc-ink);
+  text-align: left;
 }
 
 .sc-perk__desc {
   margin: 4px 0 0;
+  font-family: "Lufga", sans-serif;
   font-size: 12.5px;
   color: var(--sc-muted);
   line-height: 1.5;
+  text-align: left;
 }
 
 .sc-save-line {
@@ -554,9 +584,9 @@
 .sc-place-order-btn {
   width: 100%;
   border: 1px solid var(--sc-ink);
-  background: var(--sc-ink);
-  color: var(--sc-white);
-  padding: 15px;
+  background: transparent;
+  color: var(--sc-ink);
+  padding: 14px;
   font-size: 13.5px;
   font-weight: 600;
   letter-spacing: 0.06em;
@@ -565,8 +595,9 @@
 }
 
 .sc-place-order-btn:hover:not(:disabled) {
-  background: var(--sc-green-dark);
-  border-color: var(--sc-green-dark);
+  background: var(--sc-ink);
+  color: var(--sc-white);
+  border-color: var(--sc-ink);
 }
 
 .sc-place-order-btn:disabled {
