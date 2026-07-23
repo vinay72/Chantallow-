@@ -35,7 +35,7 @@ const INITIAL_ITEMS = [
     id: 1,
     name: "Amber Glow",
     image: IMG.pic1,
-    price: 25.0,
+    price: 0,
     qty: 1,
     attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Dry skin"],
   },
@@ -43,7 +43,7 @@ const INITIAL_ITEMS = [
     id: 2,
     name: "Amethyst Relief",
     image: IMG.pic2,
-    price: 18.5,
+    price: 6,
     qty: 1,
     attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Fairness Cream"],
   },
@@ -51,7 +51,7 @@ const INITIAL_ITEMS = [
     id: 3,
     name: "Jasper Revive",
     image: IMG.pic3,
-    price: 22.0,
+    price: 0,
     qty: 1,
     attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Fairness Cream"],
   },
@@ -59,7 +59,7 @@ const INITIAL_ITEMS = [
     id: 4,
     name: "Malachite Fusion",
     image: IMG.pic4,
-    price: 20.25,
+    price: 0,
     qty: 1,
     attributes: ["Skin Type: Dry", "Item Form: Serum", "Used For: Fairness Cream"],
   },
@@ -67,7 +67,7 @@ const INITIAL_ITEMS = [
     id: 5,
     name: "Obsidian Infusion",
     image: IMG.pic5,
-    price: 19.0,
+    price: 0,
     qty: 1,
     attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Fairness Cream"],
   },
@@ -75,7 +75,7 @@ const INITIAL_ITEMS = [
     id: 6,
     name: "Olivine Relief",
     image: IMG.pic5,
-    price: 21.0,
+    price: 0,
     qty: 1,
     attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Balm"],
   },
@@ -146,7 +146,7 @@ const TrashIcon = () => (
 );
 
 const ShippingIcon = () => (
-  <svg width="34" height="34" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <svg width="45" height="45" viewBox="0 0 45 45" fill="none" xmlns="http://www.w3.org/2000/svg">
     <path
       fillRule="evenodd"
       clipRule="evenodd"
@@ -546,7 +546,7 @@ export default function AddToCart() {
 
               <div className="sc-total-row">
                 <span>Total Amount</span>
-                <span className="sc-total-amount">{formatPrice(total)}</span>
+                <span className="sc-total-amount">$125.75</span>
               </div>
 
               <button type="button" className="sc-place-order-btn" disabled={items.length === 0}>
