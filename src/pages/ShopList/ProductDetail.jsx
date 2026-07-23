@@ -94,11 +94,11 @@ export default function ProductDetail() {
       {/* ---------------- Banner ---------------- */}
       <div className="ct-banner">
         <div className="ct-banner__inner">
-          <h1>Malachite Fusion</h1>
+          <h1>Products Details</h1>
           <nav aria-label="Breadcrumb" className="ct-breadcrumb">
             <a href="/">Home</a>
             <span aria-hidden="true">›</span>
-            <span>Malachite Fusion</span>
+            <span>Products Details</span>
           </nav>
         </div>
       </div>
