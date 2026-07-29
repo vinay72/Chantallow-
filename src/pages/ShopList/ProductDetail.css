@@ -170,11 +170,18 @@ img {
 
 .ct-product {
   display: grid;
-  grid-template-columns: 1.1fr 1.4fr 0.9fr; /* wider image column */
-  gap: 44px;
+  /* Bootstrap ratio from the reference template:
+     col-4 (image) : col-7-of-8 (info) : col-5-of-8 (sidebar) */
+  grid-template-columns: 1fr 1.17fr 0.83fr;
+  gap: 40px;
   padding-top: 48px;
   padding-bottom: 72px;
-  align-items: start; /* required so sticky children can pin */
+  /* container-fluid in the reference — span nearly the full viewport */
+  max-width: none;
+  padding-left: 24px;
+  padding-right: 40px; /* extra breathing room on the right edge */
+  /* NOTE: no `align-items: start` — the gallery wrapper must stretch to the
+     full row height so the image has room to scroll away when released. */
 }
 
 @media (max-width: 1100px) {
@@ -191,46 +198,62 @@ img {
   .ct-product {
     grid-template-columns: 1fr;
   }
-  .ct-gallery {
-    transform: none !important; /* JS also clears this; belt-and-braces */
-  }
   .ct-gallery__main {
+    position: relative !important; /* JS also disables pin below 760px; belt-and-braces */
+    top: auto !important;
+    left: auto !important;
+    bottom: auto !important;
+    width: 100% !important;
+    transform: none !important;
     height: auto;
     min-height: 420px;
   }
 }
 
-/* Gallery — tall product photo on a dark studio stage.
-   Pinned via JS transform (see ProductDetail.jsx): the image stays
-   fixed in view while the info column scrolls past it, and is
-   released once the text ends. A transform is used instead of
-   position:sticky so the effect survives parents with `overflow`
-   set. Thumbnails overlap the lower portion of the main image. */
+/* Gallery — tall product photo on a light card.
+   Pinned via JS (see ProductDetail.jsx) using true position:fixed while
+   pinned, so the image is completely static on screen — it does not
+   move at all while the info column and sidebar scroll past it. Once
+   the text/sidebar content ends, the image switches to position:absolute
+   and scrolls away with the rest of the page.
+   `.ct-gallery` is a wrapper that stays in the grid flow (its height is
+   locked via JS to the image's own height, so nothing collapses when
+   the inner image switches out of normal flow). `.ct-gallery__main` is
+   the element whose position mode actually gets toggled. */
 
 .ct-gallery {
-  position: relative;
-  align-self: start;   /* keep natural height inside the grid row */
-  height: fit-content;
-  will-change: transform;
+  position: relative; /* containing block for the pinned/released image */
+  /* stretches to the full grid row height (see .ct-product) so the
+     released image has somewhere to travel to */
 }
 
+/* Native CSS sticky fallback: if the JS pin is unavailable for any reason,
+   this still keeps the image in view. The JS sets inline position styles
+   which override this when active. */
 .ct-gallery__main {
-  background: linear-gradient(175deg, #21262a 0%, #0d0f0d 100%);
-  border-radius: var(--ct-radius-md);
+  /* Anchored to the top of the (full-height) wrapper; the JS translates
+     this element downward to create the pinned effect. */
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  will-change: transform;
+  background: #ffffff;
+  border-radius: var(--ct-radius-lg);
   overflow: hidden;
-  position: relative;
-  height: calc(100vh - 100px); /* taller — nearly full viewport height */
-  min-height: 640px;
-  max-height: 880px;
+  height: calc(100vh - 110px);
+  min-height: 680px;
+  max-height: 900px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 10px 30px rgba(31, 35, 33, 0.08);
 }
 
 .ct-jar-photo {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: cover; /* switch to `contain` if using a white-background photo */
   display: block;
 }
 
@@ -266,16 +289,21 @@ img {
   outline-offset: 2px;
 }
 
-/* Info column */
+/* Info column — left-aligned next to the image, like the reference design */
+
+.ct-info {
+  text-align: left;
+  padding-right: 32px; /* breathing room before the sidebar */
+}
 
 .ct-badge {
   display: inline-block;
   background: var(--ct-badge-bg);
   color: #fff;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.05em;
-  padding: 5px 11px;
+  padding: 6px 14px;
   border-radius: 4px;
   margin-bottom: 14px;
   text-transform: uppercase;
@@ -283,7 +311,7 @@ img {
 
 .ct-info__title {
   font-family: var(--ct-font-display);
-  font-size: 34px;
+  font-size: 30px;
   margin: 0 0 4px;
   font-weight: 500;
   letter-spacing: 0.01em;
@@ -292,7 +320,7 @@ img {
 .ct-info__subtitle {
   color: var(--ct-ink-soft);
   margin: 0 0 12px;
-  font-size: 13.5px;
+  font-size: 13px;
 }
 
 .ct-review-row {
@@ -300,7 +328,7 @@ img {
   align-items: center;
   gap: 10px;
   margin-bottom: 20px;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 .dz-rating {
@@ -326,22 +354,23 @@ img {
 }
 
 .ct-copy-block {
-  margin-bottom: 18px;
+  margin: 0 0 20px;
   max-width: 620px;
 }
 
 .ct-copy-block h3 {
-  font-size: 13.5px;
+  font-family: var(--ct-font-display);
+  font-size: 15px;
   text-transform: none;
-  margin: 0 0 4px;
-  font-weight: 700;
+  margin: 0 0 5px;
+  font-weight: 600;
   color: var(--ct-ink);
 }
 
 .ct-copy-block p {
   margin: 0;
-  font-size: 13.5px;
-  line-height: 1.55;
+  font-size: 13px;
+  line-height: 1.6;
   color: var(--ct-ink-soft);
 }
 
@@ -352,7 +381,7 @@ img {
 .ct-divider {
   border: none;
   border-top: 1px solid var(--ct-hairline);
-  margin: 20px 0;
+  margin: 22px 0;
   max-width: 620px;
 }
 
@@ -361,7 +390,7 @@ img {
   font-size: 13px;
   font-weight: 600;
   color: var(--ct-ink);
-  margin-bottom: 8px;
+  margin-bottom: 9px;
   padding: 0;
 }
 
@@ -373,7 +402,7 @@ img {
 
 .ct-size__options {
   display: flex;
-  gap: 22px;
+  gap: 26px;
 }
 
 .ct-size__option {
@@ -381,7 +410,7 @@ img {
   align-items: center;
   gap: 7px;
   cursor: pointer;
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--ct-ink);
 }
 
@@ -410,13 +439,17 @@ img {
 }
 
 .ct-price__current {
-  font-size: 22px;
+  font-size: 21px;
   font-weight: 700;
+  font-family: var(--ct-font-body);
+  color: var(--ct-ink);
 }
 
 .ct-price__old {
   color: var(--ct-ink-soft);
-  font-size: 14px;
+  font-size: 13px;
+  font-family: var(--ct-font-body);
+  font-weight: 400;
 }
 
 .ct-qty-stepper {
@@ -462,9 +495,9 @@ img {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 13px 26px;
+  padding: 12px 24px;
   border-radius: var(--ct-radius-sm);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   letter-spacing: 0.03em;
   cursor: pointer;
@@ -497,8 +530,8 @@ img {
 }
 
 .ct-meta-row {
-  font-size: 13px;
-  margin-bottom: 10px;
+  font-size: 12.5px;
+  margin-bottom: 9px;
   display: flex;
   gap: 8px;
   align-items: center;
@@ -521,8 +554,8 @@ img {
 
 .ct-tagline {
   font-weight: 700;
-  margin: 16px 0 12px;
-  font-size: 13.5px;
+  margin: 14px 0 11px;
+  font-size: 12.5px;
 }
 
 .ct-seals {
@@ -533,38 +566,45 @@ img {
 }
 
 .ct-seal {
-  width: 40px;
-  height: 40px;
+  /* Real seal graphics (a.png / b.png / c.png) — the template renders
+     these at max-width 65px; the artwork carries its own circular border */
+  width: 58px;
+  height: 58px;
+  object-fit: contain;
+  display: inline-block;
   border-radius: 50%;
-  border: 1px solid var(--ct-hairline);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 17px;
+  background: #ffffff;
 }
 
 .ct-fineprint {
-  font-size: 12.5px;
+  font-size: 12px;
   color: var(--ct-ink-soft);
   margin: 0;
-  max-width: 420px;
+  max-width: 460px;
 }
 
 /* Sidebar */
 
 .ct-sidebar {
-  background: var(--ct-surface);
-  border: 1px solid var(--ct-hairline);
-  border-radius: var(--ct-radius-lg);
-  padding: 22px;
+  /* Reference template uses .cart-detail.bg-transparent — a plain
+     bordered box on the page background, no card styling. */
+  background: transparent;
+  border: 1px solid #c9d6ca;
+  border-radius: 0;
+  padding: 24px;
   position: sticky;
   top: 88px;
   align-self: start;
 }
 
 .ct-sidebar .ct-btn--outline {
-  border-color: var(--ct-hairline);
+  border-color: #1f2321;
   font-weight: 500;
+  border-radius: 0;
+}
+
+.ct-sidebar .ct-btn {
+  border-radius: 0;
 }
 
 .ct-perk {
@@ -572,9 +612,10 @@ img {
   gap: 12px;
   align-items: center;
   margin-bottom: 10px;
-  border: 1px solid var(--ct-hairline);
-  border-radius: var(--ct-radius-sm);
-  padding: 12px 14px;
+  border: 1px solid #c9d6ca;
+  border-radius: 0;
+  padding: 14px 16px;
+  background: transparent;
 }
 
 .ct-perk__icon {
@@ -584,18 +625,20 @@ img {
 
 .ct-perk h4 {
   margin: 2px 0 0;
-  font-size: 14px;
+  font-size: 13.5px;
+  font-family: var(--ct-font-display);
+  font-weight: 600;
 }
 
 .ct-perk p {
-  margin: 4px 0 0;
-  font-size: 12px;
+  margin: 3px 0 0;
+  font-size: 11.5px;
   color: var(--ct-ink-soft);
   line-height: 1.45;
 }
 
 .ct-perk__label {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--ct-ink-soft);
   font-weight: 500;
   display: block;
@@ -606,17 +649,17 @@ img {
   align-items: center;
   gap: 8px;
   color: var(--ct-accent);
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 12px 4px;
+  padding: 11px 4px;
 }
 
 .ct-total-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  font-size: 14px;
-  padding: 12px 4px 16px;
+  font-size: 13px;
+  padding: 11px 4px 15px;
   border-top: 1px solid var(--ct-hairline);
   margin-bottom: 16px;
 }
@@ -626,7 +669,7 @@ img {
 }
 
 .ct-total-row strong {
-  font-size: 20px;
+  font-size: 18px;
 }
 
 /* ---------------- Related products ---------------- */
@@ -683,34 +726,40 @@ img {
 .ct-product-card {
   background: var(--ct-surface);
   border: 1px solid var(--ct-hairline);
-  border-radius: var(--ct-radius-md);
+  border-radius: 16px;
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  transition: box-shadow 0.15s ease;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .ct-product-card:hover {
-  box-shadow: 0 8px 24px rgba(31, 35, 33, 0.08);
+  box-shadow: 0 14px 32px rgba(31, 35, 33, 0.1);
+  transform: translateY(-4px);
 }
 
-/* Card media: full-bleed photo, consistent tall aspect ratio */
+/* Card media: clean white stage, photo contained with breathing room */
 .ct-product-card__media {
-  background: linear-gradient(180deg, #f2f4f2 0%, #e7ebe7 100%);
-  padding: 0;
+  background: #fbfcfb;
+  padding: 22px;
   display: flex;
   align-items: center;
   justify-content: center;
   position: relative;
-  aspect-ratio: 1 / 1.1;
-  min-height: 300px;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
+  border-bottom: 1px solid var(--ct-hairline);
 }
 
 .ct-jar-photo--compact {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  transition: transform 0.3s ease;
+}
+
+.ct-product-card:hover .ct-jar-photo--compact {
+  transform: scale(1.04);
 }
 
 .ct-jar-svg--compact {
@@ -740,9 +789,10 @@ img {
 
 .ct-product-card__body h3 {
   font-family: var(--ct-font-display);
-  font-size: 19px;
+  font-size: 18px;
   margin: 0 0 12px;
   font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .ct-product-card__footer {
@@ -752,14 +802,14 @@ img {
 }
 
 .ct-product-card__price {
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
 }
 
 .ct-product-card__price del {
   font-weight: 400;
   color: var(--ct-ink-soft);
-  margin-left: 4px;
+  margin-left: 5px;
   font-size: 14px;
 }
 
@@ -767,168 +817,18 @@ img {
   background: var(--ct-primary);
   color: #fff;
   border: none;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--ct-radius-sm);
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
+  transition: background 0.18s ease;
 }
 
-/* ---------------- Footer ---------------- */
-
-.ct-footer {
-  background: #ffffff;
-  border-top: 1px solid var(--ct-hairline);
-}
-
-.ct-footer__grid {
-  display: grid;
-  grid-template-columns: 1.5fr 1.2fr 1fr 1fr;
-  gap: 40px;
-  padding: 64px 24px;
-}
-
-@media (max-width: 900px) {
-  .ct-footer__grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
-@media (max-width: 560px) {
-  .ct-footer__grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-.ct-logo--footer {
-  margin-bottom: 18px;
-}
-
-.ct-footer__address {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 22px;
-  font-size: 14px;
-  color: var(--ct-ink-soft);
-}
-
-.ct-footer__address li {
-  margin-bottom: 8px;
-}
-
-.ct-footer__address span {
-  font-weight: 600;
-  color: var(--ct-ink);
-}
-
-.ct-newsletter h4 {
-  font-size: 15px;
-  margin: 0 0 12px;
-  text-transform: capitalize;
-  font-weight: 600;
-}
-
-.ct-newsletter__form {
-  display: flex;
-  border: 1px solid var(--ct-hairline);
-  border-radius: var(--ct-radius-sm);
-  overflow: hidden;
-  max-width: 320px;
-}
-
-.ct-newsletter__form input {
-  flex: 1;
-  border: none;
-  padding: 12px 14px;
-  font-size: 14px;
-  outline: none;
-}
-
-.ct-newsletter__form button {
-  background: var(--ct-primary);
-  color: #fff;
-  border: none;
-  padding: 0 18px;
-  cursor: pointer;
-  font-size: 16px;
-}
-
-.ct-footer__col h4 {
-  font-size: 17px;
-  margin: 0 0 20px;
-  font-family: var(--ct-font-display);
-  font-weight: 500;
-}
-
-.ct-footer__posts {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.ct-footer__posts li {
-  display: flex;
-  gap: 14px;
-  margin-bottom: 16px;
-  align-items: center;
-}
-
-.ct-footer__post-thumb {
-  width: 52px;
-  height: 52px;
-  border-radius: var(--ct-radius-sm);
-  background: linear-gradient(160deg, #cdd9ce, #9fb3a1);
-  flex-shrink: 0;
-}
-
-.ct-footer__posts a {
-  display: block;
-  font-size: 15px;
-  font-weight: 600;
-  margin-bottom: 3px;
-}
-
-.ct-footer__posts span {
-  font-size: 12px;
-  color: var(--ct-ink-soft);
-}
-
-.ct-footer__links {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.ct-footer__links li {
-  margin-bottom: 12px;
-  font-size: 14px;
-}
-
-.ct-footer__links a:hover {
-  color: var(--ct-accent);
-}
-
-.ct-footer__bottom {
-  border-top: 1px solid var(--ct-hairline);
-  background: #fafafa;
-}
-
-.ct-footer__bottom-inner {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 20px 24px;
-  font-size: 13.5px;
-  color: var(--ct-ink-soft);
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.ct-footer__brand {
-  color: var(--ct-accent);
-  font-weight: 600;
+.ct-product-card__cart:hover {
+  background: var(--ct-accent);
 }
 
 /* ---------------- Scroll functionality ---------------- */

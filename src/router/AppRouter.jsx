@@ -1,7 +1,5 @@
 import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-
 import AboutUs from "../pages/AboutUs/AboutUs";
 import Home from "../pages/Home/Home";
 import ShopCart from "../pages/Home/ShopCart";
@@ -15,6 +13,7 @@ import ContactUs from "../pages/ContactUs/ContactUs";
 // import Register from "../components/Register";
 import PrivacyPolicy from "../pages/Privacy/PrivacyPolicy";
 import TermsConditionsPage from "../pages/Terms&Conditions/Terms&Conditions";
+import ReturnRefundPolicy from "../pages/ReturnandRefundPolicy/Return&RefundPolicy";
 
 function AppRouter() {
   return (
@@ -28,6 +27,7 @@ function AppRouter() {
          <Route path="/shop-list/addtocart" element={<AddToCart  />} />
          <Route path="/blog" element={<BlogCategory />} />
          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+         <Route path="/return-refund-policy" element={<ReturnRefundPolicy />} />
          <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
          <Route path="/contactus" element={<ContactUs />} />
           <Route path="/login" element={<Login />} />

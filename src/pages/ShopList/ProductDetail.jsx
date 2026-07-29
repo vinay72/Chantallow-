@@ -1,7 +1,17 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link } from "react-router-dom";
+import { ArrowRight } from "lucide-react";
 import "./ProductDetail.css";
 import malachiteFusionJar from "../../assets/beauty/malachite-fusion.jpg";
 import obsidianInfusionJar from "../../assets/beauty/obsidian-infusion.jpg";
+import sealRecycle from "../../assets/a.png";
+import sealNatural from "../../assets/b.png";
+import sealMadeWithLove from "../../assets/c.png";
+import logo from "../../assets/logo.png";
+import recentPost1 from "../../assets/shop/product/small/1.png";
+import recentPost2 from "../../assets/shop/product/small/2.png";
+import recentPost3 from "../../assets/shop/product/small/3.png";
+import footerImg from "../../assets/footer/footer.png";
 
 /**
  * Chantallow — Product Detail Page
@@ -23,12 +33,6 @@ const RELATED_PRODUCTS = [
   { id: "malachite", name: "Malachite Fusion", price: 80, oldPrice: 89, image: malachiteFusionJar },
   { id: "nourishing", name: "Nourishing Body Butter", price: 80, oldPrice: 89, image: malachiteFusionJar },
   { id: "exfoliating", name: "Exfoliating Body Scrub", price: 80, oldPrice: 89, image: malachiteFusionJar },
-];
-
-const RECENT_POSTS = [
-  { id: 1, title: "Hydrated Supple Skin", date: "July 23, 2023" },
-  { id: 2, title: "Glowing Radiant Skin", date: "July 23, 2023" },
-  { id: 3, title: "Silky Soft Skin", date: "July 23, 2023" },
 ];
 
 function StarRating({ rating = 3, outOf = 5 }) {
@@ -99,53 +103,95 @@ export default function ProductDetail() {
     };
   }, []);
 
-  /* -------- Pinned gallery scroll effect (JS-driven "sticky") --------
-     As you scroll, the text/sidebar columns move up while the image stays
-     pinned in view. When you reach the end of the text, the image is
-     released and everything scrolls away together.
-     Implemented with a transform instead of position:sticky so it keeps
-     working even if a parent element has `overflow` set (which silently
-     breaks CSS sticky). */
-  const galleryRef = useRef(null);
+  /* -------- Pinned gallery scroll effect --------
+     Three phases as you scroll:
+       1. BEFORE  — image sits at the top of its column.
+       2. PINNED  — the image is translated down by exactly the amount the
+                    page has scrolled, so the two cancel out and the image
+                    appears completely motionless on screen while the info
+                    column and sidebar scroll past it.
+       3. RELEASED— once the image reaches the bottom of its column, the
+                    translate stops growing and it rides away with the page.
+
+     Implemented with `transform: translate3d` rather than `position: fixed`
+     or `position: sticky`, because:
+       - `sticky` is silently broken by any ancestor with `overflow` set.
+       - `fixed`  is silently broken by any ancestor with `transform`,
+                  `filter`, `perspective`, `backdrop-filter` or `will-change`
+                  (it then resolves against that ancestor, not the viewport).
+       - `transform` on the element itself always works, in every case.
+
+     `galleryWrapperRef` is a normal grid item that stretches to the full
+     row height (see .ct-product in the CSS — it must NOT use align-items:
+     start, or the wrapper collapses and there is no travel distance).
+     `galleryInnerRef` is the element that actually gets translated. */
+  const galleryWrapperRef = useRef(null);
+  const galleryInnerRef = useRef(null);
   const productRef = useRef(null);
 
   useEffect(() => {
     const HEADER_OFFSET = 88; // height of the sticky header + breathing room
-    let ticking = false;
 
-    const update = () => {
-      ticking = false;
-      const gallery = galleryRef.current;
-      const container = productRef.current;
-      if (!gallery || !container) return;
-
-      // On stacked mobile layout, don't pin — just clear any transform.
-      if (window.innerWidth <= 760) {
-        gallery.style.transform = "";
-        return;
-      }
-
-      // How far the gallery is allowed to travel: the difference between
-      // the full product-section height and the gallery's own height.
-      const maxShift = container.offsetHeight - gallery.offsetHeight;
-      if (maxShift <= 0) {
-        gallery.style.transform = "";
-        return;
-      }
-
-      // How far the top of the product section has scrolled past the header.
-      const containerTop = container.getBoundingClientRect().top + window.scrollY;
-      const rawShift = window.scrollY + HEADER_OFFSET - containerTop;
-
-      // Clamp: 0 (not yet reached) … maxShift (text has ended — release).
-      const shift = Math.min(Math.max(rawShift, 0), maxShift);
-      gallery.style.transform = `translateY(${shift}px)`;
+    const reset = () => {
+      const inner = galleryInnerRef.current;
+      if (!inner) return;
+      inner.style.position = "";
+      inner.style.top = "";
+      inner.style.left = "";
+      inner.style.bottom = "";
+      inner.style.width = "";
+      inner.style.transform = "";
+      inner.style.zIndex = "";
     };
 
+    const update = () => {
+      const wrapper = galleryWrapperRef.current;
+      const inner = galleryInnerRef.current;
+      if (!wrapper || !inner) return;
+
+      // On stacked mobile layout, don't pin at all.
+      if (window.innerWidth <= 760) {
+        reset();
+        return;
+      }
+
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const innerHeight = inner.getBoundingClientRect().height;
+
+      // Total distance the image is allowed to travel down its column
+      // before it reaches the bottom and rides away with the page.
+      const maxShift = wrapperRect.height - innerHeight;
+
+      if (maxShift <= 0) {
+        // Image is as tall as (or taller than) its column — nothing to pin.
+        inner.style.transform = "";
+        return;
+      }
+
+      // How far the top of the column has scrolled past the header line.
+      const rawShift = HEADER_OFFSET - wrapperRect.top;
+
+      // Clamp:
+      //   0        -> phase 1, not reached yet (image at top of column)
+      //   0..max   -> phase 2, pinned (translate cancels out the scroll,
+      //               so the image appears completely motionless)
+      //   maxShift -> phase 3, released (image rides away with the page)
+      const shift = Math.min(Math.max(rawShift, 0), maxShift);
+
+      // A transform is used rather than position:fixed because `fixed` is
+      // silently broken by any ancestor with transform/filter/will-change,
+      // whereas a transform on the element itself always works.
+      inner.style.transform = `translate3d(0, ${shift}px, 0)`;
+    };
+
+    let ticking = false;
     const onScroll = () => {
       if (!ticking) {
         ticking = true;
-        requestAnimationFrame(update);
+        requestAnimationFrame(() => {
+          ticking = false;
+          update();
+        });
       }
     };
 
@@ -156,6 +202,7 @@ export default function ProductDetail() {
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
+      reset();
     };
   }, []);
 
@@ -210,10 +257,11 @@ export default function ProductDetail() {
 
       {/* ---------------- Product Detail ---------------- */}
       <main className="ct-container ct-product" ref={productRef}>
-        {/* Gallery — JS-pinned: image stays fixed in view while the info
-            column scrolls, released when the text ends */}
-        <section className="ct-gallery" aria-label="Product images" ref={galleryRef}>
-          <div className="ct-gallery__main">
+        {/* Gallery — JS-pinned: image is completely static in the
+            viewport while the info column scrolls, released when the
+            text/sidebar content ends */}
+        <section className="ct-gallery" aria-label="Product images" ref={galleryWrapperRef}>
+          <div className="ct-gallery__main" ref={galleryInnerRef}>
             <img
               className="ct-jar-photo"
               src={THUMBNAILS[activeImage].src}
@@ -353,10 +401,10 @@ export default function ProductDetail() {
 
           <p className="ct-tagline">Non-toxic. Handmade. Nourishing.</p>
 
-          <div className="ct-seals" aria-hidden="true">
-            <span className="ct-seal">♻</span>
-            <span className="ct-seal">❁</span>
-            <span className="ct-seal">✿</span>
+          <div className="ct-seals">
+            <img className="ct-seal" src={sealRecycle} alt="Recyclable packaging" />
+            <img className="ct-seal" src={sealNatural} alt="Natural ingredients" />
+            <img className="ct-seal" src={sealMadeWithLove} alt="Made with love" />
           </div>
 
           <p className="ct-fineprint">
@@ -445,86 +493,7 @@ export default function ProductDetail() {
       </section>
 
       {/* ---------------- Footer ---------------- */}
-      <footer className="ct-footer">
-        <div className="ct-container ct-footer__grid">
-          <div className="ct-footer__col">
-            <div className="ct-logo ct-logo--footer">
-              <span className="ct-logo__mark" aria-hidden="true">
-                ⚉
-              </span>
-              <span className="ct-logo__text">CHANTALLOW</span>
-            </div>
-            <ul className="ct-footer__address">
-              <li>
-                <span>Address</span> : 000 Wall Street, UK, London
-              </li>
-              <li>
-                <span>E-mail</span> : example@info.com
-              </li>
-              <li>
-                <span>Phone</span> : (000) 000-0000
-              </li>
-            </ul>
-            <div className="ct-newsletter">
-              <h4>Subscribe To Our Newsletter</h4>
-              <form
-                onSubmit={(e) => e.preventDefault()}
-                className="ct-newsletter__form"
-              >
-                <input type="email" required placeholder="Your Email Address" />
-                <button type="submit" aria-label="Subscribe">
-                  →
-                </button>
-              </form>
-            </div>
-          </div>
-
-          <div className="ct-footer__col">
-            <h4>Recent Posts</h4>
-            <ul className="ct-footer__posts">
-              {RECENT_POSTS.map((post) => (
-                <li key={post.id}>
-                  <div className="ct-footer__post-thumb" aria-hidden="true" />
-                  <div>
-                    <a href="#">{post.title}</a>
-                    <span>{post.date}</span>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="ct-footer__col">
-            <h4>Useful Links</h4>
-            <ul className="ct-footer__links">
-              <li><a href="/">Home</a></li>
-              <li><a href="/about-us">About Us</a></li>
-              <li><a href="/returns">Returns</a></li>
-              <li><a href="/terms">Terms &amp; Conditions</a></li>
-              <li><a href="/privacy-policy">Privacy-Policy</a></li>
-              <li><a href="/contact-us">Contact Us</a></li>
-            </ul>
-          </div>
-
-          <div className="ct-footer__col">
-            <h4>Social Media</h4>
-            <ul className="ct-footer__links">
-              <li><a href="#">Instagram</a></li>
-              <li><a href="https://www.facebook.com/indiankoder">Facebook</a></li>
-              <li><a href="#">YouTube</a></li>
-              <li><a href="#">Linkedin</a></li>
-              <li><a href="#">X.Com</a></li>
-            </ul>
-          </div>
-        </div>
-
-        <div className="ct-footer__bottom">
-          <div className="ct-container ct-footer__bottom-inner">
-            <p>© {new Date().getFullYear()} <span className="ct-footer__brand">Chantallow</span> Theme. All Rights Reserved.</p>
-            <p className="ct-footer__accept">We Accept: VISA · MC · AMEX · DISC</p>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       {/* ---------------- Scroll-to-top ---------------- */}
       <ScrollTopButton />
@@ -600,4 +569,217 @@ function JarIllustration({ compact }) {
       </text>
     </svg>
   );
+}
+
+/* ---------------- Footer ---------------- */
+
+function Footer() {
+    return (
+        <footer style={{ background: "#FFFFFF", color: "#1C1C1A", padding: "72px 24px 24px", borderTop: "1px solid #F0EEE4" }}>
+            <div
+                style={{
+                    maxWidth: 1360,
+                    margin: "0 auto",
+                    display: "grid",
+                    gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 4 : window.innerWidth > 560 ? 2 : 1}, 1fr)`,
+                    gap: 40,
+                    marginBottom: 48,
+                    textAlign: "left",
+                }}
+            >
+                <div>
+                    <div style={{ marginBottom: 24 }}>
+                        <img src={logo} alt="Chantallow" style={{ height: 40, width: "auto", display: "block" }} />
+                    </div>
+                    <p style={{ fontSize: 13.5, fontFamily: 'Lufga', lineHeight: 2, color: "#5A5A52", margin: "0 0 6px" }}>
+                        <strong style={{ color: "#1C1C1A" }}>Address :</strong> 000 Wall Street, UK, London
+                    </p>
+                    <p style={{ fontSize: 13.5, fontFamily: 'Lufga', lineHeight: 2, color: "#5A5A52", margin: "0 0 6px" }}>
+                        <strong style={{ color: "#1C1C1A" }}>E-mail :</strong> example@info.com
+                    </p>
+                    <p style={{ fontSize: 13.5, fontFamily: 'Lufga', lineHeight: 2, color: "#5A5A52", margin: "0 0 24px" }}>
+                        <strong style={{ color: "#1C1C1A" }}>Phone :</strong> (000) 000-0000
+                    </p>
+                    <h6 style={{ fontSize: 14.5, fontWeight: 700, margin: "0 0 12px" }}>
+                        Subscribe To Our Newsletter
+                    </h6>
+                    <div
+                        style={{
+                            display: "flex",
+                            background: "#EAF5EA",
+                            borderRadius: 30,
+                            overflow: "hidden",
+                        }}
+                    >
+                        <input
+                            type="email"
+                            placeholder="Your Email Address"
+                            style={{
+                                flex: 1,
+                                background: "transparent",
+                                border: "none",
+                                padding: "14px 20px",
+                                color: "#1C1C1A",
+                                fontSize: 13.5,
+                                outline: "none",
+                            }}
+                        />
+                        <button
+                            aria-label="Subscribe"
+                            style={{
+                                background: "transparent",
+                                border: "none",
+                                width: 52,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                cursor: "pointer",
+                            }}
+                        >
+                            <ArrowRight size={18} color="#1C1C1A" />
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h5
+                        style={{
+                            fontSize: 20, fontWeight: 700, color: "#1C1C1A",
+                            margin: "0 0 22px",
+
+
+                        }}
+                    >
+                        Recent Posts
+                    </h5>
+                    {[
+                        { title: "Hydrated Supple Skin", img: recentPost1 },
+                        { title: "Glowing Radiant Skin", img: recentPost2 },
+                        { title: "Silky Soft Skin", img: recentPost3 },
+                    ].map((t) => (
+                        <div
+                            key={t.title}
+                            style={{
+                                display: "flex",
+                                gap: 16,
+                                marginBottom: 20,
+                                alignItems: "flex-start",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    width: 76,
+                                    height: 76,
+                                    borderRadius: 4,
+                                    background: "#F4F1E6",
+                                    flexShrink: 0,
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <img
+                                    src={t.img}
+                                    alt=""
+                                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                                />
+                            </div>
+                            <div style={{ paddingTop: 6 }}>
+                                <div
+                                    style={{
+                                        fontSize: 17,
+                                        fontWeight: 700,
+                                        color: "#1C1C1A",
+                                        marginBottom: 6,
+                                        fontFamily: "Lufga",
+                                    }}
+                                >
+                                    {t.title}
+                                </div>
+                                <div style={{ fontSize: 14, color: "#9A9A90", fontFamily: "Lufga" }}>
+                                    July 23, 2023
+                                </div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div>
+                    <h5 style={{ fontSize: 20, fontWeight: 700, color: "#1C1C1A", margin: "0 0 22px" }}>
+                        Useful Links
+                    </h5>
+                    {[
+                        { label: "Home", path: "/" },
+                        { label: "About Us", path: "/aboutus" },
+                        { label: "Returns", path: "#" },
+                        { label: "Terms & Conditions", path: "/terms-and-conditions" },
+                        { label: "Privacy-Policy", path: "/privacy-policy" },
+                        { label: "Contact Us", path: "/contactus" },
+                    ].map((l) => (
+                        <Link
+                            key={l.label}
+                            to={l.path}
+                            className="ctw-underline-link"
+                            style={{
+                                display: "block",
+                                fontSize: 15,
+                                fontFamily: "Lufga, sans-serif",
+                                color: "#2D2E2F",
+                                transition: "all 0.8s ease",
+                                marginBottom: 14,
+                                textDecoration: "none",
+                            }}
+                        >
+                            {l.label}
+                        </Link>
+                    ))}
+                </div>
+
+                <div>
+                    <h5 style={{ fontSize: 20, fontWeight: 700, color: "#1C1C1A", margin: "0 0 22px" }}>
+                        Social Media
+                    </h5>
+                    {["Instagram", "Facebook", "YouTube", "Linkedin", "X.Com"].map((l) => (
+                        <a
+                            key={l}
+                            href="#home"
+                            className="ctw-underline-link"
+                            style={{
+                                display: "block",
+                                fontSize: 14.5,
+                                color: "#3A3A36",
+                                marginBottom: 14,
+                                textDecoration: "none",
+                            }}
+                        >
+                            {l}
+                        </a>
+                    ))}
+                </div>
+            </div>
+
+            <div
+                style={{
+                    maxWidth: 1360,
+                    margin: "0 auto",
+                    paddingTop: 24,
+                    borderTop: "1px solid #F0EEE4",
+                    display: "flex",
+                    flexWrap: "wrap",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    gap: 12,
+                    fontSize: 13.5,
+                    color: "#5A5A52",
+                }}
+            >
+                <p style={{ fontFamily: 'Lufga', margin: 0 }}>
+                    © 2026 <span style={{ color: "#41705B", fontWeight: 600 }}>Chantallow</span> Theme. All
+                    Rights Reserved.
+                </p>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                    <span>We Accept:</span>
+                    <img src={footerImg} alt="Accepted payment methods" style={{ height: 24, display: "block" }} />
+                </div>
+            </div>
+        </footer>
+    );
 }
