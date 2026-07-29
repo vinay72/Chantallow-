@@ -1,12 +1,15 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./ProductDetail.css";
 import malachiteFusionJar from "../../assets/beauty/malachite-fusion.jpg";
 import obsidianInfusionJar from "../../assets/beauty/obsidian-infusion.jpg";
 
 /**
  * Chantallow — Product Detail Page
- * Converted from static HTML/CSS template to a single-file React component.
- * Split out into ProductDetail.jsx (markup/logic) + ProductDetail.css (styles).
+ * Markup/logic here + styles in ProductDetail.css.
+ * Includes scroll functionality:
+ *  - Sticky product image (stays pinned while right content scrolls)
+ *  - Scroll-to-top button that appears after scrolling down
+ *  - Smooth scrolling behavior
  */
 
 const THUMBNAILS = [
@@ -16,10 +19,10 @@ const THUMBNAILS = [
 ];
 
 const RELATED_PRODUCTS = [
-  { id: "obsidian", name: "Obsidian Infusion", price: 0, oldPrice: 0, image: obsidianInfusionJar },
-  { id: "malachite", name: "Malachite Fusion", price: 0, oldPrice: 0, image: malachiteFusionJar },
-  { id: "amethyst", name: "Amethyst Relief", price: 0, oldPrice: 0 },
-  { id: "amber", name: "Amber Glow", price: 0, oldPrice: 0 },
+  { id: "cleansing", name: "Cleansing Body Wash", price: 80, oldPrice: 89, image: obsidianInfusionJar },
+  { id: "malachite", name: "Malachite Fusion", price: 80, oldPrice: 89, image: malachiteFusionJar },
+  { id: "nourishing", name: "Nourishing Body Butter", price: 80, oldPrice: 89, image: malachiteFusionJar },
+  { id: "exfoliating", name: "Exfoliating Body Scrub", price: 80, oldPrice: 89, image: malachiteFusionJar },
 ];
 
 const RECENT_POSTS = [
@@ -46,13 +49,115 @@ function StarRating({ rating = 3, outOf = 5 }) {
   );
 }
 
+/** Scroll-to-top button — appears after the user scrolls down. */
+function ScrollTopButton() {
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll(); // set initial state
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  return (
+    <button
+      type="button"
+      className={`ct-scrolltop ${visible ? "is-visible" : ""}`}
+      onClick={scrollToTop}
+      aria-label="Scroll to top"
+      aria-hidden={!visible}
+      tabIndex={visible ? 0 : -1}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M12 19V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 12L12 5L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+}
+
 export default function ProductDetail() {
   const [activeImage, setActiveImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("4oz");
+  const [selectedSize, setSelectedSize] = useState("2oz");
   const [quantity, setQuantity] = useState(1);
 
   const decrementQty = () => setQuantity((q) => Math.max(1, q - 1));
   const incrementQty = () => setQuantity((q) => q + 1);
+
+  /* Enable smooth scrolling for the whole page while this page is mounted
+     (anchor links like "(5 customer reviews)" glide instead of jumping). */
+  useEffect(() => {
+    const prev = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "smooth";
+    return () => {
+      document.documentElement.style.scrollBehavior = prev;
+    };
+  }, []);
+
+  /* -------- Pinned gallery scroll effect (JS-driven "sticky") --------
+     As you scroll, the text/sidebar columns move up while the image stays
+     pinned in view. When you reach the end of the text, the image is
+     released and everything scrolls away together.
+     Implemented with a transform instead of position:sticky so it keeps
+     working even if a parent element has `overflow` set (which silently
+     breaks CSS sticky). */
+  const galleryRef = useRef(null);
+  const productRef = useRef(null);
+
+  useEffect(() => {
+    const HEADER_OFFSET = 88; // height of the sticky header + breathing room
+    let ticking = false;
+
+    const update = () => {
+      ticking = false;
+      const gallery = galleryRef.current;
+      const container = productRef.current;
+      if (!gallery || !container) return;
+
+      // On stacked mobile layout, don't pin — just clear any transform.
+      if (window.innerWidth <= 760) {
+        gallery.style.transform = "";
+        return;
+      }
+
+      // How far the gallery is allowed to travel: the difference between
+      // the full product-section height and the gallery's own height.
+      const maxShift = container.offsetHeight - gallery.offsetHeight;
+      if (maxShift <= 0) {
+        gallery.style.transform = "";
+        return;
+      }
+
+      // How far the top of the product section has scrolled past the header.
+      const containerTop = container.getBoundingClientRect().top + window.scrollY;
+      const rawShift = window.scrollY + HEADER_OFFSET - containerTop;
+
+      // Clamp: 0 (not yet reached) … maxShift (text has ended — release).
+      const shift = Math.min(Math.max(rawShift, 0), maxShift);
+      gallery.style.transform = `translateY(${shift}px)`;
+    };
+
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update(); // set correct position on mount / refresh mid-page
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
 
   return (
     <div className="ct-page">
@@ -67,16 +172,16 @@ export default function ProductDetail() {
           </a>
 
           <nav className="ct-nav" aria-label="Primary">
-            <a href="/">Home</a>
-            <a href="/about-us">About Us</a>
-            <a href="/shop-list">Shop</a>
-            <a href="/blog-category">Blog</a>
-            <a href="/contact-us">Contact US</a>
+            <a href="/">Home +</a>
+            <a href="/about-us">About Us +</a>
+            <a href="/shop-list">Shop +</a>
+            <a href="/blog-category">Blog +</a>
+            <a href="/contact-us">Contact US +</a>
           </nav>
 
           <div className="ct-header__actions">
             <a href="/registration" className="ct-login-link">
-              Login / Register
+              Login /<br />Register
             </a>
             <button type="button" className="ct-icon-btn" aria-label="Search">
               <SearchIcon />
@@ -97,43 +202,44 @@ export default function ProductDetail() {
           <h1>Products Details</h1>
           <nav aria-label="Breadcrumb" className="ct-breadcrumb">
             <a href="/">Home</a>
-            <span aria-hidden="true">›</span>
+            <span aria-hidden="true">◆</span>
             <span>Products Details</span>
           </nav>
         </div>
       </div>
 
       {/* ---------------- Product Detail ---------------- */}
-      <main className="ct-container ct-product">
-        {/* Gallery */}
-        <section className="ct-gallery" aria-label="Product images">
+      <main className="ct-container ct-product" ref={productRef}>
+        {/* Gallery — JS-pinned: image stays fixed in view while the info
+            column scrolls, released when the text ends */}
+        <section className="ct-gallery" aria-label="Product images" ref={galleryRef}>
           <div className="ct-gallery__main">
             <img
               className="ct-jar-photo"
               src={THUMBNAILS[activeImage].src}
               alt={THUMBNAILS[activeImage].alt}
             />
-          </div>
-          <div className="ct-gallery__thumbs">
-            {THUMBNAILS.map((thumb, i) => (
-              <button
-                key={thumb.id}
-                type="button"
-                className={`ct-gallery__thumb ${i === activeImage ? "is-active" : ""}`}
-                onClick={() => setActiveImage(i)}
-                aria-label={`View image ${i + 1}`}
-                aria-pressed={i === activeImage}
-                style={{ backgroundImage: `url(${thumb.src})` }}
-              />
-            ))}
+            <div className="ct-gallery__thumbs">
+              {THUMBNAILS.map((thumb, i) => (
+                <button
+                  key={thumb.id}
+                  type="button"
+                  className={`ct-gallery__thumb ${i === activeImage ? "is-active" : ""}`}
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`View image ${i + 1}`}
+                  aria-pressed={i === activeImage}
+                  style={{ backgroundImage: `url(${thumb.src})` }}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
         {/* Info */}
         <section className="ct-info" aria-label="Product information">
-          <span className="ct-badge">SALE 10% OFF</span>
+          <span className="ct-badge">SALE 20% OFF</span>
           <h2 className="ct-info__title">Malachite Fusion</h2>
-          <p className="ct-info__subtitle">Moringa + Butterfly Pea Infused Tallow</p>
+          <p className="ct-info__subtitle">Malachite Fusion</p>
 
           <div className="ct-review-row">
             <StarRating rating={3} />
@@ -146,31 +252,22 @@ export default function ProductDetail() {
           <div className="ct-copy-block">
             <h3>Description:</h3>
             <p>
-              A luxurious botanical tallow crème crafted with grass-fed, grass-finished beef tallow
-              infused with nutrient-rich moringa and butterfly pea flower to deeply nourish, moisturize,
-              and support healthy-looking skin. Rich in naturally occurring fatty acids and skin-loving
-              nutrients, this blend helps soften dry skin, improve the appearance of texture, and
-              promote a radiant, refreshed complexion.
+              A rich, nourishing tallow crème made with grass-fed, grass-finished beef tallow and
+              infused with botanical herbs to deeply moisturize and support soft, healthy-looking
+              skin naturally.
             </p>
           </div>
 
           <div className="ct-copy-block">
             <h3>Ingredients:</h3>
-            <p>
-              Moringa is celebrated for its naturally occurring Vitamins A, C, and E, known for
-              supporting hydration, antioxidant protection, and smoother, healthier-looking skin.
-              Butterfly pea flower contributes beneficial antioxidants and flavonoids that help
-              support skin vitality and a balanced complexion, while rosemary, frankincense, and myrrh
-              provide botanical nourishment and calming skin support.
-            </p>
+            <p>Grass-Fed/Grass-Finished Beef Tallow infused with Moringa</p>
           </div>
 
           <div className="ct-copy-block">
             <h3>Directions:</h3>
             <p>
-              Specially suited for tattoo care, this rich crème helps keep tattooed skin moisturized,
-              supple, and vibrant-looking. Its deeply conditioning formula supports skin comfort,
-              hydration, and healthy-looking skin during everyday tattoo maintenance and care.
+              Apply a small scoop and rub into skin. Use as needed for whole body skin care.
+              External use only. Patch test first. <strong>Use within 1 year.</strong>
             </p>
           </div>
 
@@ -179,15 +276,15 @@ export default function ProductDetail() {
           <fieldset className="ct-size">
             <legend className="ct-label">Select Size</legend>
             <div className="ct-size__options">
-              <label className={`ct-size__option ${selectedSize === "4oz" ? "is-selected" : ""}`}>
+              <label className={`ct-size__option ${selectedSize === "2oz" ? "is-selected" : ""}`}>
                 <input
                   type="radio"
                   name="size"
-                  value="4oz"
-                  checked={selectedSize === "4oz"}
-                  onChange={() => setSelectedSize("4oz")}
+                  value="2oz"
+                  checked={selectedSize === "2oz"}
+                  onChange={() => setSelectedSize("2oz")}
                 />
-                4 .Oz
+                2 .Oz
               </label>
               <label className={`ct-size__option ${selectedSize === "1.7oz" ? "is-selected" : ""}`}>
                 <input
@@ -205,8 +302,8 @@ export default function ProductDetail() {
           <div className="ct-price-row">
             <span className="ct-label">Price</span>
             <div className="ct-price">
-              <span className="ct-price__current">$00.00</span>
-              <del className="ct-price__old">$00.00</del>
+              <span className="ct-price__current">$000.00</span>
+              <del className="ct-price__old">$000.00</del>
             </div>
           </div>
 
@@ -255,6 +352,13 @@ export default function ProductDetail() {
           </div>
 
           <p className="ct-tagline">Non-toxic. Handmade. Nourishing.</p>
+
+          <div className="ct-seals" aria-hidden="true">
+            <span className="ct-seal">♻</span>
+            <span className="ct-seal">❁</span>
+            <span className="ct-seal">✿</span>
+          </div>
+
           <p className="ct-fineprint">
             Made by a manufacturer exempt from Florida&rsquo;s cosmetic manufacturing permit
             requirements.
@@ -283,7 +387,7 @@ export default function ProductDetail() {
             </div>
             <div>
               <h4>Enjoy The Product</h4>
-              <p>Crafted in small batches for freshness and consistent quality.</p>
+              <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>
             </div>
           </div>
 
@@ -309,7 +413,7 @@ export default function ProductDetail() {
       <section className="ct-container ct-related">
         <div className="ct-related__head">
           <h2>Related products</h2>
-          <a href="/shop-list">See all products →</a>
+          <a href="/shop-list">See all products ›</a>
         </div>
         <div className="ct-related__grid">
           {RELATED_PRODUCTS.map((product) => (
@@ -362,7 +466,7 @@ export default function ProductDetail() {
               </li>
             </ul>
             <div className="ct-newsletter">
-              <h4>Subscribe to our newsletter</h4>
+              <h4>Subscribe To Our Newsletter</h4>
               <form
                 onSubmit={(e) => e.preventDefault()}
                 className="ct-newsletter__form"
@@ -397,7 +501,7 @@ export default function ProductDetail() {
               <li><a href="/about-us">About Us</a></li>
               <li><a href="/returns">Returns</a></li>
               <li><a href="/terms">Terms &amp; Conditions</a></li>
-              <li><a href="/privacy-policy">Privacy Policy</a></li>
+              <li><a href="/privacy-policy">Privacy-Policy</a></li>
               <li><a href="/contact-us">Contact Us</a></li>
             </ul>
           </div>
@@ -408,19 +512,22 @@ export default function ProductDetail() {
               <li><a href="#">Instagram</a></li>
               <li><a href="https://www.facebook.com/indiankoder">Facebook</a></li>
               <li><a href="#">YouTube</a></li>
-              <li><a href="#">LinkedIn</a></li>
-              <li><a href="#">X.com</a></li>
+              <li><a href="#">Linkedin</a></li>
+              <li><a href="#">X.Com</a></li>
             </ul>
           </div>
         </div>
 
         <div className="ct-footer__bottom">
           <div className="ct-container ct-footer__bottom-inner">
-            <p>© {new Date().getFullYear()} Chantallow Theme. All Rights Reserved.</p>
+            <p>© {new Date().getFullYear()} <span className="ct-footer__brand">Chantallow</span> Theme. All Rights Reserved.</p>
             <p className="ct-footer__accept">We Accept: VISA · MC · AMEX · DISC</p>
           </div>
         </div>
       </footer>
+
+      {/* ---------------- Scroll-to-top ---------------- */}
+      <ScrollTopButton />
     </div>
   );
 }
@@ -459,8 +566,8 @@ function CartIcon({ small }) {
 function CheckIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-      <path d="M17.5 9.99992V10.8333C17.4989 12.7503 16.8763 14.6153 15.7264 16.1494C14.5766 17.6836 12.9614 18.8038 11.1216 19.3423C9.28173 19.8809 7.31596 19.808 5.5216 19.1348C3.72724 18.4617 2.19967 17.2246 1.16702 15.6089C0.134362 13.9932 -0.343895 12.086 -0.211691 10.1735C-0.0794874 8.26098 0.657165 6.43978 1.90178 4.98232C3.1464 3.52486 4.83046 2.51101 6.70197 2.09055C8.57347 1.67009 10.5306 1.86563 12.2833 2.64159" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M17.5 3.33325L10 10.8408L7.5 8.34075" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18.3327 9.2415V9.99984C18.3317 11.8153 17.7438 13.5819 16.6562 15.0364C15.5686 16.4909 14.0403 17.5555 12.2988 18.0717C10.5572 18.5879 8.69569 18.5279 6.99098 17.9004C5.28627 17.273 3.82868 16.1124 2.83801 14.5912C1.84733 13.0701 1.37559 11.2698 1.49356 9.45778C1.61152 7.64575 2.31294 5.92137 3.49353 4.54122C4.67413 3.16106 6.27132 2.19883 8.04565 1.79539C9.81998 1.39194 11.6767 1.56876 13.3427 2.29984" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18.3333 3.33325L10 11.6749L7.5 9.17492" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
