@@ -14,6 +14,11 @@ import pic1 from "../../assets/pic1.png";
 import pic2 from "../../assets/pic2.png";
 import lavender from "../../assets/lavender.png";
 
+import petMap from "../../assets/map/map2.png";
+import petDog from "../../assets/pet/dog.png";
+import petCat from "../../assets/pet/cat.png";
+import petJars from "../../assets/pet/P1.png";
+
 
 import completeCareBg from "../../assets/about/bg1.png";
 import lineSvg from "../../assets/line.svg";   // adjust path to where you place it
@@ -202,6 +207,9 @@ export default function Home() {
                 <MoreCollections />
                 <SimilarProfilesSection />
                 <SavingSection />
+                <SavingSection />
+                <FurkindPetSection />   
+                <FeaturedOffers />
                 <FeaturedOffers />
                 <ShortlistSection />
             </main>
@@ -1872,6 +1880,146 @@ function SavingSection() {
                             </text>
                         </svg>
                     </div>
+                </div>
+            </div>
+        </section>
+    );
+}
+
+/* ----------------------------- Furkind Pet Tallow ----------------------------- */
+
+function FurkindPetSection() {
+    const isDesktop = window.innerWidth > 992;
+
+    return (
+        <section
+            id="furkind"
+            style={{
+                background: "linear-gradient(180deg, #D6F5C9 0%, #D6F5C9 25%, #FFFFFF 75%)",
+                padding: "100px 24px 120px",
+                position: "relative",
+                overflow: "hidden",
+            }}
+        >
+            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+                {/* Grass map with pets */}
+                <div
+    style={{
+        position: "relative",
+        maxWidth: 900,
+        margin: "0 auto 40px",
+    }}
+>
+    <img
+        src={petMap}
+        alt=""
+        aria-hidden="true"
+        style={{ width: "100%", height: "auto", display: "block" }}
+    />
+
+    {/* Dog — left, sitting on the grass */}
+    <img
+        src={petDog}
+        alt="Golden retriever"
+        style={{
+            position: "absolute",
+            bottom: "30%",
+            left: "8%",
+            width: isDesktop ? "22%" : "30%",
+            height: "auto",
+            display: "block",
+            pointerEvents: "none",
+            zIndex: 2,
+        }}
+    />
+
+    {/* Jars — center */}
+    <img
+        src={petJars}
+        alt="Chantallow Roasted Glow coffee infused tallow jars"
+        style={{
+            position: "absolute",
+            bottom: "32%",
+            left: "50%",
+            transform: "translateX(-50%)",
+            width: isDesktop ? "34%" : "42%",
+            height: "auto",
+            display: "block",
+            pointerEvents: "none",
+            zIndex: 1,
+        }}
+    />
+
+    {/* Cat — right, sitting on the grass */}
+    <img
+        src={petCat}
+        alt="Puppy and kitten"
+        style={{
+            position: "absolute",
+            bottom: "30%",
+            right: "6%",
+            width: isDesktop ? "22%" : "30%",
+            height: "auto",
+            display: "block",
+            pointerEvents: "none",
+            zIndex: 2,
+        }}
+    />
+    </div>
+
+                {/* Text content */}
+                <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+                    <a href="#furkind" style={{ textDecoration: "none" }}>
+                        <h2
+                            style={{
+                                fontSize: "clamp(2.4rem, 4vw, 3.8rem)",
+                                fontFamily: "Marcellus, sans-serif",
+                                color: "#2D2E2F",
+                                fontWeight: 400,
+                                margin: "0 0 24px",
+                            }}
+                        >
+                            Furkind Pet Tallow
+                        </h2>
+                    </a>
+
+                    <p
+                        style={{
+                            fontSize: 16,
+                            lineHeight: 1.9,
+                            fontFamily: "Lufga, sans-serif",
+                            color: "#5A5A52",
+                            margin: "0 0 32px",
+                        }}
+                    >
+                        Our nutrient-rich Pet Balm combines the nourishing power of grass-fed,
+                        grass-finished beef tallow with organic raw unrefined coconut oil to help
+                        soothe, protect, and restore dry, rough, or irritated skin and paws. Beef
+                        tallow is a natural source of Vitamin A, D, E, and K, supporting skin
+                        renewal, barrier function, and moisture retention. The naturally occurring
+                        fatty acids in tallow closely resemble the oils found in healthy skin,
+                        making it highly absorbable and deeply moisturizing. Together, these
+                        ingredients help soften rough paws, reduce dryness and cracking, calm
+                        irritation, and create a protective moisture barrier to keep your pet's skin
+                        and paws healthy, smooth, and comfortable.
+                    </p>
+
+                    <a
+                        href="#shop"
+                        style={{
+                            display: "inline-block",
+                            background: "#2D2E2F",
+                            color: "#FFFFFF",
+                            padding: "15px 40px",
+                            fontSize: 15,
+                            fontFamily: "Lufga, sans-serif",
+                            letterSpacing: "0.06em",
+                            textTransform: "uppercase",
+                            textDecoration: "none",
+                        }}
+                    >
+                        Buy Now
+                    </a>
                 </div>
             </div>
         </section>

@@ -1,5 +1,20 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
+import { Search, Heart, ShoppingCart, Menu, ArrowRight, ChevronDown } from "lucide-react";
 import "./ReturnRefundPolicy.css";
+import logo from "../../assets/logo.png";
+import recentPost1 from "../../assets/shop/product/small/1.png";
+import recentPost2 from "../../assets/shop/product/small/2.png";
+import recentPost3 from "../../assets/shop/product/small/3.png";
+import footerImg from "../../assets/footer/footer.png";
+
+const NAV_LINKS = [
+  { label: "Home", path: "/" },
+  { label: "About Us", path: "/aboutus" },
+  { label: "Shop", path: "/shop-list" },
+  { label: "Blog", path: "/blog-category" },
+  { label: "Contact US", path: "/contactus" },
+];
 
 /**
  * Chantallow — Return & Refund Policy page
@@ -64,7 +79,7 @@ function AccordionItem({ item, isOpen, onToggle }) {
           aria-controls={`rr-panel-${item.id}`}
         >
           {item.title}
-          <span className="rr-accordion__toggle" aria-hidden="true" />
+          <ChevronDown className="rr-accordion__chevron" size={20} strokeWidth={1.75} aria-hidden="true" />
         </button>
       </h2>
       <div
@@ -101,6 +116,8 @@ export default function ReturnRefundPolicy() {
 
   return (
     <div className="rr-page">
+      <Header />
+
       {/* ---------------- Banner ---------------- */}
       <div className="rr-banner">
         <div className="rr-container">
@@ -218,6 +235,140 @@ export default function ReturnRefundPolicy() {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
+}
+
+/* ---------------- Header ---------------- */
+
+function Header() {
+    const [menuOpen, setMenuOpen] = useState(false);
+
+    return (
+        <header className="ctw-header">
+            <div className="ctw-header-inner">
+                <Link to="/" className="ctw-header-logo">
+                    <img src={logo} alt="Chantallow" />
+                </Link>
+
+                <nav className={menuOpen ? "ctw-nav is-open" : "ctw-nav"}>
+                    {NAV_LINKS.map((link) => (
+                        <Link key={link.label} to={link.path} className="ctw-nav-link">
+                            {link.label} <span className="ctw-nav-plus">+</span>
+                        </Link>
+                    ))}
+                </nav>
+
+                <div className="ctw-header-actions">
+                    <Link to="/registration" className="ctw-login-link">
+                        Login /<br />Register
+                    </Link>
+                    <button aria-label="Search" className="ctw-icon-btn">
+                        <Search size={20} strokeWidth={1.5} color="#000" />
+                    </button>
+                    <button aria-label="Wishlist" className="ctw-icon-btn">
+                        <Heart size={20} strokeWidth={1.5} color="#000" />
+                    </button>
+                    <button aria-label="Cart" className="ctw-icon-btn">
+                        <ShoppingCart size={20} strokeWidth={1.5} color="#000" />
+                    </button>
+                    <button
+                        aria-label="Toggle menu"
+                        onClick={() => setMenuOpen((v) => !v)}
+                        className="ctw-icon-btn ctw-menu-btn"
+                    >
+                        <Menu size={22} />
+                    </button>
+                </div>
+            </div>
+        </header>
+    );
+}
+
+/* ---------------- Footer ---------------- */
+
+function Footer() {
+    return (
+        <footer className="ctw-footer">
+            <div className="ctw-footer-grid">
+                <div>
+                    <div className="ctw-footer-logo">
+                        <img src={logo} alt="Chantallow" />
+                    </div>
+                    <p className="ctw-footer-address-line">
+                        <strong>Address :</strong> 000 Wall Street, UK, London
+                    </p>
+                    <p className="ctw-footer-address-line">
+                        <strong>E-mail :</strong> example@info.com
+                    </p>
+                    <p className="ctw-footer-address-line">
+                        <strong>Phone :</strong> (000) 000-0000
+                    </p>
+                    <h6 className="ctw-footer-newsletter-title">Subscribe To Our Newsletter</h6>
+                    <div className="ctw-newsletter-form">
+                        <input type="email" placeholder="Your Email Address" className="ctw-newsletter-input" />
+                        <button aria-label="Subscribe" className="ctw-newsletter-submit">
+                            <ArrowRight size={18} color="#1C1C1A" />
+                        </button>
+                    </div>
+                </div>
+
+                <div>
+                    <h5 className="ctw-footer-heading">Recent Posts</h5>
+                    {[
+                        { title: "Hydrated Supple Skin", img: recentPost1 },
+                        { title: "Glowing Radiant Skin", img: recentPost2 },
+                        { title: "Silky Soft Skin", img: recentPost3 },
+                    ].map((t) => (
+                        <div key={t.title} className="ctw-footer-post">
+                            <div className="ctw-footer-post-thumb">
+                                <img src={t.img} alt="" />
+                            </div>
+                            <div className="ctw-footer-post-body">
+                                <div className="ctw-footer-post-title">{t.title}</div>
+                                <div className="ctw-footer-post-date">July 23, 2023</div>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
+                <div>
+                    <h5 className="ctw-footer-heading">Useful Links</h5>
+                    {[
+                        { label: "Home", path: "/" },
+                        { label: "About Us", path: "/aboutus" },
+                        { label: "Returns", path: "/returns" },
+                        { label: "Terms & Conditions", path: "/terms-and-conditions" },
+                        { label: "Privacy-Policy", path: "/privacy-policy" },
+                        { label: "Contact Us", path: "/contactus" },
+                    ].map((l) => (
+                        <Link key={l.label} to={l.path} className="ctw-underline-link ctw-footer-link">
+                            {l.label}
+                        </Link>
+                    ))}
+                </div>
+
+                <div>
+                    <h5 className="ctw-footer-heading">Social Media</h5>
+                    {["Instagram", "Facebook", "YouTube", "Linkedin", "X.Com"].map((l) => (
+                        <a key={l} href="#home" className="ctw-underline-link ctw-footer-social-link">
+                            {l}
+                        </a>
+                    ))}
+                </div>
+            </div>
+
+            <div className="ctw-footer-bottom">
+                <p className="ctw-footer-copyright">
+                    © 2026 <span className="ctw-footer-brand">Chantallow</span> Theme. All Rights Reserved.
+                </p>
+                <div className="ctw-footer-payments">
+                    <span>We Accept:</span>
+                    <img src={footerImg} alt="Accepted payment methods" />
+                </div>
+            </div>
+        </footer>
+    );
 }

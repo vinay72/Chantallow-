@@ -31,13 +31,13 @@
 
 .rr-banner {
   background: var(--rr-bg);
-  padding: 72px 0 40px;
+  padding: 72px 0 24px;
   text-align: center;
 }
 
 .rr-banner__entry h1 {
-  font-family: var(--rr-font-display);
-  font-size: clamp(34px, 4.5vw, 54px);
+  font-family: "Marcellus", sans-serif;
+  font-size: 75px;
   font-weight: 500;
   margin: 0 0 14px;
   color: var(--rr-ink);
@@ -50,7 +50,7 @@
   gap: 12px;
   font-size: 14px;
   color: var(--rr-ink-soft);
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .rr-breadcrumb a {
@@ -70,16 +70,6 @@
 
 .rr-banner__chevron {
   color: var(--rr-ink);
-  animation: rr-bounce 1.6s ease-in-out infinite;
-}
-
-@keyframes rr-bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(6px); }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .rr-banner__chevron { animation: none; }
 }
 
 /* ---------------- Content layout ---------------- */
@@ -104,8 +94,8 @@
 
 .rr-policy__intro {
   font-size: 15px;
-  color: var(--rr-ink-soft);
-  margin: 0 0 28px;
+  color: var(--rr-ink);
+  margin: 0 0 32px;
 }
 
 /* ---------------- Accordion (dz-accordion style-2) ---------------- */
@@ -113,13 +103,12 @@
 .rr-accordion {
   display: flex;
   flex-direction: column;
-  gap: 14px;
 }
 
 .rr-accordion__item {
-  background: var(--rr-surface);
-  border: 1px solid var(--rr-hairline);
-  overflow: hidden;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--rr-hairline);
 }
 
 .rr-accordion__header {
@@ -136,66 +125,49 @@
   border: none;
   cursor: pointer;
   text-align: left;
-  padding: 18px 22px;
-  font-family: var(--rr-font-body);
-  font-size: 16px;
-  font-weight: 600;
+  padding: 20px 0;
+  font-family: "Marcellus", sans-serif;
+  font-size: 24px;
+  font-weight: 500;
   color: var(--rr-ink);
   transition: color 0.15s ease;
 }
 
 .rr-accordion__item.is-open .rr-accordion__button {
-  color: var(--rr-accent);
+  color: var(--rr-ink);
 }
 
-/* Plus/minus toggle indicator */
-.rr-accordion__toggle {
-  position: relative;
-  width: 16px;
-  height: 16px;
+/* Chevron toggle indicator — rotates to point up when open */
+.rr-accordion__chevron {
   flex-shrink: 0;
+  color: var(--rr-ink);
+  transition: transform 0.25s ease;
 }
 
-.rr-accordion__toggle::before,
-.rr-accordion__toggle::after {
-  content: "";
-  position: absolute;
-  background: currentColor;
-  transition: transform 0.2s ease;
-}
-
-.rr-accordion__toggle::before {
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 2px;
-  transform: translateY(-50%);
-}
-
-.rr-accordion__toggle::after {
-  left: 50%;
-  top: 0;
-  bottom: 0;
-  width: 2px;
-  transform: translateX(-50%);
-}
-
-.rr-accordion__item.is-open .rr-accordion__toggle::after {
-  transform: translateX(-50%) scaleY(0); /* plus becomes minus */
+.rr-accordion__item.is-open .rr-accordion__chevron {
+  transform: rotate(180deg);
 }
 
 .rr-accordion__panel {
-  border-top: 1px solid var(--rr-hairline);
+  border-top: none;
 }
 
 .rr-accordion__body {
-  padding: 18px 22px;
+  padding: 20px 0;
+  font-family: "Lufga", sans-serif;
+  font-size: 14px;
+  color: #666666;
+  text-align: left;
 }
 
 .rr-accordion__body p {
-  margin: 0 0 10px;
-  font-size: 14.5px;
-  color: var(--rr-ink-soft);
+  margin: 0 0 8px;
+  font-family: inherit;
+  font-size: inherit;
+  line-height: 1.6;
+  color: inherit;
+  text-align: left;
+  white-space: normal;
 }
 
 .rr-accordion__body p:last-child {
@@ -206,8 +178,8 @@
 
 .rr-contact {
   background: transparent;
-  border: 1px solid var(--rr-hairline);
-  padding: 32px 28px;
+  border: none;
+  padding: 0;
 }
 
 .rr-contact__title {
@@ -218,9 +190,10 @@
 }
 
 .rr-contact__text {
-  font-size: 14px;
-  color: var(--rr-ink-soft);
-  margin: 0 0 24px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--rr-ink);
+  margin: 0 0 26px;
 }
 
 .rr-contact__success {
