@@ -14,6 +14,8 @@ import pic1 from "../../assets/pic1.png";
 import pic2 from "../../assets/pic2.png";
 import lavender from "../../assets/lavender.png";
 
+
+
 import petMap from "../../assets/map/map2.png";
 import petDog from "../../assets/pet/dog.png";
 import petCat from "../../assets/pet/cat.png";
@@ -160,6 +162,12 @@ const NAV_LINKS = [
     { label: "Contact Us", path: "/contactus" },
 ];
 
+const NEW_ARRIVALS = [
+    { id: 1, name: "Bare Whipped Tallow", img: collectionImg6 },
+    { id: 2, name: "Furkind Pet Tallow", img: collectionImg6 },
+    { id: 3, name: "Taluma Hair Care", img: collectionImg6 },
+];
+
 const CATEGORY_MARQUEE = ["Accessories", "Haircare", "Nailcare", "Beautycare", "Bodycare", "Skincare"];
 
 export default function Home() {
@@ -208,7 +216,7 @@ export default function Home() {
                 <SimilarProfilesSection />
                 <SavingSection />
                 <SavingSection />
-                <FurkindPetSection />   
+                <FurkindPetSection />
                 <FeaturedOffers />
                 <FeaturedOffers />
                 <ShortlistSection />
@@ -818,7 +826,6 @@ function TallowCollection({ onQuickView }) {
                         color: "#2D2E2F",
                         fontFamily: "Marcellus, sans-serif",
                     }}
-
                 >
                     Experience The Tallow Collection
                 </h2>
@@ -943,7 +950,7 @@ function TallowCollection({ onQuickView }) {
                                 <h5 style={{ margin: "0 0 6px", fontSize: 20, fontFamily: "Marcellus, sans-serif", fontWeight: 700, color: "#3B1941", textTransform: "uppercase" }}>
                                     {c.name}
                                 </h5>
-                                <span style={{ fontSize: 13, fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
+                                <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
                                     $00 <span style={{ textDecoration: "line-through" }}>$00</span>
                                 </span>
                             </div>
@@ -951,9 +958,125 @@ function TallowCollection({ onQuickView }) {
                     ))}
                 </div>
 
-                {/* <div style={{ display: "flex", justifyContent: "center", marginTop: 56 }}>
-                    <RotatingLinkBadge label="ALL PRODUCTS" href="#shop" />
-                </div> */}
+                {/* New Arrivals — separate grid so it renders correctly */}
+                <div
+                    style={{
+                        display: "grid",
+                        gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1}, 1fr)`,
+                        gap: 24,
+                        textAlign: "left",
+                        marginTop: 24,
+                    }}
+                >
+                    {NEW_ARRIVALS.map((p) => (
+                        <div
+                            key={p.id}
+                            className="ctw-card-hover"
+                            style={{
+                                background: "#fff",
+                                borderRadius: 16,
+                                overflow: "hidden",
+                                border: "1px solid #E2E9DA",
+                            }}
+                        >
+                            <div
+                                style={{
+                                    position: "relative",
+                                    aspectRatio: "4 / 4.2",
+                                    background: "#F7F4EC",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    justifyContent: "center",
+                                    overflow: "hidden",
+                                }}
+                            >
+                                <img
+                                    src={p.img}
+                                    alt={`Chantallow ${p.name}`}
+                                    style={{
+                                        width: "100%",
+                                        height: "100%",
+                                        objectFit: "cover",
+                                        display: "block",
+                                    }}
+                                />
+
+                                {/* Quick View pill */}
+                                <button
+                                    onClick={() => onQuickView()}
+                                    style={{
+                                        position: "absolute",
+                                        bottom: 14,
+                                        left: 14,
+                                        background: "#41705B",
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: 20,
+                                        padding: "9px 16px",
+                                        fontSize: 11.5,
+                                        fontWeight: 700,
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Quick View
+                                </button>
+
+                                {/* Cart icon */}
+                                <button
+                                    aria-label="Add to cart"
+                                    style={{
+                                        position: "absolute",
+                                        bottom: 14,
+                                        right: 14,
+                                        background: "#1C1C1A",
+                                        color: "#fff",
+                                        border: "none",
+                                        borderRadius: "50%",
+                                        width: 38,
+                                        height: 38,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    <ShoppingBag size={16} />
+                                </button>
+
+                                {/* Wishlist heart */}
+                                <button
+                                    aria-label="Add to wishlist"
+                                    style={{
+                                        position: "absolute",
+                                        top: 12,
+                                        right: 12,
+                                        background: "#fff",
+                                        border: "none",
+                                        borderRadius: "50%",
+                                        width: 32,
+                                        height: 32,
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    <Heart size={14} />
+                                </button>
+                            </div>
+
+                            <div style={{ padding: "16px 18px 20px" }}>
+                                <h5 style={{ margin: "0 0 6px", fontSize: 20, fontFamily: "Marcellus, sans-serif", fontWeight: 700, color: "#5d1100" }}>
+                                    {p.name}
+                                </h5>
+                                <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
+                                    $00 <span style={{ textDecoration: "line-through" }}>$00</span>
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
             </div>
         </section>
     );
@@ -1888,6 +2011,8 @@ function SavingSection() {
 
 /* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
+/* ----------------------------- Furkind Pet Tallow ----------------------------- */
+
 function FurkindPetSection() {
     const isDesktop = window.innerWidth > 992;
 
@@ -1901,71 +2026,74 @@ function FurkindPetSection() {
                 overflow: "hidden",
             }}
         >
-            <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-                {/* Grass map with pets */}
+            <div style={{ maxWidth: 1200, margin: "0 auto ", position: "relative", zIndex: 1 }}>
+                {/* Grass map with pets and jars */}
                 <div
-    style={{
-        position: "relative",
-        maxWidth: 900,
-        margin: "0 auto 40px",
-    }}
->
-    <img
-        src={petMap}
-        alt=""
-        aria-hidden="true"
-        style={{ width: "100%", height: "auto", display: "block" }}
-    />
+                    style={{
+                        position: "relative",
+                        maxWidth: 1200,
+                        margin: "0 auto 40px",
+                    }}
+                >
+                    <img
+                        src={petMap}
+                        alt=""
+                        aria-hidden="true"
+                        style={{ width: "100%", height: "auto", display: "block" }}
+                    />
 
-    {/* Dog — left, sitting on the grass */}
-    <img
-        src={petDog}
-        alt="Golden retriever"
-        style={{
-            position: "absolute",
-            bottom: "30%",
-            left: "8%",
-            width: isDesktop ? "22%" : "30%",
-            height: "auto",
-            display: "block",
-            pointerEvents: "none",
-            zIndex: 2,
-        }}
-    />
+                    {/* area-box1 — dog, left */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            left: "12%",
+                            bottom: "44%",        // was 18% — raised up
+                            width: isDesktop ? "24%" : "32%",
+                            zIndex: 2,
+                        }}
+                    >
+                        <img
+                            src={petDog}
+                            alt="image"
+                            style={{ width: "80%", height: "auto", display: "block" }}
+                        />
+                    </div>
 
-    {/* Jars — center */}
-    <img
-        src={petJars}
-        alt="Chantallow Roasted Glow coffee infused tallow jars"
-        style={{
-            position: "absolute",
-            bottom: "32%",
-            left: "50%",
-            transform: "translateX(-50%)",
-            width: isDesktop ? "34%" : "42%",
-            height: "auto",
-            display: "block",
-            pointerEvents: "none",
-            zIndex: 1,
-        }}
-    />
+                    {/* area-box3 — jars, center */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            left: "44%",
+                            bottom: "64%",        // was 20% — raised up
+                            transform: "translateX(-50%)",
+                            width: isDesktop ? "30%" : "40%",
+                            zIndex: 1,
+                        }}
+                    >
+                        <img
+                            src={petJars}
+                            alt="image"
+                            style={{ width: "100%", height: "auto", display: "block" }}
+                        />
+                    </div>
 
-    {/* Cat — right, sitting on the grass */}
-    <img
-        src={petCat}
-        alt="Puppy and kitten"
-        style={{
-            position: "absolute",
-            bottom: "30%",
-            right: "6%",
-            width: isDesktop ? "22%" : "30%",
-            height: "auto",
-            display: "block",
-            pointerEvents: "none",
-            zIndex: 2,
-        }}
-    />
-    </div>
+                    {/* area-box2 — cat, right */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            right: "23%",
+                            bottom: "44%",        // was 18% — raised up
+                            width: isDesktop ? "24%" : "32%",
+                            zIndex: 2,
+                        }}
+                    >
+                        <img
+                            src={petCat}
+                            alt="image"
+                            style={{ width: "100%", height: "auto", display: "block" }}
+                        />
+                    </div>
+                </div>
 
                 {/* Text content */}
                 <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
@@ -1990,6 +2118,7 @@ function FurkindPetSection() {
                             fontFamily: "Lufga, sans-serif",
                             color: "#5A5A52",
                             margin: "0 0 32px",
+                            textAlign: "left",
                         }}
                     >
                         Our nutrient-rich Pet Balm combines the nourishing power of grass-fed,
