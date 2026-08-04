@@ -211,13 +211,10 @@ export default function Home() {
                 <CompleteCareBanner />
                 <CategoryMarquee />
                 <TallowCollection onQuickView={() => setQuickView(true)} />
-
                 <MoreCollections />
                 <SimilarProfilesSection />
                 <SavingSection />
-                <SavingSection />
                 <FurkindPetSection />
-                <FeaturedOffers />
                 <FeaturedOffers />
                 <ShortlistSection />
             </main>
@@ -2014,6 +2011,7 @@ function SavingSection() {
 /* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
 function FurkindPetSection() {
+    const navigate = useNavigate(); 
     const isDesktop = window.innerWidth > 992;
 
     return (
@@ -2097,7 +2095,11 @@ function FurkindPetSection() {
 
                 {/* Text content */}
                 <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
-                    <a href="#furkind" style={{ textDecoration: "none" }}>
+                    <a 
+                        onClick={() => navigate("/furkind-pet-tallow")}
+                        style={{ textDecoration: "none", cursor: "pointer" }}
+
+                    >
                         <h2
                             style={{
                                 fontSize: "clamp(2.4rem, 4vw, 3.8rem)",

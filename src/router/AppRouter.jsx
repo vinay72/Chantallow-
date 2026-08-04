@@ -14,6 +14,7 @@ import ContactUs from "../pages/ContactUs/ContactUs";
 import PrivacyPolicy from "../pages/Privacy/PrivacyPolicy";
 import TermsConditionsPage from "../pages/Terms&Conditions/Terms&Conditions";
 import ReturnRefundPolicy from "../pages/ReturnandRefundPolicy/Return&RefundPolicy";
+import FurkindPetTallow from "../pages/Home/FurkindPetTallow";
 
 function AppRouter() {
   return (
@@ -28,6 +29,7 @@ function AppRouter() {
          <Route path="/blog" element={<BlogCategory />} />
          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
          <Route path="/return-refund-policy" element={<ReturnRefundPolicy />} />
+         <Route path="/furkind-pet-tallow" element={<FurkindPetTallow />} />
          <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
          <Route path="/contactus" element={<ContactUs />} />
           <Route path="/login" element={<Login />} />
