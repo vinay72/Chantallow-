@@ -6,7 +6,7 @@
     --bg: #e9f2ea;
     --ink: #2b2b2b;
     --muted: #7a7a7a;
-    --line: #dce4dc;
+    --line: #cfd9cf;
     --dark-btn: #1c1c1c;
     font-family: "Poppins", "Segoe UI", Arial, sans-serif;
     color: var(--ink);
@@ -45,10 +45,6 @@
     flex-shrink: 0;
 }
 
-.fpt-logo-mark svg {
-    display: block;
-}
-
 .fpt-logo-text {
     font-family: Georgia, "Times New Roman", serif;
     font-size: 24px;
@@ -62,7 +58,6 @@
     font-size: 20px;
 }
 
-/* single-row nav, centered between logo and actions */
 .fpt-nav {
     display: flex;
     flex-wrap: wrap;
@@ -78,7 +73,6 @@
     gap: 6px;
     font-size: 16px;
     color: #2f3a2c;
-    font-weight: 400;
     white-space: nowrap;
 }
 
@@ -160,34 +154,53 @@
 /* ===== Product layout ===== */
 .fpt-product {
     position: relative;
-    max-width: 1240px;
+    max-width: 1320px;
     margin: 0 auto;
     padding: 48px 24px 40px;
     display: grid;
-    grid-template-columns: 360px minmax(0, 1fr) 300px;
-    gap: 40px;
+    grid-template-columns: 380px minmax(0, 1fr) 300px;
+    gap: 44px;
     align-items: start;
 }
 
-/* Gallery */
+/* Gallery — sticky per reference "dz-product-detail sticky-top" */
 .fpt-gallery {
     position: sticky;
     top: 20px;
 }
 
 .fpt-main-img {
-    background: radial-gradient(circle at 50% 35%, #3b3b3b, #1c1c1c);
+    background: radial-gradient(circle at 50% 30%, #3b3b3b, #1a1a1a);
     border-radius: 4px;
-    aspect-ratio: 1/1;
+    aspect-ratio: 3/4;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    padding: 30px;
+    padding: 40px 20px 0;
+    overflow: hidden;
+}
+
+.fpt-thumbs {
+    display: flex;
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.fpt-thumb {
+    flex: 1;
+    aspect-ratio: 1/1;
+    background: #d9d9d9;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    color: #8a8a8a;
 }
 
 /* Jar illustration */
 .jar {
-    width: 190px;
+    width: 220px;
     text-align: center;
 }
 
@@ -196,7 +209,7 @@
 }
 
 .jar-lid {
-    height: 26px;
+    height: 30px;
     background: linear-gradient(#3c2f24, #241a12);
     border-radius: 8px 8px 4px 4px;
     width: 82%;
@@ -210,7 +223,7 @@
 .jar-body {
     background: #f5f3ee;
     border-radius: 4px;
-    padding: 22px 12px 16px;
+    padding: 24px 12px 40px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -219,7 +232,7 @@
 }
 
 .jar-brand {
-    font-size: 11px;
+    font-size: 12px;
     letter-spacing: 2px;
     color: #4a4a4a;
 }
@@ -228,71 +241,46 @@
     font-size: 8px;
 }
 
-.jar-sub {
-    font-size: 10px;
-    color: #7a2f2f;
-    font-weight: 600;
-    margin-top: 4px;
-}
-
-.jar-sub2 {
-    font-size: 6px;
-    color: #8a8a8a;
-    text-align: center;
-}
-
-.jar-thumbs {
-    display: flex;
-    justify-content: center;
-    gap: 8px;
-    margin-top: 10px;
-}
-
-.jar-thumbs span {
-    width: 34px;
-    height: 34px;
-    background: #d9d9d9;
-    border-radius: 2px;
-}
-
 /* Info column */
 .fpt-sale {
     display: inline-block;
     background: #2f8f4e;
     color: #fff;
     font-size: 11px;
-    padding: 4px 10px;
+    padding: 5px 12px;
     border-radius: 3px;
-    margin-bottom: 12px;
+    margin-bottom: 14px;
+    letter-spacing: .5px;
 }
 
 .fpt-title {
     font-family: Georgia, serif;
-    font-size: 30px;
-    font-weight: 500;
-    margin: 0 0 6px;
+    font-size: 42px;
+    font-weight: 400;
+    margin: 0 0 10px;
 }
 
 .fpt-subtitle {
-    color: #555;
-    margin: 0 0 12px;
+    color: #4a4a4a;
+    margin: 0 0 14px;
+    font-size: 15px;
 }
 
 .fpt-rating {
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 20px;
+    margin-bottom: 24px;
     font-size: 14px;
 }
 
 .stars .star {
     color: #ccc;
-    font-size: 16px;
+    font-size: 17px;
 }
 
 .stars .star.filled {
-    color: #e0a63c;
+    color: #1c1c1c;
 }
 
 .fpt-rating .muted {
@@ -301,27 +289,34 @@
 
 .fpt-h {
     font-size: 15px;
-    font-weight: 600;
-    margin: 18px 0 6px;
+    font-weight: 700;
+    margin: 0 0 4px;
 }
 
 .fpt-desc {
-    color: #555;
-    font-size: 14px;
-    margin: 0;
-}
-
-.fpt-rule {
-    border: none;
-    border-top: 1px solid var(--line);
-    margin: 26px 0;
+    color: #5a5a5a;
+    font-size: 14.5px;
+    margin: 0 0 20px;
+    max-width: 640px;
 }
 
 /* Size */
+.fpt-size-block {
+    margin: 12px 0 20px;
+}
+
+.fpt-label {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #2b2b2b;
+    margin-bottom: 10px;
+}
+
 .fpt-sizes {
     display: flex;
-    gap: 26px;
-    margin-top: 4px;
+    gap: 24px;
+    align-items: center;
 }
 
 .fpt-radio {
@@ -334,13 +329,18 @@
 
 .fpt-radio input {
     accent-color: var(--sage);
+    width: 16px;
+    height: 16px;
 }
 
-/* Price */
+.fpt-meta-row {
+    margin-bottom: 20px;
+}
+
 .fpt-price {
     font-size: 24px;
     font-weight: 600;
-    margin: 2px 0 0;
+    margin: 0;
 }
 
 .fpt-price-old {
@@ -351,6 +351,10 @@
 }
 
 /* Quantity */
+.fpt-qty-block {
+    margin-bottom: 24px;
+}
+
 .fpt-qty {
     display: inline-flex;
     align-items: center;
@@ -361,18 +365,20 @@
 
 .fpt-qty button {
     width: 40px;
-    height: 40px;
+    height: 42px;
     border: none;
-    background: var(--dark-btn);
-    color: #fff;
+    background: #fff;
+    color: #1c1c1c;
     font-size: 18px;
     cursor: pointer;
 }
 
 .fpt-qty input {
-    width: 46px;
-    height: 40px;
+    width: 50px;
+    height: 42px;
     border: none;
+    border-left: 1px solid var(--line);
+    border-right: 1px solid var(--line);
     text-align: center;
     font-size: 15px;
     background: #fff;
@@ -382,65 +388,74 @@
 .fpt-actions {
     display: flex;
     gap: 14px;
-    margin-top: 22px;
-    flex-wrap: wrap;
+    margin-bottom: 30px;
 }
 
 .btn-dark {
     background: var(--dark-btn);
     color: #fff;
     border: none;
-    padding: 14px 34px;
+    padding: 15px 40px;
     font-size: 13px;
     letter-spacing: 1px;
     cursor: pointer;
     border-radius: 2px;
+    text-transform: uppercase;
 }
 
 .btn-outline {
     background: #fff;
     border: 1px solid #cfcfcf;
-    padding: 14px 26px;
+    padding: 15px 26px;
     font-size: 13px;
     cursor: pointer;
     border-radius: 2px;
     display: inline-flex;
     align-items: center;
+    justify-content: center;
     gap: 8px;
+}
+
+.btn-icon-only {
+    padding: 15px 18px;
 }
 
 .btn-dark.full,
 .btn-outline.full {
     width: 100%;
-    justify-content: center;
-    margin-top: 10px;
+    margin-bottom: 12px;
+}
+
+.fpt-meta-block {
+    border-top: 1px solid var(--line);
+    padding-top: 24px;
 }
 
 .fpt-sku {
     font-size: 14px;
+    margin: 0 0 12px;
 }
 
 .fpt-share {
     display: flex;
     align-items: center;
     gap: 14px;
-    margin: 14px 0;
+    margin: 0 0 20px;
     font-size: 14px;
 }
 
 .fpt-share a {
-    color: #444;
+    color: #333;
 }
 
 .fpt-tagline {
-    font-weight: 600;
-    margin: 14px 0;
+    margin: 0 0 16px;
 }
 
 .fpt-badges {
     display: flex;
-    gap: 16px;
-    margin: 12px 0;
+    gap: 18px;
+    margin: 0 0 16px;
 }
 
 .badge {
@@ -450,79 +465,97 @@
 .fpt-exempt {
     color: #777;
     font-size: 13px;
-    max-width: 360px;
+    max-width: 420px;
+    margin: 0;
 }
 
-/* Buy box */
+.fpt-social-banner {
+    display: flex;
+    gap: 24px;
+    margin-top: 24px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* ===== Buy box — bordered/outlined rows per reference "cart-detail" ===== */
 .fpt-buybox {
     position: sticky;
     top: 20px;
-}
-
-.buy-card {
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 18px;
-    background: var(--bg);
-}
-
-.buy-row {
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 14px;
-    margin-bottom: 12px;
-    background: #eef4ef;
-}
-
-.buy-offer {
-    text-align: center;
-    font-size: 14px;
-}
-
-.buy-feature {
     display: flex;
-    align-items: center;
-    gap: 12px;
-    font-size: 13px;
+    flex-direction: column;
 }
 
-.buy-feature .muted {
-    color: var(--muted);
-    font-size: 12px;
+.perk-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px;
+    margin-bottom: 14px;
+    background: transparent;
 }
 
-.buy-ico {
+.perk-ico {
     flex-shrink: 0;
+    margin-top: 2px;
 }
 
-.buy-save {
+.perk-label {
+    display: block;
+    font-size: 13px;
+    color: #5a5a5a;
+    margin-bottom: 2px;
+}
+
+.perk-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.perk-desc {
+    font-size: 13px;
+    color: #6a6a6a;
+    margin: 4px 0 0;
+    line-height: 1.5;
+}
+
+.save-text {
     display: flex;
     align-items: center;
     gap: 8px;
     font-size: 14px;
-    margin: 14px 4px;
+    margin: 4px 0 18px;
+    color: #2b2b2b;
 }
 
-.buy-save .check {
-    color: #2f8f4e;
+.check-ico {
+    flex-shrink: 0;
 }
 
-.buy-total {
+.total-row {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 4px 16px;
+    padding: 4px 0 20px;
 }
 
-.buy-total strong {
-    font-size: 20px;
+.total-row span {
+    font-size: 16px;
+    font-weight: 600;
+}
+
+.total-row strong {
+    font-size: 22px;
+    font-weight: 700;
 }
 
 /* Vertical social rail */
 .fpt-social-rail {
     position: absolute;
     right: -6px;
-    top: 120px;
+    top: 60px;
     display: flex;
     flex-direction: column;
     gap: 26px;
@@ -537,7 +570,7 @@
 
 /* ===== Related products ===== */
 .fpt-related {
-    max-width: 1240px;
+    max-width: 1320px;
     margin: 0 auto;
     padding: 30px 24px 60px;
 }
@@ -593,13 +626,18 @@
 
 .rel-body {
     padding: 16px;
-    position: relative;
 }
 
-.rel-body h4 {
-    margin: 0 0 6px;
+.rel-body h5 {
+    margin: 0 0 10px;
     font-size: 16px;
     font-weight: 500;
+}
+
+.rel-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .rel-price {
@@ -615,11 +653,8 @@
 }
 
 .rel-cart {
-    position: absolute;
-    right: 14px;
-    bottom: 14px;
-    width: 40px;
-    height: 40px;
+    width: 36px;
+    height: 36px;
     background: var(--dark-btn);
     border: none;
     border-radius: 3px;
@@ -767,7 +802,7 @@
 
 @media (max-width: 1080px) {
     .fpt-product {
-        grid-template-columns: 300px 1fr;
+        grid-template-columns: 320px 1fr;
     }
 
     .fpt-buybox {
@@ -805,12 +840,20 @@
         font-size: 40px;
     }
 
+    .fpt-title {
+        font-size: 30px;
+    }
+
     .fpt-product {
         grid-template-columns: 1fr;
     }
 
     .fpt-gallery {
         position: static;
+    }
+
+    .fpt-actions {
+        flex-direction: column;
     }
 
     .related-grid {

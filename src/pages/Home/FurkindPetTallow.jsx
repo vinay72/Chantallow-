@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import "./FurkindPetTallow.css";
 
 const relatedProducts = [
-  { name: "Obsidian Infusion", subtitle: "CACAO INFUSED TALLOW", price: "$00", old: "$00" },
-  { name: "Malachite Fusion", subtitle: "MORINGA-BUTTERFLY PEA INFUSED TALLOW", price: "$00", old: "$00" },
-  { name: "Amethyst Relief", subtitle: "LEVENDER WHIPPED TALLOW", price: "$00", old: "$00" },
-  { name: "Amber Glow", subtitle: "TALLOW MANUKA -LAVENDER INFUSED TALLOW", price: "$00", old: "$00" },
+  { name: "Jasper Revive", price: "$00", old: "$00" },
+  { name: "Obsidian Infusion", price: "$00", old: "$00" },
+  { name: "Malachite Fusion", price: "$00", old: "$00" },
+  { name: "Amethyst Relief", price: "$00", old: "$00" },
 ];
 
 const recentPosts = [
@@ -77,7 +77,7 @@ export default function FurkindPetTallow() {
 
       {/* ===== Product ===== */}
       <section className="fpt-product">
-        {/* Left: gallery */}
+        {/* Left: sticky gallery */}
         <div className="fpt-gallery">
           <div className="fpt-main-img">
             <div className="jar">
@@ -88,10 +88,12 @@ export default function FurkindPetTallow() {
                   <svg viewBox="0 0 40 40" width="46" height="46"><ellipse cx="20" cy="23" rx="7" ry="8" fill="none" stroke="#7a6a55" strokeWidth="1" /><path d="M10 14c-1 3 1 6 3 6M30 14c1 3-1 6-3 6" fill="none" stroke="#7a6a55" strokeWidth="1" /><circle cx="17" cy="22" r="1" fill="#7a6a55" /><circle cx="23" cy="22" r="1" fill="#7a6a55" /></svg>
                 </span>
               </div>
-              <div className="jar-thumbs">
-                <span /><span /><span />
-              </div>
             </div>
+          </div>
+          <div className="fpt-thumbs">
+            <span className="fpt-thumb">121x121</span>
+            <span className="fpt-thumb">121x121</span>
+            <span className="fpt-thumb">121x121</span>
           </div>
         </div>
 
@@ -140,115 +142,128 @@ export default function FurkindPetTallow() {
             <strong>Use within 12 months of opening.</strong>
           </p>
 
-          <hr className="fpt-rule" />
-
-          <h4 className="fpt-h">Select Size</h4>
-          <div className="fpt-sizes">
-            <label className="fpt-radio">
-              <input type="radio" name="size" checked={size === "4oz"} onChange={() => setSize("4oz")} />
-              <span>4 .Oz</span>
-            </label>
-            <label className="fpt-radio">
-              <input type="radio" name="size" checked={size === "1.7oz"} onChange={() => setSize("1.7oz")} />
-              <span>1.7 .Oz</span>
-            </label>
+          <div className="fpt-size-block">
+            <span className="fpt-label">Select Size</span>
+            <div className="fpt-sizes">
+              <label className="fpt-radio">
+                <input type="radio" name="size" checked={size === "4oz"} onChange={() => setSize("4oz")} />
+                <span>4 .Oz</span>
+              </label>
+              <label className="fpt-radio">
+                <input type="radio" name="size" checked={size === "1.7oz"} onChange={() => setSize("1.7oz")} />
+                <span>1.7 .Oz</span>
+              </label>
+            </div>
           </div>
 
-          <h4 className="fpt-h">Price</h4>
-          <p className="fpt-price">
-            $00.00 <span className="fpt-price-old">$00.00</span>
-          </p>
+          <div className="fpt-meta-row">
+            <div>
+              <span className="fpt-label">Price</span>
+              <p className="fpt-price">
+                $00.00 <span className="fpt-price-old">$00.00</span>
+              </p>
+            </div>
+          </div>
 
-          <h4 className="fpt-h">Quantity</h4>
-          <div className="fpt-qty">
-            <button onClick={dec} aria-label="Decrease">−</button>
-            <input type="text" value={qty} readOnly />
-            <button onClick={inc} aria-label="Increase">+</button>
+          <div className="fpt-qty-block">
+            <span className="fpt-label">Quantity</span>
+            <div className="fpt-qty">
+              <button onClick={dec} aria-label="Decrease">−</button>
+              <input type="text" value={qty} readOnly />
+              <button onClick={inc} aria-label="Increase">+</button>
+            </div>
           </div>
 
           <div className="fpt-actions">
-            <button className="btn-dark">ADD TO CART</button>
-            <button className="btn-outline">
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
-              Add To Wishlist
+            <button className="btn-dark">Add To Cart</button>
+            <button className="btn-outline btn-icon-only">
+              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
             </button>
           </div>
 
-          <hr className="fpt-rule" />
+          <div className="fpt-meta-block">
+            <p className="fpt-sku"><strong>SKU:</strong> PRT584E63A</p>
 
-          <p className="fpt-sku"><strong>SKU:</strong> PRT584E63A</p>
+            <div className="fpt-share">
+              <strong>Share:</strong>
+              <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 8h2V5h-2c-2 0-3 1-3 3v2H9v3h2v6h3v-6h2l1-3h-3V8c0-.5.3-1 1-1z" fill="currentColor" /></svg></a>
+              <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9v9H4V9h2zM5 4a1.2 1.2 0 1 0 0 2.4A1.2 1.2 0 0 0 5 4zm4 5h2v1.3c.5-.9 1.5-1.5 2.7-1.5 2 0 3.3 1.3 3.3 3.7V18h-2v-4.9c0-1.2-.5-2-1.6-2s-1.7.8-1.7 2V18H9V9z" fill="currentColor" /></svg></a>
+              <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="17" cy="7" r="1" fill="currentColor" /></svg></a>
+              <a href="#" aria-label="X"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.6" /></svg></a>
+            </div>
 
-          <div className="fpt-share">
-            <strong>Share:</strong>
-            <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 8h2V5h-2c-2 0-3 1-3 3v2H9v3h2v6h3v-6h2l1-3h-3V8c0-.5.3-1 1-1z" fill="currentColor" /></svg></a>
-            <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9v9H4V9h2zM5 4a1.2 1.2 0 1 0 0 2.4A1.2 1.2 0 0 0 5 4zm4 5h2v1.3c.5-.9 1.5-1.5 2.7-1.5 2 0 3.3 1.3 3.3 3.7V18h-2v-4.9c0-1.2-.5-2-1.6-2s-1.7.8-1.7 2V18H9V9z" fill="currentColor" /></svg></a>
-            <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="17" cy="7" r="1" fill="currentColor" /></svg></a>
-            <a href="#" aria-label="X"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.6" /></svg></a>
+            <p className="fpt-tagline"><strong>Non-toxic. Handmade. Nourishing.</strong></p>
+
+            <div className="fpt-badges">
+              <span className="badge" aria-label="Recyclable"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M7 8l2-3 2 3M17 10l1 3-3 1M7 16l-2-3 3-1" fill="none" stroke="#4c4c4c" strokeWidth="1.4" strokeLinecap="round" /></svg></span>
+              <span className="badge" aria-label="Natural"><svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9" fill="none" stroke="#4c4c4c" strokeWidth="1" /><path d="M12 8c-2 2-2 5 0 7 2-2 2-5 0-7z" fill="none" stroke="#4c4c4c" strokeWidth="1.2" /></svg></span>
+              <span className="badge" aria-label="Handmade"><svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9" fill="none" stroke="#4c4c4c" strokeWidth="1" /><path d="M8 13c1-2 3-3 4-1s3 1 4-1" fill="none" stroke="#4c4c4c" strokeWidth="1.2" /></svg></span>
+            </div>
+
+            <p className="fpt-exempt">
+              Made by a manufacturer exempt from Florida's cosmetic manufacturing permit requirements.
+            </p>
           </div>
 
-          <p className="fpt-tagline">Non-toxic. Handmade. Nourishing.</p>
-
-          <div className="fpt-badges">
-            <span className="badge" aria-label="Recyclable"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M7 8l2-3 2 3M17 10l1 3-3 1M7 16l-2-3 3-1" fill="none" stroke="#4c4c4c" strokeWidth="1.4" strokeLinecap="round" /></svg></span>
-            <span className="badge" aria-label="Natural"><svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9" fill="none" stroke="#4c4c4c" strokeWidth="1" /><path d="M12 8c-2 2-2 5 0 7 2-2 2-5 0-7z" fill="none" stroke="#4c4c4c" strokeWidth="1.2" /></svg></span>
-            <span className="badge" aria-label="Handmade"><svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9" fill="none" stroke="#4c4c4c" strokeWidth="1" /><path d="M8 13c1-2 3-3 4-1s3 1 4-1" fill="none" stroke="#4c4c4c" strokeWidth="1.2" /></svg></span>
+          <div className="fpt-social-banner">
+            <a href="#">Instagram</a>
+            <a href="#">Facebook</a>
+            <a href="#">twitter</a>
           </div>
-
-          <p className="fpt-exempt">
-            Made by a manufacturer exempt from Florida's cosmetic manufacturing permit requirements.
-          </p>
         </div>
 
-        {/* Right: purchase card */}
+        {/* Right: sidebar cart summary, matches cart-detail block from reference */}
         <aside className="fpt-buybox">
-          <div className="buy-card">
-            <div className="buy-row buy-offer">Bank Offer 5% Cashback</div>
+          <button type="button" className="btn-outline full">Bank Offer 5% Cashback</button>
 
-            <div className="buy-row buy-feature">
-              <span className="buy-ico">
-                <svg viewBox="0 0 24 24" width="24" height="24"><path d="M3 15h18l-2 4H5zM6 15V8h9l4 4v3M9 8V5h3v3" fill="none" stroke="#5a5a5a" strokeWidth="1.3" /></svg>
-              </span>
-              <span><strong>Easy Returns</strong><br />30 Days</span>
+          <div className="perk-row">
+            <span className="perk-ico">
+              <svg viewBox="0 0 24 24" width="26" height="26"><path d="M3 15h18l-2 4H5zM6 15V8h9l4 4v3M9 8V5h3v3" fill="none" stroke="#3a3a3a" strokeWidth="1.4" /></svg>
+            </span>
+            <div>
+              <span className="perk-label">Easy Returns</span>
+              <h6 className="perk-title">30 Days</h6>
             </div>
-
-            <div className="buy-row buy-feature">
-              <span className="buy-ico">
-                <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3l8 4v8l-8 4-8-4V7z" fill="none" stroke="#5a5a5a" strokeWidth="1.3" /><path d="M4 7l8 4 8-4M12 11v9" fill="none" stroke="#5a5a5a" strokeWidth="1.3" /></svg>
-              </span>
-              <span><strong>Enjoy The Product</strong><br />
-                <span className="muted">Lorem Ipsum is simply dummy text of the printing and typesetting</span>
-              </span>
-            </div>
-
-            <p className="buy-save">
-              <span className="check">◎</span> You will save ₹504 on this order
-            </p>
-
-            <div className="buy-total">
-              <span>Total</span>
-              <strong>$125.75</strong>
-            </div>
-
-            <button className="btn-outline full">
-              <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
-              Add To Wishlist
-            </button>
-            <button className="btn-dark full">ADD TO CART</button>
           </div>
+
+          <div className="perk-row">
+            <span className="perk-ico">
+              <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3l8 4v8l-8 4-8-4V7z" fill="none" stroke="#3a3a3a" strokeWidth="1.4" /><path d="M4 7l8 4 8-4M12 11v9" fill="none" stroke="#3a3a3a" strokeWidth="1.4" /></svg>
+            </span>
+            <div>
+              <h6 className="perk-title">Enjoy The Product</h6>
+              <p className="perk-desc">Lorem Ipsum is simply dummy text of the printing and typesetting</p>
+            </div>
+          </div>
+
+          <p className="save-text">
+            <svg viewBox="0 0 24 24" width="17" height="17" className="check-ico"><path d="M20 6L9 17l-5-5" fill="none" stroke="#2f8f4e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
+            You will save ₹504 on this order
+          </p>
+
+          <div className="total-row">
+            <span>Total</span>
+            <strong>$125.75</strong>
+          </div>
+
+          <button className="btn-outline full">
+            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
+            Add To Wishlist
+          </button>
+          <button className="btn-dark full">ADD TO CART</button>
         </aside>
 
         {/* Vertical social rail */}
         <div className="fpt-social-rail">
           <span>INSTAGRAM</span>
           <span>FACEBOOK</span>
-          <span>TWITTER</span>
         </div>
       </section>
 
       {/* ===== Related products ===== */}
       <section className="fpt-related">
         <div className="related-head">
-          <h3>Related Products</h3>
+          <h3>Related products</h3>
           <a href="#" className="see-all">See all products <span>›</span></a>
         </div>
 
@@ -266,17 +281,17 @@ export default function FurkindPetTallow() {
                     <span className="jar-face">
                       <svg viewBox="0 0 40 40" width="30" height="30"><ellipse cx="20" cy="23" rx="7" ry="8" fill="none" stroke="#7a6a55" strokeWidth="1" /><path d="M10 14c-1 3 1 6 3 6M30 14c1 3-1 6-3 6" fill="none" stroke="#7a6a55" strokeWidth="1" /></svg>
                     </span>
-                    <span className="jar-sub">{p.name}</span>
-                    <span className="jar-sub2">{p.subtitle}</span>
                   </div>
                 </div>
               </div>
               <div className="rel-body">
-                <h4>{p.name}</h4>
-                <p className="rel-price">{p.price} <span>{p.old}</span></p>
-                <button className="rel-cart" aria-label="Add to cart">
-                  <svg viewBox="0 0 24 24" width="18" height="18"><path d="M6 6h15l-1.5 9h-12z" fill="none" stroke="#fff" strokeWidth="1.6" /><circle cx="9" cy="20" r="1.3" fill="#fff" /><circle cx="18" cy="20" r="1.3" fill="#fff" /></svg>
-                </button>
+                <h5>{p.name}</h5>
+                <div className="rel-footer">
+                  <p className="rel-price">{p.price} <span>{p.old}</span></p>
+                  <button className="rel-cart" aria-label="Add to cart">
+                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6h15l-1.5 9h-12z" fill="none" stroke="#fff" strokeWidth="1.6" /><circle cx="9" cy="20" r="1.3" fill="#fff" /><circle cx="18" cy="20" r="1.3" fill="#fff" /></svg>
+                  </button>
+                </div>
               </div>
             </div>
           ))}
