@@ -1,28 +1,134 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import "./FurkindPetTallow.css";
+import productMain from "../../assets/product1.png";
+import thumb1 from "../../assets/products/product-detail2/1.png";
+import thumb2 from "../../assets/products/product-detail2/2.png";
+import thumb3 from "../../assets/products/product-detail2/3.png";
+import sealRecycle from "../../assets/a.png";
+import sealNatural from "../../assets/b.png";
+import sealMadeWithLove from "../../assets/c.png";
 
-const relatedProducts = [
-  { name: "Jasper Revive", price: "$00", old: "$00" },
-  { name: "Obsidian Infusion", price: "$00", old: "$00" },
-  { name: "Malachite Fusion", price: "$00", old: "$00" },
-  { name: "Amethyst Relief", price: "$00", old: "$00" },
+const GALLERY_IMAGES = [productMain, productMain, productMain];
+const THUMBNAILS = [thumb1, thumb2, thumb3];
+
+const RELATED_PRODUCTS = [
+  { id: "jasper", name: "Jasper Revive", price: "$00", oldPrice: "$00" },
+  { id: "obsidian", name: "Obsidian Infusion", price: "$00", oldPrice: "$00" },
+  { id: "malachite", name: "Malachite Fusion", price: "$00", oldPrice: "$00" },
+  { id: "amethyst", name: "Amethyst Relief", price: "$00", oldPrice: "$00" },
 ];
 
-const recentPosts = [
-  { title: "Hydrated Supple Skin", date: "July 23, 2023" },
-  { title: "Glowing Radiant Skin", date: "July 23, 2023" },
-  { title: "Silky Soft Skin", date: "July 23, 2023" },
-];
+function StarRating({ rating = 3, outOf = 5 }) {
+  return (
+    <ul className="fpt-rating-list" aria-label={`${rating} out of ${outOf} stars`}>
+      {Array.from({ length: outOf }).map((_, i) => (
+        <li key={i}>
+          <svg width="14" height="13" viewBox="0 0 14 13" fill="none">
+            <path
+              d="M6.74805 0.234375L8.72301 4.51608L13.4054 5.07126L9.9436 8.27267L10.8625 12.8975L6.74805 10.5944L2.63355 12.8975L3.5525 8.27267L0.090651 5.07126L4.77309 4.51608L6.74805 0.234375Z"
+              fill={i < rating ? "#1c1c1a" : "#5E626F"}
+              opacity={i < rating ? 1 : 0.25}
+            />
+          </svg>
+        </li>
+      ))}
+    </ul>
+  );
+}
 
-const usefulLinks = ["Home", "About Us", "Returns", "Terms & Conditions", "Privacy-Policy", "Contact Us"];
-const socialLinks = ["Instagram", "Facebook", "YouTube", "Linkedin", "X.Com"];
+function ScrollTopButton() {
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setVisible(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    onScroll();
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+  return (
+    <button
+      type="button"
+      className={`fpt-scrolltop ${visible ? "is-visible" : ""}`}
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+      aria-label="Scroll to top"
+      aria-hidden={!visible}
+      tabIndex={visible ? 0 : -1}
+    >
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+        <path d="M12 19V5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M5 12L12 5L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    </button>
+  );
+}
 
 export default function FurkindPetTallow() {
+  const [activeImage, setActiveImage] = useState(0);
   const [size, setSize] = useState("4oz");
   const [qty, setQty] = useState(1);
 
-  const dec = () => setQty((q) => (q > 1 ? q - 1 : 1));
+  const dec = () => setQty((q) => Math.max(1, q - 1));
   const inc = () => setQty((q) => q + 1);
+
+  useEffect(() => {
+    const prev = document.documentElement.style.scrollBehavior;
+    document.documentElement.style.scrollBehavior = "smooth";
+    return () => { document.documentElement.style.scrollBehavior = prev; };
+  }, []);
+
+  const galleryWrapperRef = useRef(null);
+  const galleryInnerRef = useRef(null);
+
+  useEffect(() => {
+    const HEADER_OFFSET = 88;
+
+    const reset = () => {
+      const inner = galleryInnerRef.current;
+      if (!inner) return;
+      inner.style.transform = "";
+    };
+
+    const update = () => {
+      const wrapper = galleryWrapperRef.current;
+      const inner = galleryInnerRef.current;
+      if (!wrapper || !inner) return;
+
+      if (window.innerWidth <= 760) {
+        reset();
+        return;
+      }
+
+      const wrapperRect = wrapper.getBoundingClientRect();
+      const innerHeight = inner.getBoundingClientRect().height;
+      const maxShift = wrapperRect.height - innerHeight;
+
+      if (maxShift <= 0) {
+        inner.style.transform = "";
+        return;
+      }
+
+      const rawShift = HEADER_OFFSET - wrapperRect.top;
+      const shift = Math.min(Math.max(rawShift, 0), maxShift);
+      inner.style.transform = `translate3d(0, ${shift}px, 0)`;
+    };
+
+    let ticking = false;
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(() => { ticking = false; update(); });
+      }
+    };
+
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    update();
+
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+      reset();
+    };
+  }, []);
 
   return (
     <div className="fpt">
@@ -31,7 +137,7 @@ export default function FurkindPetTallow() {
         <div className="fpt-header-inner">
           <a className="fpt-logo" href="#">
             <span className="fpt-logo-mark">
-              <svg viewBox="0 0 48 48" width="34" height="34" aria-hidden="true">
+              <svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true">
                 <ellipse cx="24" cy="26" rx="9" ry="11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" />
                 <path d="M9 15c-2 5 2 10 6 11M39 15c2 5-2 10-6 11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" strokeLinecap="round" />
                 <path d="M24 14v-6" stroke="#7d8a6a" strokeWidth="1.3" />
@@ -43,253 +149,264 @@ export default function FurkindPetTallow() {
           </a>
 
           <nav className="fpt-nav" aria-label="Primary">
-            <a href="#">Home <span className="plus">✦</span></a>
-            <a href="#">About Us <span className="plus">✦</span></a>
-            <a href="#">Shop <span className="plus">✦</span></a>
-            <a href="#">Blog <span className="plus">✦</span></a>
-            <a href="#">Contact US <span className="plus">✦</span></a>
+            <a href="#">Home +</a>
+            <a href="#">About Us +</a>
+            <a href="#">Shop +</a>
+            <a href="#">Blog +</a>
+            <a href="#">Contact US +</a>
           </nav>
 
           <div className="fpt-header-right">
             <a className="fpt-login" href="#">Login /<br />Register</a>
             <button className="icon-btn" aria-label="Search">
-              <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="1.6" /><line x1="16.5" y1="16.5" x2="21" y2="21" stroke="currentColor" strokeWidth="1.6" /></svg>
+              <svg viewBox="0 0 20 20" width="20" height="20"><circle cx="9.2" cy="9.2" r="6.7" fill="none" stroke="currentColor" strokeWidth="1.5" /><line x1="17.5" y1="17.5" x2="13.9" y2="13.9" stroke="currentColor" strokeWidth="1.5" /></svg>
             </button>
             <button className="icon-btn" aria-label="Wishlist">
-              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
+              <svg viewBox="0 0 20 20" width="20" height="20"><path d="M17.4 3.8a5.6 5.6 0 0 0-7.4.9 5.6 5.6 0 0 0-7.4-.9 5.9 5.9 0 0 0-.6 8.5L10 18l7.4-5.6a5.9 5.9 0 0 0 0-8.5z" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
             </button>
             <button className="icon-btn" aria-label="Cart">
-              <svg viewBox="0 0 24 24" width="20" height="20"><path d="M6 6h15l-1.5 9h-12z" fill="none" stroke="currentColor" strokeWidth="1.6" /><circle cx="9" cy="20" r="1.4" fill="currentColor" /><circle cx="18" cy="20" r="1.4" fill="currentColor" /></svg>
+              <svg viewBox="0 0 20 20" width="20" height="20"><path d="M.8.8h3.4l2.2 11.2c.2.7.9 1.2 1.6 1.2h8.1c.7 0 1.3-.5 1.5-1.2l1.3-7H5" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="7.5" cy="18.3" r="1.1" fill="currentColor" /><circle cx="16.7" cy="18.3" r="1.1" fill="currentColor" /></svg>
             </button>
           </div>
         </div>
       </header>
 
       {/* ===== Banner ===== */}
-      <section className="fpt-banner">
-        <h1 className="fpt-banner-title">Furkind Pet Tallow</h1>
-        <div className="fpt-crumb">
-          <a href="#">Home</a>
-          <span className="dot">◆</span>
-          <span>Furkind Pet Tallow</span>
+      <div className="fpt-banner">
+        <div className="fpt-banner-inner">
+          <h1>Furkind Pet Tallow</h1>
+          <nav aria-label="Breadcrumb" className="fpt-crumb">
+            <a href="#">Home</a>
+            <span aria-hidden="true">◆</span>
+            <span>Furkind Pet Tallow</span>
+          </nav>
         </div>
-      </section>
+      </div>
 
       {/* ===== Product ===== */}
-      <section className="fpt-product">
-        {/* Left: sticky gallery */}
-        <div className="fpt-gallery">
-          <div className="fpt-main-img">
-            <div className="jar">
-              <div className="jar-lid" />
-              <div className="jar-body">
-                <span className="jar-brand">CHANTALLOW</span>
-                <span className="jar-face">
-                  <svg viewBox="0 0 40 40" width="46" height="46"><ellipse cx="20" cy="23" rx="7" ry="8" fill="none" stroke="#7a6a55" strokeWidth="1" /><path d="M10 14c-1 3 1 6 3 6M30 14c1 3-1 6-3 6" fill="none" stroke="#7a6a55" strokeWidth="1" /><circle cx="17" cy="22" r="1" fill="#7a6a55" /><circle cx="23" cy="22" r="1" fill="#7a6a55" /></svg>
-                </span>
-              </div>
+      <main className="fpt-product">
+        {/* Gallery — pinned image + thumbnails */}
+        <section className="fpt-gallery" aria-label="Product images" ref={galleryWrapperRef}>
+          <div className="fpt-gallery-main" ref={galleryInnerRef}>
+            <div className="fpt-photo-stage">
+              <img
+                className="fpt-product-photo"
+                src={GALLERY_IMAGES[activeImage]}
+                alt="Furkind Pet Tallow jar"
+              />
+            </div>
+            <div className="fpt-gallery-thumbs">
+              {THUMBNAILS.map((thumb, i) => (
+                <button
+                  key={i}
+                  type="button"
+                  className={`fpt-gallery-thumb ${i === activeImage ? "is-active" : ""}`}
+                  onClick={() => setActiveImage(i)}
+                  aria-label={`View image ${i + 1}`}
+                  aria-pressed={i === activeImage}
+                >
+                  <img src={thumb} alt="" />
+                </button>
+              ))}
             </div>
           </div>
-          <div className="fpt-thumbs">
-            <span className="fpt-thumb">121x121</span>
-            <span className="fpt-thumb">121x121</span>
-            <span className="fpt-thumb">121x121</span>
-          </div>
-        </div>
+        </section>
 
-        {/* Middle: details */}
-        <div className="fpt-info">
-          <span className="fpt-sale">SALE 10% OFF</span>
+        {/* Info */}
+        <section className="fpt-info" aria-label="Product information">
+          <span className="fpt-badge">SALE 10% OFF</span>
           <h2 className="fpt-title">Furkind Pet Tallow</h2>
           <p className="fpt-subtitle">Grass-Fed/Grass-Finished Beef Tallow, Organic Raw Unrefined Coconut Oil</p>
 
-          <div className="fpt-rating">
-            <span className="stars">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <span key={i} className={i <= 3 ? "star filled" : "star"}>★</span>
-              ))}
-            </span>
-            <strong>4.7 Rating</strong>
-            <span className="muted">(5 customer reviews)</span>
+          <div className="fpt-review-row">
+            <StarRating rating={3} />
+            <span className="fpt-review-rating">4.7 Rating</span>
+            <a href="#reviews" className="fpt-review-count">(5 customer reviews)</a>
           </div>
 
-          <h4 className="fpt-h">Description:</h4>
-          <p className="fpt-desc">
-            Our nutrient-rich Pet Balm combines the nourishing power of grass-fed, grass-finished beef
-            tallow with organic raw unrefined coconut oil to help soothe, protect, and restore dry, rough,
-            or irritated skin and paws. Beef tallow is a natural source of Vitamin A, which supports skin
-            renewal and healthy tissue maintenance; Vitamin D, which helps support skin barrier function;
-            Vitamin E, a powerful antioxidant that helps protect against environmental stressors and supports
-            moisture retention; and Vitamin K, which contributes to overall skin health. The naturally
-            occurring fatty acids in tallow closely resemble the oils found in healthy skin, making it highly
-            absorbable and deeply moisturizing. Organic raw unrefined coconut oil provides additional
-            hydration and contains lauric acid, caprylic acid, and capric acid, which help condition the skin
-            and support a clean, healthy environment on your pet’s skin surface. Together, these ingredients
-            help soften rough paws, reduce dryness and cracking, calm irritation, and create a protective
-            moisture barrier to keep your pet's skin and paws healthy, smooth, and comfortable.
-          </p>
-
-          <h4 className="fpt-h">Ingredients:</h4>
-          <p className="fpt-desc">Grass-Fed/Grass-Finished Beef Tallow, Organic Raw Unrefined Coconut Oil</p>
-
-          <h4 className="fpt-h">Directions:</h4>
-          <p className="fpt-desc">
-            Using clean fingertips, apply a small amount of balm directly to your pet's paws, nose, elbows,
-            or other areas of dry or irritated skin. Gently massage until absorbed. Use daily for routine
-            maintenance or as needed to provide extra hydration and protection. For best results, apply after
-            outdoor activities, bathing, or whenever skin appears dry. For external use only. Perform a patch
-            test before first use. Store in a cool, dry place away from direct sunlight.{" "}
-            <strong>Use within 12 months of opening.</strong>
-          </p>
-
-          <div className="fpt-size-block">
-            <span className="fpt-label">Select Size</span>
-            <div className="fpt-sizes">
-              <label className="fpt-radio">
-                <input type="radio" name="size" checked={size === "4oz"} onChange={() => setSize("4oz")} />
-                <span>4 .Oz</span>
-              </label>
-              <label className="fpt-radio">
-                <input type="radio" name="size" checked={size === "1.7oz"} onChange={() => setSize("1.7oz")} />
-                <span>1.7 .Oz</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="fpt-meta-row">
-            <div>
-              <span className="fpt-label">Price</span>
-              <p className="fpt-price">
-                $00.00 <span className="fpt-price-old">$00.00</span>
-              </p>
-            </div>
-          </div>
-
-          <div className="fpt-qty-block">
-            <span className="fpt-label">Quantity</span>
-            <div className="fpt-qty">
-              <button onClick={dec} aria-label="Decrease">−</button>
-              <input type="text" value={qty} readOnly />
-              <button onClick={inc} aria-label="Increase">+</button>
-            </div>
-          </div>
-
-          <div className="fpt-actions">
-            <button className="btn-dark">Add To Cart</button>
-            <button className="btn-outline btn-icon-only">
-              <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
-            </button>
-          </div>
-
-          <div className="fpt-meta-block">
-            <p className="fpt-sku"><strong>SKU:</strong> PRT584E63A</p>
-
-            <div className="fpt-share">
-              <strong>Share:</strong>
-              <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M14 8h2V5h-2c-2 0-3 1-3 3v2H9v3h2v6h3v-6h2l1-3h-3V8c0-.5.3-1 1-1z" fill="currentColor" /></svg></a>
-              <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 9v9H4V9h2zM5 4a1.2 1.2 0 1 0 0 2.4A1.2 1.2 0 0 0 5 4zm4 5h2v1.3c.5-.9 1.5-1.5 2.7-1.5 2 0 3.3 1.3 3.3 3.7V18h-2v-4.9c0-1.2-.5-2-1.6-2s-1.7.8-1.7 2V18H9V9z" fill="currentColor" /></svg></a>
-              <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" width="16" height="16"><rect x="4" y="4" width="16" height="16" rx="4" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="12" cy="12" r="3.5" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="17" cy="7" r="1" fill="currentColor" /></svg></a>
-              <a href="#" aria-label="X"><svg viewBox="0 0 24 24" width="16" height="16"><path d="M5 5l14 14M19 5L5 19" stroke="currentColor" strokeWidth="1.6" /></svg></a>
-            </div>
-
-            <p className="fpt-tagline"><strong>Non-toxic. Handmade. Nourishing.</strong></p>
-
-            <div className="fpt-badges">
-              <span className="badge" aria-label="Recyclable"><svg viewBox="0 0 24 24" width="26" height="26"><path d="M7 8l2-3 2 3M17 10l1 3-3 1M7 16l-2-3 3-1" fill="none" stroke="#4c4c4c" strokeWidth="1.4" strokeLinecap="round" /></svg></span>
-              <span className="badge" aria-label="Natural"><svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9" fill="none" stroke="#4c4c4c" strokeWidth="1" /><path d="M12 8c-2 2-2 5 0 7 2-2 2-5 0-7z" fill="none" stroke="#4c4c4c" strokeWidth="1.2" /></svg></span>
-              <span className="badge" aria-label="Handmade"><svg viewBox="0 0 24 24" width="26" height="26"><circle cx="12" cy="12" r="9" fill="none" stroke="#4c4c4c" strokeWidth="1" /><path d="M8 13c1-2 3-3 4-1s3 1 4-1" fill="none" stroke="#4c4c4c" strokeWidth="1.2" /></svg></span>
-            </div>
-
-            <p className="fpt-exempt">
-              Made by a manufacturer exempt from Florida's cosmetic manufacturing permit requirements.
+          <div className="fpt-copy-block">
+            <h3>Description:</h3>
+            <p>
+              Our nutrient-rich Pet Balm combines the nourishing power of grass-fed, grass-finished beef
+              tallow with organic raw unrefined coconut oil to help soothe, protect, and restore dry, rough,
+              or irritated skin and paws. Beef tallow is a natural source of Vitamin A, which supports skin
+              renewal and healthy tissue maintenance; Vitamin D, which helps support skin barrier function;
+              Vitamin E, a powerful antioxidant that helps protect against environmental stressors and supports
+              moisture retention; and Vitamin K, which contributes to overall skin health. The naturally
+              occurring fatty acids in tallow closely resemble the oils found in healthy skin, making it highly
+              absorbable and deeply moisturizing. Organic raw unrefined coconut oil provides additional
+              hydration and contains lauric acid, caprylic acid, and capric acid, which help condition the skin
+              and support a clean, healthy environment on your pet’s skin surface. Together, these ingredients
+              help soften rough paws, reduce dryness and cracking, calm irritation, and create a protective
+              moisture barrier to keep your pet's skin and paws healthy, smooth, and comfortable.
             </p>
           </div>
 
-          <div className="fpt-social-banner">
-            <a href="#">Instagram</a>
-            <a href="#">Facebook</a>
-            <a href="#">twitter</a>
+          <div className="fpt-copy-block">
+            <h3>Ingredients:</h3>
+            <p>Grass-Fed/Grass-Finished Beef Tallow, Organic Raw Unrefined Coconut Oil</p>
           </div>
-        </div>
 
-        {/* Right: sidebar cart summary, matches cart-detail block from reference */}
-        <aside className="fpt-buybox">
-          <button type="button" className="btn-outline full">Bank Offer 5% Cashback</button>
+          <div className="fpt-copy-block">
+            <h3>Directions:</h3>
+            <p>
+              Using clean fingertips, apply a small amount of balm directly to your pet's paws, nose, elbows,
+              or other areas of dry or irritated skin. Gently massage until absorbed. Use daily for routine
+              maintenance or as needed to provide extra hydration and protection. For best results, apply
+              after outdoor activities, bathing, or whenever skin appears dry. For external use only. Perform
+              a patch test before first use. Store in a cool, dry place away from direct sunlight.{" "}
+              <strong>Use within 12 months of opening.</strong>
+            </p>
+          </div>
 
-          <div className="perk-row">
-            <span className="perk-ico">
-              <svg viewBox="0 0 24 24" width="26" height="26"><path d="M3 15h18l-2 4H5zM6 15V8h9l4 4v3M9 8V5h3v3" fill="none" stroke="#3a3a3a" strokeWidth="1.4" /></svg>
-            </span>
-            <div>
-              <span className="perk-label">Easy Returns</span>
-              <h6 className="perk-title">30 Days</h6>
+          <hr className="fpt-divider" />
+
+          <fieldset className="fpt-size">
+            <legend className="fpt-label">Select Size</legend>
+            <div className="fpt-size-options">
+              <label className={`fpt-size-option ${size === "4oz" ? "is-selected" : ""}`}>
+                <input type="radio" name="size" checked={size === "4oz"} onChange={() => setSize("4oz")} />
+                4 .Oz
+              </label>
+              <label className={`fpt-size-option ${size === "1.7oz" ? "is-selected" : ""}`}>
+                <input type="radio" name="size" checked={size === "1.7oz"} onChange={() => setSize("1.7oz")} />
+                1.7 .Oz
+              </label>
+            </div>
+          </fieldset>
+
+          <div className="fpt-price-row">
+            <span className="fpt-label">Price</span>
+            <div className="fpt-price">
+              <span className="fpt-price-current">$00.00</span>
+              <del className="fpt-price-old">$00.00</del>
             </div>
           </div>
 
-          <div className="perk-row">
-            <span className="perk-ico">
-              <svg viewBox="0 0 24 24" width="26" height="26"><path d="M12 3l8 4v8l-8 4-8-4V7z" fill="none" stroke="#3a3a3a" strokeWidth="1.4" /><path d="M4 7l8 4 8-4M12 11v9" fill="none" stroke="#3a3a3a" strokeWidth="1.4" /></svg>
-            </span>
-            <div>
-              <h6 className="perk-title">Enjoy The Product</h6>
-              <p className="perk-desc">Lorem Ipsum is simply dummy text of the printing and typesetting</p>
+          <div className="fpt-qty-row">
+            <span className="fpt-label">Quantity</span>
+            <div className="fpt-qty-stepper">
+              <button type="button" onClick={dec} aria-label="Decrease quantity">−</button>
+              <input type="text" readOnly value={qty} aria-label="Quantity" />
+              <button type="button" onClick={inc} aria-label="Increase quantity">+</button>
             </div>
           </div>
 
-          <p className="save-text">
-            <svg viewBox="0 0 24 24" width="17" height="17" className="check-ico"><path d="M20 6L9 17l-5-5" fill="none" stroke="#2f8f4e" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>
-            You will save ₹504 on this order
+          <div className="fpt-cta-row">
+            <button type="button" className="fpt-btn fpt-btn-primary">ADD TO CART</button>
+            <button type="button" className="fpt-btn fpt-btn-outline">
+              <HeartIcon small /> Add To Wishlist
+            </button>
+          </div>
+
+          <hr className="fpt-divider" />
+
+          <div className="fpt-meta-row">
+            <strong>SKU:</strong> <span>PRT584E63A</span>
+          </div>
+
+          <div className="fpt-meta-row fpt-share">
+            <strong>Share:</strong>
+            <a href="#" aria-label="Facebook">f</a>
+            <a href="#" aria-label="LinkedIn">in</a>
+            <a href="#" aria-label="Instagram">ig</a>
+            <a href="#" aria-label="X">x</a>
+          </div>
+
+          <p className="fpt-tagline">Non-toxic. Handmade. Nourishing.</p>
+
+          <div className="fpt-seals">
+            <span className="fpt-seal" aria-label="Recyclable">
+              <img src={sealRecycle} alt="Recyclable packaging" />
+            </span>
+            <span className="fpt-seal" aria-label="Natural">
+              <img src={sealNatural} alt="Natural ingredients" />
+            </span>
+            <span className="fpt-seal" aria-label="Made with love">
+              <img src={sealMadeWithLove} alt="Made with love" />
+            </span>
+          </div>
+
+          <p className="fpt-fineprint">
+            Made by a manufacturer exempt from Florida's cosmetic manufacturing permit requirements.
           </p>
+        </section>
 
-          <div className="total-row">
+        {/* Sidebar */}
+        <aside className="fpt-sidebar" aria-label="Order summary">
+          <button type="button" className="fpt-btn fpt-btn-outline fpt-btn-block">
+            Bank Offer 5% Cashback
+          </button>
+
+          <div className="fpt-perk">
+            <div className="fpt-perk-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24"><path d="M3 15h18l-2 4H5zM6 15V8h9l4 4v3M9 8V5h3v3" fill="none" stroke="#3a3a3a" strokeWidth="1.3" /></svg>
+            </div>
+            <div>
+              <span className="fpt-perk-label">Easy Returns</span>
+              <h4>30 Days</h4>
+            </div>
+          </div>
+
+          <div className="fpt-perk">
+            <div className="fpt-perk-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="24" height="24"><path d="M12 3l8 4v8l-8 4-8-4V7z" fill="none" stroke="#3a3a3a" strokeWidth="1.3" /><path d="M4 7l8 4 8-4M12 11v9" fill="none" stroke="#3a3a3a" strokeWidth="1.3" /></svg>
+            </div>
+            <div>
+              <h4>Enjoy The Product</h4>
+              <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>
+            </div>
+          </div>
+
+          <div className="fpt-savings">
+            <CheckIcon /> You will save ₹504 on this order
+          </div>
+
+          <div className="fpt-total-row">
             <span>Total</span>
             <strong>$125.75</strong>
           </div>
 
-          <button className="btn-outline full">
-            <svg viewBox="0 0 24 24" width="16" height="16"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="currentColor" strokeWidth="1.6" /></svg>
-            Add To Wishlist
+          <button type="button" className="fpt-btn fpt-btn-outline fpt-btn-block">
+            <HeartIcon small /> Add To Wishlist
           </button>
-          <button className="btn-dark full">ADD TO CART</button>
+          <button type="button" className="fpt-btn fpt-btn-primary fpt-btn-block">
+            ADD TO CART
+          </button>
         </aside>
+      </main>
 
-        {/* Vertical social rail */}
-        <div className="fpt-social-rail">
-          <span>INSTAGRAM</span>
-          <span>FACEBOOK</span>
+      {/* ===== Related Products ===== */}
+      <section className="fpt-container fpt-related">
+        <div className="fpt-related-head">
+          <h2>Related products</h2>
+          <a href="#">See all products ›</a>
         </div>
-      </section>
-
-      {/* ===== Related products ===== */}
-      <section className="fpt-related">
-        <div className="related-head">
-          <h3>Related products</h3>
-          <a href="#" className="see-all">See all products <span>›</span></a>
-        </div>
-
-        <div className="related-grid">
-          {relatedProducts.map((p, i) => (
-            <div className="rel-card" key={i}>
-              <button className="rel-wish" aria-label="Wishlist">
-                <svg viewBox="0 0 24 24" width="18" height="18"><path d="M12 20s-7-4.5-7-9.5A3.5 3.5 0 0 1 12 7a3.5 3.5 0 0 1 7 3.5C19 15.5 12 20 12 20z" fill="none" stroke="#9aa79a" strokeWidth="1.6" /></svg>
-              </button>
-              <div className="rel-img">
+        <div className="fpt-related-grid">
+          {RELATED_PRODUCTS.map((product) => (
+            <div className="fpt-product-card" key={product.id}>
+              <div className="fpt-product-card-media">
                 <div className="jar sm">
                   <div className="jar-lid" />
                   <div className="jar-body">
                     <span className="jar-brand">CHANTALLOW</span>
                     <span className="jar-face">
-                      <svg viewBox="0 0 40 40" width="30" height="30"><ellipse cx="20" cy="23" rx="7" ry="8" fill="none" stroke="#7a6a55" strokeWidth="1" /><path d="M10 14c-1 3 1 6 3 6M30 14c1 3-1 6-3 6" fill="none" stroke="#7a6a55" strokeWidth="1" /></svg>
+                      <svg viewBox="0 0 40 40" width="32" height="32"><ellipse cx="20" cy="23" rx="7" ry="8" fill="none" stroke="#7a6a55" strokeWidth="1" /><path d="M10 14c-1 3 1 6 3 6M30 14c1 3-1 6-3 6" fill="none" stroke="#7a6a55" strokeWidth="1" /></svg>
                     </span>
                   </div>
                 </div>
+                <button type="button" className="fpt-product-card-wish" aria-label="Add to wishlist">
+                  <HeartIcon small />
+                </button>
               </div>
-              <div className="rel-body">
-                <h5>{p.name}</h5>
-                <div className="rel-footer">
-                  <p className="rel-price">{p.price} <span>{p.old}</span></p>
-                  <button className="rel-cart" aria-label="Add to cart">
-                    <svg viewBox="0 0 24 24" width="16" height="16"><path d="M6 6h15l-1.5 9h-12z" fill="none" stroke="#fff" strokeWidth="1.6" /><circle cx="9" cy="20" r="1.3" fill="#fff" /><circle cx="18" cy="20" r="1.3" fill="#fff" /></svg>
+              <div className="fpt-product-card-body">
+                <h3>{product.name}</h3>
+                <div className="fpt-product-card-footer">
+                  <span className="fpt-product-card-price">
+                    {product.price} <del>{product.oldPrice}</del>
+                  </span>
+                  <button type="button" className="fpt-product-card-cart" aria-label={`Add ${product.name} to cart`}>
+                    <CartIcon small />
                   </button>
                 </div>
               </div>
@@ -299,65 +416,108 @@ export default function FurkindPetTallow() {
       </section>
 
       {/* ===== Footer ===== */}
-      <footer className="fpt-footer">
-        <div className="footer-grid">
-          <div className="footer-col">
-            <a className="fpt-logo dark" href="#">
-              <span className="fpt-logo-mark">
-                <svg viewBox="0 0 48 48" width="30" height="30"><ellipse cx="24" cy="26" rx="9" ry="11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" /><path d="M9 15c-2 5 2 10 6 11M39 15c2 5-2 10-6 11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" strokeLinecap="round" /></svg>
-              </span>
-              <span className="fpt-logo-text sm">CHANTALLOW</span>
-            </a>
-            <p className="foot-line"><strong>Address :</strong> 000 Wall Street, UK, London</p>
-            <p className="foot-line"><strong>E-mail :</strong> example@info.com</p>
-            <p className="foot-line"><strong>Phone :</strong> (000) 000-0000</p>
-            <p className="foot-sub">Subscribe To Our Newsletter</p>
-            <div className="newsletter">
-              <input type="email" placeholder="Your Email Address" />
-              <button aria-label="Subscribe">→</button>
-            </div>
-          </div>
+      <Footer />
 
-          <div className="footer-col">
-            <h5>Recent Posts</h5>
-            {recentPosts.map((post, i) => (
-              <div className="foot-post" key={i}>
-                <span className="foot-thumb" />
-                <span>
-                  <strong>{post.title}</strong>
-                  <small>{post.date}</small>
-                </span>
-              </div>
-            ))}
-          </div>
-
-          <div className="footer-col">
-            <h5>Useful Links</h5>
-            <ul className="foot-links">
-              {usefulLinks.map((l) => <li key={l}><a href="#">{l}</a></li>)}
-            </ul>
-          </div>
-
-          <div className="footer-col">
-            <h5>Social Media</h5>
-            <ul className="foot-links">
-              {socialLinks.map((l) => <li key={l}><a href="#">{l}</a></li>)}
-            </ul>
-          </div>
-        </div>
-
-        <div className="footer-bottom">
-          <p>© 2026 <span>Chantallow</span> Theme. All Rights Reserved.</p>
-          <div className="pay">
-            <span>We Accept :</span>
-            <span className="pay-badge">VISA</span>
-            <span className="pay-badge">●●</span>
-            <span className="pay-badge">DISC</span>
-            <span className="pay-badge">AMEX</span>
-            <span className="pay-badge">MC</span>
-          </div>
-        </div>
-      </footer>
+      <ScrollTopButton />
     </div>
+  );
+}
+
+function HeartIcon({ small }) {
+  const size = small ? 16 : 20;
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M17.4 3.8a5.6 5.6 0 0 0-7.4.9 5.6 5.6 0 0 0-7.4-.9 5.9 5.9 0 0 0-.6 8.5L10 18l7.4-5.6a5.9 5.9 0 0 0 0-8.5z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CartIcon({ small }) {
+  const size = small ? 16 : 20;
+  return (
+    <svg width={size} height={size} viewBox="0 0 20 20" fill="none">
+      <path d="M7.5 18.3a.83.83 0 1 0 0-1.67.83.83 0 0 0 0 1.67zM16.7 18.3a.83.83 0 1 0 0-1.67.83.83 0 0 0 0 1.67zM.8.8h3.4l2.2 11.2c.2.7.9 1.2 1.6 1.2h8.1c.7 0 1.3-.5 1.5-1.2l1.3-7H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 20 20" fill="none" aria-hidden="true">
+      <path d="M18.3 9.2V10a8.33 8.33 0 1 1-4.9-7.6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M18.3 3.3L10 11.7 7.5 9.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function Footer() {
+  return (
+    <footer className="fpt-footer">
+      <div className="fpt-footer-grid">
+        <div className="fpt-footer-col">
+          <a className="fpt-logo dark" href="#">
+            <span className="fpt-logo-mark">
+              <svg viewBox="0 0 48 48" width="28" height="28"><ellipse cx="24" cy="26" rx="9" ry="11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" /><path d="M9 15c-2 5 2 10 6 11M39 15c2 5-2 10-6 11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" strokeLinecap="round" /></svg>
+            </span>
+            <span className="fpt-logo-text sm">CHANTALLOW</span>
+          </a>
+          <p className="foot-line"><strong>Address :</strong> 000 Wall Street, UK, London</p>
+          <p className="foot-line"><strong>E-mail :</strong> example@info.com</p>
+          <p className="foot-line"><strong>Phone :</strong> (000) 000-0000</p>
+          <p className="foot-sub">Subscribe To Our Newsletter</p>
+          <div className="fpt-newsletter">
+            <input type="email" placeholder="Your Email Address" />
+            <button aria-label="Subscribe">→</button>
+          </div>
+        </div>
+
+        <div className="fpt-footer-col">
+          <h5>Recent Posts</h5>
+          {[
+            { title: "Hydrated Supple Skin", date: "July 23, 2023" },
+            { title: "Glowing Radiant Skin", date: "July 23, 2023" },
+            { title: "Silky Soft Skin", date: "July 23, 2023" },
+          ].map((post) => (
+            <div className="foot-post" key={post.title}>
+              <span className="foot-thumb" />
+              <span>
+                <strong>{post.title}</strong>
+                <small>{post.date}</small>
+              </span>
+            </div>
+          ))}
+        </div>
+
+        <div className="fpt-footer-col">
+          <h5>Useful Links</h5>
+          <ul className="foot-links">
+            {["Home", "About Us", "Returns", "Terms & Conditions", "Privacy-Policy", "Contact Us"].map((l) => (
+              <li key={l}><a href="#">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+
+        <div className="fpt-footer-col">
+          <h5>Social Media</h5>
+          <ul className="foot-links">
+            {["Instagram", "Facebook", "YouTube", "Linkedin", "X.Com"].map((l) => (
+              <li key={l}><a href="#">{l}</a></li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      <div className="fpt-footer-bottom">
+        <p>© 2026 <span>Chantallow</span> Theme. All Rights Reserved.</p>
+        <div className="fpt-pay">
+          <span>We Accept :</span>
+          <span className="pay-badge">VISA</span>
+          <span className="pay-badge">MC</span>
+          <span className="pay-badge">AMEX</span>
+          <span className="pay-badge">DISC</span>
+          <span className="pay-badge">PP</span>
+        </div>
+      </div>
+    </footer>
   );
 }
