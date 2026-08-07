@@ -7,6 +7,10 @@ import thumb3 from "../../assets/products/product-detail2/3.png";
 import sealRecycle from "../../assets/a.png";
 import sealNatural from "../../assets/b.png";
 import sealMadeWithLove from "../../assets/c.png";
+import recentPost1 from "../../assets/shop/product/small/1.png";
+import recentPost2 from "../../assets/shop/product/small/2.png";
+import recentPost3 from "../../assets/shop/product/small/3.png";
+import footerImg from "../../assets/footer/footer.png";
 
 const GALLERY_IMAGES = [productMain, productMain, productMain];
 const THUMBNAILS = [thumb1, thumb2, thumb3];
@@ -474,12 +478,14 @@ function Footer() {
         <div className="fpt-footer-col">
           <h5>Recent Posts</h5>
           {[
-            { title: "Hydrated Supple Skin", date: "July 23, 2023" },
-            { title: "Glowing Radiant Skin", date: "July 23, 2023" },
-            { title: "Silky Soft Skin", date: "July 23, 2023" },
+            { title: "Hydrated Supple Skin", date: "July 23, 2023", image: recentPost1 },
+            { title: "Glowing Radiant Skin", date: "July 23, 2023", image: recentPost2 },
+            { title: "Silky Soft Skin", date: "July 23, 2023", image: recentPost3 },
           ].map((post) => (
             <div className="foot-post" key={post.title}>
-              <span className="foot-thumb" />
+              <span className="foot-thumb">
+                <img src={post.image} alt={post.title} />
+              </span>
               <span>
                 <strong>{post.title}</strong>
                 <small>{post.date}</small>
@@ -511,11 +517,7 @@ function Footer() {
         <p>© 2026 <span>Chantallow</span> Theme. All Rights Reserved.</p>
         <div className="fpt-pay">
           <span>We Accept :</span>
-          <span className="pay-badge">VISA</span>
-          <span className="pay-badge">MC</span>
-          <span className="pay-badge">AMEX</span>
-          <span className="pay-badge">DISC</span>
-          <span className="pay-badge">PP</span>
+          <img src={footerImg} alt="Accepted payment methods" className="weacceptimage" />
         </div>
       </div>
     </footer>
