@@ -40,9 +40,9 @@ import moreCollection4 from "../../assets/banner/about4.png"; // Jasper Revive
 // SIMILAR PROFILES IMAGES
 
 import similarPortrait from "../../assets/about/pic12.jpg";
-import similarImg1 from "../../assets/shop/product/1.png"; // Olivine Relief
-import similarImg2 from "../../assets/shop/product/2.png"; // Malachite Fusion
-import similarImg3 from "../../assets/shop/product/3.png"; // Obsidian Infusion
+
+import similarImg2 from "../../assets/shop/product/Similar/3.png"; // Malachite Fusion
+import similarImg3 from "../../assets/shop/product/Similar/4.png"; // Obsidian Infusion
 
 // SAVING SECTION IMAGES
 
@@ -82,6 +82,8 @@ import jasperReviveJar from "../../assets/beauty/jasper-revive.jpg";
 import malachiteFusionJar from "../../assets/beauty/malachite-fusion.jpg";
 import olivineReliefJar from "../../assets/beauty/olivine-relief.jpg";
 import obsidianInfusionJar from "../../assets/beauty/obsidian-infusion.jpg";
+import talumaHairCareJar from "../../assets/beauty/taluma-hair-care.jpg";
+import bareWhippedTallowJar from "../../assets/beauty/bare-whipped-tallow.jpg";
 
 // Product photography used in the "Experience, The Tallow Collection" cards
 import collectionImg1 from "../../assets/product/new/1.png";
@@ -90,6 +92,8 @@ import collectionImg3 from "../../assets/product/new/3.png";
 import collectionImg4 from "../../assets/product/new/4.png";
 import collectionImg5 from "../../assets/product/new/5.png";
 import collectionImg6 from "../../assets/product/new/6.png";
+import collectionImg7 from "../../assets/product/new/7.png"; // Bare Whipped Tallow
+import collectionImg8 from "../../assets/product/new/8.png"; // Taluma Hair Care
 
 
 
@@ -107,28 +111,32 @@ const PRODUCTS = [
     { id: 4, name: "Malachite Fusion", accent: "#5B2861", items: "4 items", img: malachiteFusionJar },
     { id: 5, name: "Olivine Relief", accent: "#505634", items: "4 items", img: olivineReliefJar },
     { id: 6, name: "Obsidian Infusion", accent: "#631908", items: "4 items", img: obsidianInfusionJar },
+    { id: 7, name: "Taluma Hair Care", accent: "#2D2E2F", items: "4 items", img: talumaHairCareJar },
+    { id: 8, name: "Bare Whipped Tallow", accent: "#c5502f", items: "4 items", img: bareWhippedTallowJar },
 ];
 
 const COLLECTION_CARDS = [
-    { id: 1, name: "Amber Glow", tag: "Get 20% Off", accent: "#7A0000", img: collectionImg1 },
-    { id: 2, name: "Amethyst Relief", accent: "#3B1941", img: collectionImg2 },
-    { id: 3, name: "Jasper Revive", tag: "Featured", accent: "#3B1941", img: collectionImg3 },
-    { id: 4, name: "Malachite Fusion", accent: "#5B2861", img: collectionImg4 },
-    { id: 5, name: "Obsidian Infusion", accent: "#536807", img: collectionImg5 },
-    { id: 6, name: "Olivine Relief", accent: "#5d1100", img: collectionImg6 },
+    { id: 1, name: "Amber Glow", tag: "Get 20% Off", accent: "#7A0000", img: collectionImg1, col: 1 },
+    { id: 2, name: "Amethyst Relief", accent: "#3B1941", img: collectionImg2, col: 2 },
+    { id: 3, name: "Jasper Revive", tag: "Featured", accent: "#3B1941", img: collectionImg3, col: 3 },
+    { id: 4, name: "Malachite Fusion", accent: "#5B2861", img: collectionImg4, col: 1 },
+    { id: 7, name: "Taluma Hair Care", accent: "#5d1100", img: collectionImg8, col: 2 },
+    { id: 5, name: "Obsidian Infusion", accent: "#536807", img: collectionImg5, col: 3 },
+    { id: 8, name: "Bare Whipped Tallow", accent: "#5d1100", img: collectionImg7, col: 1 },
+    { id: 6, name: "Olivine Relief", accent: "#5d1100", img: collectionImg6, col: 3 },
 ];
 
 const MORE_COLLECTIONS = [
-    { id: 1, name: "Amethyst Relife", img: moreCollection1 },
-    { id: 2, name: "Malachite Fusion", img: moreCollection2 },
-    { id: 3, name: "Jasper Revive", img: moreCollection3 },
-    { id: 4, name: "Anti Aging Cream", img: moreCollection4 },
+    { id: 1, name: "Amethyst Relife", img: moreCollection1 },     // about2.png
+    { id: 2, name: "Malachite Fusion", img: moreCollection2 },    // about3.png
+    { id: 3, name: "Jasper Revive", img: moreCollection3 },       // about4.png
+    { id: 4, name: "Taluma Hair Care", img: moreCollection3 },    // about4.png
+    { id: 5, name: "Bare Whipped Tallow", img: moreCollection3 }, // about4.png
 ];
 
 const SIMILAR_PROFILES = [
-    { id: 1, name: "Moisturizing Body Lotion", sale: "Up to 40% Off", price: "$00", img: similarImg1 },
-    { id: 2, name: "Rejuvenating Body Oil", sale: "Up to 40% Off", price: "$80", was: "$95", img: similarImg2 },
-    { id: 3, name: "Cleansing Body Wash", sale: "Up to 40% Off", price: "$80", was: "$95", img: similarImg3 },
+    { id: 1, name: "Jasper Revive", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg2 },
+    { id: 2, name: "Obsidian Infusion", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg3 },
 ];
 
 const SAVING_LEFT = [
@@ -695,7 +703,7 @@ function MissionStrip() {
                 <div
                     style={{
                         display: "grid",
-                        gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 6 : window.innerWidth > 560 ? 3 : 2}, 1fr)`,
+                        gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 4 : 2}, 1fr)`,
                         gap: 20,
                     }}
                 >
@@ -753,7 +761,135 @@ function MissionStrip() {
 
 /* --------------------------- Tallow Collection --------------------------- */
 
+function CollectionCard({ c, onQuickView }) {
+    return (
+        <div
+            className="ctw-card-hover"
+            style={{
+                background: "#fff",
+                borderRadius: 16,
+                overflow: "hidden",
+                border: "1px solid #E2E9DA",
+            }}
+        >
+            <div
+                style={{
+                    position: "relative",
+                    aspectRatio: "4 / 4.2",
+                    background: `linear-gradient(150deg, ${c.accent}24, ${c.accent}55)`,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    overflow: "hidden",
+                }}
+            >
+                <img
+                    src={c.img}
+                    alt={`Chantallow ${c.name} tallow skincare jar`}
+                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                />
+                {c.tag && (
+                    <span
+                        style={{
+                            position: "absolute",
+                            top: 12,
+                            left: 12,
+                            background: "#1C1C1A",
+                            color: "#fff",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            padding: "5px 10px",
+                            borderRadius: 20,
+                            textTransform: "uppercase",
+                        }}
+                    >
+                        {c.tag}
+                    </span>
+                )}
+                <button
+                    onClick={() => onQuickView()}
+                    style={{
+                        position: "absolute",
+                        bottom: 14,
+                        left: 14,
+                        background: "#41705B",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: 20,
+                        padding: "9px 16px",
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        cursor: "pointer",
+                    }}
+                >
+                    Quick View
+                </button>
+                <button
+                    aria-label="Add to cart"
+                    style={{
+                        position: "absolute",
+                        bottom: 14,
+                        right: 14,
+                        background: "#1C1C1A",
+                        color: "#fff",
+                        border: "none",
+                        borderRadius: "50%",
+                        width: 38,
+                        height: 38,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                    }}
+                >
+                    <ShoppingBag size={16} />
+                </button>
+                <button
+                    aria-label="Add to wishlist"
+                    style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 12,
+                        background: "#fff",
+                        border: "none",
+                        borderRadius: "50%",
+                        width: 32,
+                        height: 32,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        cursor: "pointer",
+                    }}
+                >
+                    <Heart size={14} />
+                </button>
+            </div>
+            <div style={{ padding: "16px 18px 20px" }}>
+                <h5
+                    style={{
+                        margin: "0 0 6px",
+                        fontSize: 20,
+                        fontFamily: "Marcellus, sans-serif",
+                        fontWeight: 700,
+                        color: "#3B1941",
+                        textTransform: "uppercase",
+                    }}
+                >
+                    {c.name}
+                </h5>
+                <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
+                    $00 <span style={{ textDecoration: "line-through" }}>$00</span>
+                </span>
+            </div>
+        </div>
+    );
+}
+
 function TallowCollection({ onQuickView }) {
+    const width = window.innerWidth;
+    const isDesktop = width > 900;
+    const flatCols = width > 600 ? 2 : 1;
+
     return (
         <section
             id="shop"
@@ -793,7 +929,7 @@ function TallowCollection({ onQuickView }) {
                     pointerEvents: "none",
                     zIndex: 1,
                     animation: "ctwFloat 5s ease-in-out infinite",
-                    display: window.innerWidth > 1000 ? "block" : "none",
+                    display: width > 1000 ? "block" : "none",
                 }}
             />
             <img
@@ -809,12 +945,11 @@ function TallowCollection({ onQuickView }) {
                     zIndex: 1,
                     animation: "ctwFloat 6s ease-in-out infinite",
                     animationDelay: "1s",
-                    display: window.innerWidth > 1000 ? "block" : "none",
+                    display: width > 1000 ? "block" : "none",
                 }}
             />
 
             <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", textAlign: "center" }}>
-
                 <h2
                     style={{
                         fontSize: 65,
@@ -827,253 +962,48 @@ function TallowCollection({ onQuickView }) {
                     Experience The Tallow Collection
                 </h2>
 
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1}, 1fr)`,
-                        gap: 24,
-                        textAlign: "left",
-                    }}
-                >
-                    {COLLECTION_CARDS.map((c) => (
-                        <div
-                            key={c.id}
-                            className="ctw-card-hover"
-                            style={{
-                                background: "#fff",
-                                borderRadius: 16,
-                                overflow: "hidden",
-                                border: "1px solid #E2E9DA",
-                            }}
-                        >
+                {isDesktop ? (
+                    /* Desktop: 3 masonry columns, middle column offset down */
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: "repeat(3, 1fr)",
+                            gap: 24,
+                            alignItems: "start",
+                            textAlign: "left",
+                        }}
+                    >
+                        {[1, 2, 3].map((col) => (
                             <div
+                                key={col}
                                 style={{
-                                    position: "relative",
-                                    aspectRatio: "4 / 4.2",
-                                    background: `linear-gradient(150deg, ${c.accent}24, ${c.accent}55)`,
                                     display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    overflow: "hidden",
+                                    flexDirection: "column",
+                                    gap: 24,
+                                    marginTop: col === 2 ? 48 : 0,
                                 }}
                             >
-                                <img
-                                    src={c.img}
-                                    alt={`Chantallow ${c.name} tallow skincare jar`}
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                        display: "block",
-                                    }}
-                                />
-                                {c.tag && (
-                                    <span
-                                        style={{
-                                            position: "absolute",
-                                            top: 12,
-                                            left: 12,
-                                            background: "#1C1C1A",
-                                            color: "#fff",
-                                            fontSize: 10,
-                                            fontWeight: 700,
-                                            padding: "5px 10px",
-                                            borderRadius: 20,
-                                            textTransform: "uppercase",
-                                        }}
-                                    >
-                                        {c.tag}
-                                    </span>
-                                )}
-                                <button
-                                    onClick={() => onQuickView()}
-                                    style={{
-                                        position: "absolute",
-                                        bottom: 14,
-                                        left: 14,
-                                        background: "#41705B",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: 20,
-                                        padding: "9px 16px",
-                                        fontSize: 11.5,
-                                        fontWeight: 700,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Quick View
-                                </button>
-                                <button
-                                    aria-label="Add to cart"
-                                    style={{
-                                        position: "absolute",
-                                        bottom: 14,
-                                        right: 14,
-                                        background: "#1C1C1A",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: "50%",
-                                        width: 38,
-                                        height: 38,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    <ShoppingBag size={16} />
-                                </button>
-                                <button
-                                    aria-label="Add to wishlist"
-                                    style={{
-                                        position: "absolute",
-                                        top: 12,
-                                        right: 12,
-                                        background: "#fff",
-                                        border: "none",
-                                        borderRadius: "50%",
-                                        width: 32,
-                                        height: 32,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    <Heart size={14} />
-                                </button>
+                                {COLLECTION_CARDS.filter((c) => c.col === col).map((c) => (
+                                    <CollectionCard key={c.id} c={c} onQuickView={onQuickView} />
+                                ))}
                             </div>
-                            <div style={{ padding: "16px 18px 20px" }}>
-                                <h5 style={{ margin: "0 0 6px", fontSize: 20, fontFamily: "Marcellus, sans-serif", fontWeight: 700, color: "#3B1941", textTransform: "uppercase" }}>
-                                    {c.name}
-                                </h5>
-                                <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
-                                    $00 <span style={{ textDecoration: "line-through" }}>$00</span>
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                {/* New Arrivals — separate grid so it renders correctly */}
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1}, 1fr)`,
-                        gap: 24,
-                        textAlign: "left",
-                        marginTop: 24,
-                    }}
-                >
-                    {NEW_ARRIVALS.map((p) => (
-                        <div
-                            key={p.id}
-                            className="ctw-card-hover"
-                            style={{
-                                background: "#fff",
-                                borderRadius: 16,
-                                overflow: "hidden",
-                                border: "1px solid #E2E9DA",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    position: "relative",
-                                    aspectRatio: "4 / 4.2",
-                                    background: "#F7F4EC",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                    overflow: "hidden",
-                                }}
-                            >
-                                <img
-                                    src={p.img}
-                                    alt={`Chantallow ${p.name}`}
-                                    style={{
-                                        width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                        display: "block",
-                                    }}
-                                />
-
-                                {/* Quick View pill */}
-                                <button
-                                    onClick={() => onQuickView()}
-                                    style={{
-                                        position: "absolute",
-                                        bottom: 14,
-                                        left: 14,
-                                        background: "#41705B",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: 20,
-                                        padding: "9px 16px",
-                                        fontSize: 11.5,
-                                        fontWeight: 700,
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    Quick View
-                                </button>
-
-                                {/* Cart icon */}
-                                <button
-                                    aria-label="Add to cart"
-                                    style={{
-                                        position: "absolute",
-                                        bottom: 14,
-                                        right: 14,
-                                        background: "#1C1C1A",
-                                        color: "#fff",
-                                        border: "none",
-                                        borderRadius: "50%",
-                                        width: 38,
-                                        height: 38,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    <ShoppingBag size={16} />
-                                </button>
-
-                                {/* Wishlist heart */}
-                                <button
-                                    aria-label="Add to wishlist"
-                                    style={{
-                                        position: "absolute",
-                                        top: 12,
-                                        right: 12,
-                                        background: "#fff",
-                                        border: "none",
-                                        borderRadius: "50%",
-                                        width: 32,
-                                        height: 32,
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        cursor: "pointer",
-                                    }}
-                                >
-                                    <Heart size={14} />
-                                </button>
-                            </div>
-
-                            <div style={{ padding: "16px 18px 20px" }}>
-                                <h5 style={{ margin: "0 0 6px", fontSize: 20, fontFamily: "Marcellus, sans-serif", fontWeight: 700, color: "#5d1100" }}>
-                                    {p.name}
-                                </h5>
-                                <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
-                                    $00 <span style={{ textDecoration: "line-through" }}>$00</span>
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
+                        ))}
+                    </div>
+                ) : (
+                    /* Tablet / mobile: simple grid in list order */
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: `repeat(${flatCols}, 1fr)`,
+                            gap: 24,
+                            textAlign: "left",
+                        }}
+                    >
+                        {COLLECTION_CARDS.map((c) => (
+                            <CollectionCard key={c.id} c={c} onQuickView={onQuickView} />
+                        ))}
+                    </div>
+                )}
             </div>
         </section>
     );
@@ -1524,97 +1454,96 @@ function CategoryMarquee() {
 /* ---------------------------- More Collections ---------------------------- */
 
 function MoreCollections() {
-    const [perView, setPerView] = useState(
-        window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1
-    );
+    const getPerView = () => (window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1);
+    const [perView, setPerView] = useState(getPerView());
     const [page, setPage] = useState(0);
+    const [paused, setPaused] = useState(false);
+    const isDesktop = window.innerWidth > 900;
+
+    const pageCount = MORE_COLLECTIONS.length;
+    const loopItems = [...MORE_COLLECTIONS, ...MORE_COLLECTIONS];
 
     React.useEffect(() => {
-        const onResize = () =>
-            setPerView(window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1);
+        const onResize = () => setPerView(getPerView());
         window.addEventListener("resize", onResize);
         return () => window.removeEventListener("resize", onResize);
     }, []);
 
-    const pageCount = MORE_COLLECTIONS.length;
-
-    // duplicate the list so the row can keep sliding and loop seamlessly
-    const loopItems = [...MORE_COLLECTIONS, ...MORE_COLLECTIONS];
-
-    // advance one card every 4s, wrap after the last real card
     React.useEffect(() => {
-        const timer = setInterval(() => {
-            setPage((prev) => (prev >= pageCount - 1 ? 0 : prev + 1));
-        }, 4000);
-        return () => clearInterval(timer);
-    }, [pageCount]);
+        if (paused) return;
+        const timer = setTimeout(() => setPage((prev) => (prev + 1) % pageCount), 4000);
+        return () => clearTimeout(timer);
+    }, [page, paused, pageCount]);
 
-    const go = (next) => setPage(Math.max(0, Math.min(pageCount - 1, next)));
+    const go = (next) => setPage(((next % pageCount) + pageCount) % pageCount);
 
     return (
-        <section style={{ padding: "80px 24px", background: "#fff" }}>
+        <section style={{ padding: isDesktop ? "50px 0 70px" : "50px 24px", background: "#fff", overflow: "hidden" }}>
             <div
                 style={{
-                    maxWidth: 1360,
-                    margin: "0 auto",
                     display: "grid",
-                    gridTemplateColumns: window.innerWidth > 900 ? "0.9fr 2fr" : "1fr",
-                    gap: 40,
+                    gridTemplateColumns: isDesktop ? "34% 1fr" : "1fr",
+                    gap: isDesktop ? 120 : 32,
                     alignItems: "center",
+                    paddingRight: isDesktop ? "7.5%" : 0,
                 }}
             >
-                <div>
+                {/* Left: large portrait, flush to the left edge */}
+                <div style={{ display: isDesktop ? "block" : "none" }}>
                     <img
                         src={missionPortrait}
                         alt="Woman with glowing skin from Chantallow tallow skincare"
-                        style={{
-                            width: "98%",
-                            height: "94%",
-                            objectFit: "contain",
-                            objectPosition: "bottom center",
-                            display: "block",
-                        }}
+                        style={{ width: "100%", height: "auto", display: "block" }}
                     />
                 </div>
 
-                <div>
+                {/* Right: heading + slider */}
+                <div style={{ minWidth: 0 }}>
                     <div
                         style={{
                             display: "flex",
                             justifyContent: "space-between",
                             alignItems: "center",
-                            marginBottom: 24,
+                            marginBottom: 30,
+                            padding: "0 19px",
                         }}
                     >
                         <h2
                             style={{
-                                fontSize: 65,
+                                fontSize: "clamp(36px, 4vw, 75px)",
                                 fontFamily: "Marcellus, sans-serif",
                                 color: "#2D2E2F",
                                 fontWeight: 400,
                                 margin: 0,
+                                lineHeight: 1.1,
                             }}
                         >
-                            More Collections
+                            Our Best Sellers
                         </h2>
-                        <a
-                            href="#shop"
-                            aria-label="See all"
+                        <Link
+                            to="/shop-list"
+                            aria-label="See all products"
                             style={{
-                                width: 44,
-                                height: 44,
+                                width: isDesktop ? 100 : 60,
+                                height: isDesktop ? 100 : 60,
+                                flexShrink: 0,
                                 borderRadius: "50%",
-                                border: "1px solid #1C1C1A",
+                                background: "#EDF8F3",
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "center",
+                                color: "#1C1C1A",
                             }}
                         >
-                            <ArrowUpRight size={18} />
-                        </a>
+                            <ArrowUpRight size={isDesktop ? 40 : 26} strokeWidth={1.5} />
+                        </Link>
                     </div>
 
-                    <div style={{ overflow: "hidden" }}>
+                    <div
+                        style={{ overflow: "hidden" }}
+                        onMouseEnter={() => setPaused(true)}
+                        onMouseLeave={() => setPaused(false)}
+                    >
                         <div
                             style={{
                                 display: "flex",
@@ -1625,48 +1554,46 @@ function MoreCollections() {
                             {loopItems.map((c, i) => (
                                 <div
                                     key={`${c.id}-${i}`}
-                                    style={{ flex: `0 0 ${100 / perView}%`, padding: "0 10px" }}
+                                    aria-hidden={i >= pageCount}
+                                    style={{ flex: `0 0 ${100 / perView}%`, padding: "0 19px" }}
                                 >
                                     <div
-                                        className="ctw-card-hover"
                                         style={{
                                             aspectRatio: "1 / 1",
-                                            borderRadius: 16,
-                                            background: "linear-gradient(150deg,#8FAE7C,#41705B)",
-                                            marginBottom: 12,
+                                            borderRadius: "150px 150px 0 0",
                                             overflow: "hidden",
-                                            display: "flex",
-                                            alignItems: "center",
-                                            justifyContent: "center",
+                                            marginBottom: 14,
+                                            background: "#EDF8F3",
                                         }}
                                     >
-                                        {c.img && (
-                                            <img
-                                                src={c.img}
-                                                alt={`Chantallow ${c.name} tallow skincare jar`}
-                                                style={{
-                                                    width: "100%",
-                                                    height: "100%",
-                                                    objectFit: "cover",
-                                                    display: "block",
-                                                }}
-                                            />
-                                        )}
+                                        <img
+                                            src={c.img}
+                                            alt={`Chantallow ${c.name} tallow skincare jar`}
+                                            style={{
+                                                width: "100%",
+                                                height: "100%",
+                                                objectFit: "cover",
+                                                display: "block",
+                                                transition: "transform .5s ease",
+                                            }}
+                                            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                                            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                                        />
                                     </div>
-                                    <button
-                                        style={{
-                                            width: "100%",
-                                            background: "#F7F4EC",
-                                            border: "none",
-                                            padding: "10px 12px",
-                                            borderRadius: 10,
-                                            fontSize: 12.5,
-                                            fontWeight: 600,
-                                            cursor: "pointer",
-                                        }}
-                                    >
-                                        {c.name}
-                                    </button>
+                                    <div style={{ textAlign: "center" }}>
+                                        <Link
+                                            to="/shop-list"
+                                            style={{
+                                                fontFamily: "Lufga, sans-serif",
+                                                fontSize: 17,
+                                                fontWeight: 500,
+                                                color: "#1C1C1A",
+                                                textDecoration: "none",
+                                            }}
+                                        >
+                                            {c.name}
+                                        </Link>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -1680,6 +1607,15 @@ function MoreCollections() {
 }
 
 function CarouselControls({ page, pageCount, onGo }) {
+    const arrowStyle = {
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        padding: 4,
+        color: "#1C1C1A",
+        display: "flex",
+    };
+
     return (
         <div
             style={{
@@ -1687,41 +1623,19 @@ function CarouselControls({ page, pageCount, onGo }) {
                 justifyContent: "space-between",
                 alignItems: "center",
                 marginTop: 32,
-                padding: "0 10px",
+                padding: "0 19px",
             }}
         >
             <div style={{ display: "flex", gap: 24 }}>
-                <button
-                    onClick={() => onGo(page - 1)}
-                    disabled={page === 0}
-                    aria-label="Previous"
-                    style={{
-                        background: "none",
-                        border: "none",
-                        cursor: page === 0 ? "default" : "pointer",
-                        opacity: page === 0 ? 0.3 : 1,
-                        padding: 4,
-                    }}
-                >
-                    <ArrowLeft size={26} strokeWidth={1.3} />
+                <button onClick={() => onGo(page - 1)} aria-label="Previous" style={arrowStyle}>
+                    <ArrowLeft size={40} strokeWidth={1} />
                 </button>
-                <button
-                    onClick={() => onGo(page + 1)}
-                    disabled={page === pageCount - 1}
-                    aria-label="Next"
-                    style={{
-                        background: "none",
-                        border: "none",
-                        cursor: page === pageCount - 1 ? "default" : "pointer",
-                        opacity: page === pageCount - 1 ? 0.3 : 1,
-                        padding: 4,
-                    }}
-                >
-                    <ArrowRight size={26} strokeWidth={1.3} />
+                <button onClick={() => onGo(page + 1)} aria-label="Next" style={arrowStyle}>
+                    <ArrowRight size={40} strokeWidth={1} />
                 </button>
             </div>
 
-            <div style={{ display: "flex", gap: 6 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                 {Array.from({ length: pageCount }, (_, i) => {
                     const active = i === page;
                     return (
@@ -1731,14 +1645,14 @@ function CarouselControls({ page, pageCount, onGo }) {
                             aria-current={active ? "true" : undefined}
                             aria-label={`Go to slide ${i + 1}`}
                             style={{
-                                width: 54,
-                                height: 54,
+                                width: active ? 70 : 56,
+                                height: active ? 70 : 56,
                                 borderRadius: "50%",
-                                border: active ? "1px solid #C9D2BE" : "1px solid transparent",
-                                background: active ? "#fff" : "transparent",
+                                border: active ? "1px solid #DADADA" : "1px solid transparent",
+                                background: "transparent",
                                 color: active ? "#1C1C1A" : "#B4B4A8",
-                                fontSize: 15,
-                                fontWeight: active ? 700 : 400,
+                                fontSize: active ? 22 : 16,
+                                fontFamily: "Lufga, sans-serif",
                                 cursor: "pointer",
                                 transition: "all .25s ease",
                             }}
@@ -1783,7 +1697,7 @@ function SimilarProfilesSection() {
                             fontWeight: 500,
                             margin: 0,
                         }}>
-                            Similar Profiles
+                            Ready to Transform Your Skin?
                         </h2>
                         <a
                             href="#shop"
@@ -1796,18 +1710,20 @@ function SimilarProfilesSection() {
                     <div
                         style={{
                             display: "grid",
-                            gridTemplateColumns: `repeat(${window.innerWidth > 640 ? 3 : 1}, 1fr)`,
-                            gap: 18,
+                            gridTemplateColumns: window.innerWidth > 640 ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
+                            gap: 38,
                         }}
                     >
                         {SIMILAR_PROFILES.map((p) => (
-                            <div key={p.id} className="ctw-card-hover" style={{ background: "#fff", borderRadius: 14, padding: 14 }}>
+                            <div key={p.id} style={{ minWidth: 0 }}>
+                                {/* Image box: cream background, full jar visible */}
                                 <div
+                                    className="ctw-card-hover"
                                     style={{
-                                        aspectRatio: "1 / 1",
-                                        borderRadius: 10,
-                                        background: "linear-gradient(150deg,#EFEBDD,#D9CFAE)",
-                                        marginBottom: 12,
+                                        width: "100%",
+                                        aspectRatio: "443 / 478",
+                                        background: "#FFFDF0",
+                                        marginBottom: 22,
                                         overflow: "hidden",
                                         display: "flex",
                                         alignItems: "center",
@@ -1821,20 +1737,70 @@ function SimilarProfilesSection() {
                                             style={{
                                                 width: "100%",
                                                 height: "100%",
-                                                objectFit: "cover",
+                                                objectFit: "contain",
                                                 display: "block",
                                             }}
                                         />
                                     )}
                                 </div>
-                                <span style={{ fontSize: 10.5, color: "#41705B", fontWeight: 700 }}>{p.sale}</span>
-                                <h6 style={{ fontSize: 13, fontWeight: 600, margin: "6px 0" }}>{p.name}</h6>
-                                <span style={{ fontSize: 13, fontWeight: 700 }}>
-                                    {p.price}{" "}
-                                    {p.was && (
-                                        <del style={{ color: "#B4B4A8", fontWeight: 400, marginLeft: 4 }}>{p.was}</del>
-                                    )}
-                                </span>
+
+                                {/* Info row: sale + name on the left, price on the right */}
+                                <div
+                                    style={{
+                                        display: "flex",
+                                        justifyContent: "space-between",
+                                        alignItems: "flex-start",
+                                        gap: 12,
+                                    }}
+                                >
+                                    <div style={{ textAlign: "left" }}>
+                                        <span
+                                            style={{
+                                                display: "block",
+                                                fontSize: 17,
+                                                fontFamily: "Lufga, sans-serif",
+                                                fontWeight: 500,
+                                                color: "#41705B",
+                                                marginBottom: 6,
+                                            }}
+                                        >
+                                            {p.sale}
+                                        </span>
+                                        <h6
+                                            style={{
+                                                fontSize: 26,
+                                                fontFamily: "Marcellus, sans-serif",
+                                                fontWeight: 400,
+                                                color: "#2D2E2F",
+                                                margin: 0,
+                                            }}
+                                        >
+                                            {p.name}
+                                        </h6>
+                                    </div>
+                                    <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                                        <div
+                                            style={{
+                                                fontSize: 26,
+                                                fontFamily: "Marcellus, sans-serif",
+                                                color: "#1C1C1A",
+                                            }}
+                                        >
+                                            {p.price}
+                                        </div>
+                                        {p.was && (
+                                            <del
+                                                style={{
+                                                    fontSize: 20,
+                                                    fontFamily: "Marcellus, sans-serif",
+                                                    color: "#9A9A90",
+                                                }}
+                                            >
+                                                {p.was}
+                                            </del>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -2011,7 +1977,7 @@ function SavingSection() {
 /* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
 function FurkindPetSection() {
-    const navigate = useNavigate(); 
+    const navigate = useNavigate();
     const isDesktop = window.innerWidth > 992;
 
     return (
@@ -2095,7 +2061,7 @@ function FurkindPetSection() {
 
                 {/* Text content */}
                 <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
-                    <a 
+                    <a
                         onClick={() => navigate("/furkind-pet-tallow")}
                         style={{ textDecoration: "none", cursor: "pointer" }}
 
