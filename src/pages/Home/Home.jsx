@@ -46,10 +46,9 @@ import similarImg3 from "../../assets/shop/product/Similar/4.png"; // Obsidian I
 
 // SAVING SECTION IMAGES
 
-import savingImg1 from "../../assets/product/3.png"; // Jasper Revive
-import savingImg2 from "../../assets/product/4.png"; // Malachite Fusion
-import savingImg3 from "../../assets/product/5.png"; // Obsidian Infusion
-import savingImg4 from "../../assets/product/6.png"; // Olivine Relief
+import savingImg1 from "../../assets/shop/product/savings/4.png"; // Malachite Fusion
+import savingImg2 from "../../assets/shop/product/savings/2.png"; // Amethyst Relief
+import savingImg3 from "../../assets/shop/product/savings/1.png"; // Obsidian Infusion
 import savingBanner from "../../assets/about/pic1 111.png";
 
 // FEATURED OFFERS IMAGES
@@ -140,10 +139,10 @@ const SIMILAR_PROFILES = [
 ];
 
 const SAVING_LEFT = [
-    { id: 1, name: "Jasper Revive", sub: "Coffee Infused Tallow", img: savingImg1 },
-    { id: 2, name: "Malachite Fusion", sub: "Moringa + Butterfly Pea Infused Tallow", badge: true, img: savingImg2 },
-    { id: 3, name: "Obsidian Infusion", sub: "Cacao Infused Tallow", img: savingImg3 },
-    { id: 4, name: "Olivine Relief", sub: "Zechstein Magnesium + Arnica", img: savingImg4 },
+    { id: 1, name: "Malachite Fusion", sub: "Moringa + Butterfly Pea", price: "$00.00", was: "$00.00", img: savingImg1, path: "/shop-list" },
+    { id: 2, name: "Amethyst Relief", sub: "Lavender Whipped Tallow", price: "$00.00", was: "$00.00", img: savingImg2, badge: true, path: "/shop-list" },
+    { id: 3, name: "Amber Glow", sub: "Manuka + Lavender", price: "$00.00", was: "$00.00", img: savingImg3, path: "/shop-list" },
+    { id: 4, seeAll: true },
 ];
 
 const SHORTLIST_RIGHT = [
@@ -217,7 +216,7 @@ export default function Home() {
                 <Hero navigate={navigate} />
                 <MissionStrip />
                 <CompleteCareBanner />
-                <CategoryMarquee />
+                {/* <CategoryMarquee /> */}
                 <TallowCollection onQuickView={() => setQuickView(true)} />
                 <MoreCollections />
                 <SimilarProfilesSection />
@@ -313,7 +312,11 @@ function Header({ menuOpen, setMenuOpen, setCartOpen, setSearchOpen }) {
         <header style={{ position: "sticky", top: 0, zIndex: 40 }}>
             <div className="ctw-header">
                 <a href="#home" className="ctw-header-logo" aria-label="Chantallow home">
-                    <img src={logo} alt="Chantallow" />
+                    <img
+                        src={logo}
+                        alt="Chantallow"
+                        style={{ height: 64, width: "auto", display: "block" }}
+                    />
                 </a>
 
                 <nav className={menuOpen ? "ctw-nav is-open" : "ctw-nav"}>
@@ -1396,60 +1399,60 @@ function RotatingLinkBadge({ label = "ALL PRODUCTS", href = "#shop", size = 190 
     );
 }
 
-function CategoryMarquee() {
-    const list = [...CATEGORY_MARQUEE, ...CATEGORY_MARQUEE, ...CATEGORY_MARQUEE];
-    return (
-        <section
-            style={{
-                background: "#fff",
-                overflow: "hidden",
-                padding: "22px 0",
-                width: "100%",
-                margin: 0,
-                borderRadius: 0,
-            }}
-        >
-            <div
-                style={{
-                    display: "flex",
-                    gap: 64,
-                    whiteSpace: "nowrap",
-                    animation: "ctwMarquee 30s linear infinite",
-                    width: "fit-content",
-                }}
-            >
-                {list.map((c, i) => (
-                    <span
-                        key={i}
-                        style={{
-                            fontSize: "clamp(20px, 2.2vw, 30px)",
-                            fontWeight: 400,
-                            letterSpacing: "0.04em",
-                            textTransform: "uppercase",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 64,
-                            color: "#1C1C1A",
-                            fontFamily: "Marcellus, sans-serif",
-                        }}
-                    >
-                        {c}
-                        <span aria-hidden="true" style={{ fontSize: 20 }}>✦</span>
-                    </span>
-                ))}
-                <style>{`
-          @keyframes ctwMarquee {
-            from { transform: translateX(0); }
-            to { transform: translateX(-33.333%); }
-          }
-          @media (prefers-reduced-motion: reduce) {
-            div[style*="ctwMarquee"] { animation: none !important; }
-          }
-        `}</style>
-            </div>
-        </section>
-    );
-}
+// function CategoryMarquee() {
+//     const list = [...CATEGORY_MARQUEE, ...CATEGORY_MARQUEE, ...CATEGORY_MARQUEE];
+//     return (
+//         <section
+//             style={{
+//                 background: "#fff",
+//                 overflow: "hidden",
+//                 padding: "22px 0",
+//                 width: "100%",
+//                 margin: 0,
+//                 borderRadius: 0,
+//             }}
+//         >
+//             <div
+//                 style={{
+//                     display: "flex",
+//                     gap: 64,
+//                     whiteSpace: "nowrap",
+//                     animation: "ctwMarquee 30s linear infinite",
+//                     width: "fit-content",
+//                 }}
+//             >
+//                 {list.map((c, i) => (
+//                     <span
+//                         key={i}
+//                         style={{
+//                             fontSize: "clamp(20px, 2.2vw, 30px)",
+//                             fontWeight: 400,
+//                             letterSpacing: "0.04em",
+//                             textTransform: "uppercase",
+//                             display: "flex",
+//                             alignItems: "center",
+//                             gap: 64,
+//                             color: "#1C1C1A",
+//                             fontFamily: "Marcellus, sans-serif",
+//                         }}
+//                     >
+//                         {c}
+//                         <span aria-hidden="true" style={{ fontSize: 20 }}>✦</span>
+//                     </span>
+//                 ))}
+//                 <style>{`
+//           @keyframes ctwMarquee {
+//             from { transform: translateX(0); }
+//             to { transform: translateX(-33.333%); }
+//           }
+//           @media (prefers-reduced-motion: reduce) {
+//             div[style*="ctwMarquee"] { animation: none !important; }
+//           }
+//         `}</style>
+//             </div>
+//         </section>
+//     );
+// }
 
 /* ---------------------------- More Collections ---------------------------- */
 
@@ -1829,148 +1832,140 @@ function SimilarProfilesSection() {
 /* -------------------------------- Saving -------------------------------- */
 
 function SavingSection() {
+    const isDesktop = window.innerWidth > 900;
+
     return (
-        <section style={{ padding: "20px 24px 80px", background: "#EDF8F3", overflowX: "clip", }}>
+        <section style={{ padding: "60px 24px 80px", background: "#EDF8F3", overflowX: "clip" }}>
             <div
                 style={{
                     maxWidth: 1360,
                     margin: "0 auto",
                     display: "grid",
-                    gridTemplateColumns: window.innerWidth > 900 ? "1fr 1fr" : "1fr",
-                    gap: 24,
+                    gridTemplateColumns: isDesktop ? "minmax(0, 1fr) minmax(0, 1fr)" : "minmax(0, 1fr)",
+                    gap: 40,
                 }}
             >
-                {/* Left: each product in its own card */}
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: `repeat(${window.innerWidth > 560 ? 2 : 1}, 1fr)`,
-                        gap: 24,
-                        alignContent: "start",
-                    }}
-                >
-                    {SAVING_LEFT.map((p) => (
-                        <div
-                            key={p.id}
-                            className="ctw-card-hover"
-                            style={{
-                                position: "relative",
-                                background: "#fff",
-                                borderRadius: 14,
-                                padding: 12,
-                            }}
-                        >
-                            <SavingItem {...p} />
-                        </div>
-                    ))}
+                {/* LEFT: title + product cards */}
+                <div style={{ minWidth: 0 }}>
+                    <h2
+                        style={{
+                            fontSize: "clamp(36px, 4vw, 75px)",
+                            lineHeight: 1.2,
+                            fontFamily: "Marcellus, sans-serif",
+                            fontWeight: 400,
+                            color: "#2D2E2F",
+                            margin: "0 0 40px",
+                            textAlign: "left",
+                            maxWidth: 640,
+                        }}
+                    >
+                        Pure Ingredients, Real Results
+                    </h2>
+
+                    <div
+                        style={{
+                            display: "grid",
+                            gridTemplateColumns: window.innerWidth > 560 ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
+                            columnGap: 34,
+                            rowGap: 24,
+                            alignItems: "stretch",
+                        }}
+                    >
+                        {SAVING_LEFT.map((p) =>
+                            p.seeAll ? (
+                                /* 4th cell: transparent, "See All" button centred vertically */
+                                <div
+                                    key={p.id}
+                                    style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: 200 }}
+                                >
+                                    <Link
+                                        to="/shop-list"
+                                        style={{
+                                            display: "inline-block",
+                                            background: "#fff",
+                                            color: "#2D2E2F",
+                                            border: "2px solid #38996e",
+                                            borderRadius: 11,
+                                            padding: "12px 34px",
+                                            fontSize: 20,
+                                            fontWeight: 400,
+                                            fontFamily: "Lufga, sans-serif",
+                                            textDecoration: "none",
+                                            textTransform: "capitalize",
+                                        }}
+                                    >
+                                        See All
+                                    </Link>
+                                </div>
+                            ) : (
+                                /* Product card: white box with padding */
+                                <div
+                                    key={p.id}
+                                    className="ctw-card-hover"
+                                    style={{ position: "relative", background: "#fff", padding: "20px 22px 12px" }}
+                                >
+                                    <SavingItem {...p} />
+                                </div>
+                            )
+                        )}
+                    </div>
                 </div>
 
-                {/* Right: banner image */}
+                {/* RIGHT: banner image (unchanged) */}
                 <div
                     style={{
-
                         position: "relative",
                         minHeight: 700,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         overflow: "hidden",
-                        marginRight: -160,   // was -80 — now safe to increase
+                        marginRight: -160,
                         clipPath: "url(#waveLeft)",
-
                     }}
                 >
                     <img
                         src={savingBanner}
                         alt=""
                         aria-hidden="true"
-                        style={{
-                            position: "absolute",
-                            inset: 0,
-                            width: "100%",
-                            height: "100%",
-                            objectFit: "cover",
-                            display: "block",
-                        }}
+                        style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />
 
-                    <div
-                        style={{
-                            position: "relative",
-                            zIndex: 1,
-                            textAlign: "center",
-                            color: "#fff",
-                            padding: "48px 32px",
-                            width: "100%",
-                        }}
-                    >
-                        <h2
+                    <div style={{ position: "relative", zIndex: 1, textAlign: "center", color: "#fff", padding: "48px 32px", width: "100%" }}>
+                        {/* <h2
                             className="ctw-serif"
-                            style={{
-                                fontSize: 40,
-                                fontWeight: 500,
-                                lineHeight: 1.25,
-                                fontFamily: 'Marcellus',
-                                margin: "0 auto 12px",
-                                maxWidth: 380,
-                                color: "#FFFFFF",
-                            }}
+                            style={{ fontSize: 40, fontWeight: 500, lineHeight: 1.25, fontFamily: "Marcellus", margin: "0 auto 12px", maxWidth: 380, color: "#FFFFFF" }}
                         >
                             Great Saving On Everyday Essentials
                         </h2>
-                        <p
-                            className="ctw-serif"
-                            style={{
-                                fontSize: 16,
-                                fontFamily: 'Lufga',
-                                margin: "0 0 24px",
-                                color: "#FFFFFF",
-                                opacity: 0.95,
-                            }}
-                        >
+                        <p className="ctw-serif" style={{ fontSize: 16, fontFamily: "Lufga", margin: "0 0 24px", color: "#FFFFFF", opacity: 0.95 }}>
                             Up To 60% Off + Up To $107 Cashback
                         </p>
                         <a
                             href="#shop"
                             className="ctw-serif"
-                            style={{
-                                display: "inline-block",
-                                background: "rgba(255,255,255,0.9)",
-                                color: "#1C1C1A",
-                                padding: "12px 32px",
-                                borderRadius: 4,
-                                fontSize: 17,
-                                textDecoration: "none",
-                            }}
+                            style={{ display: "inline-block", background: "rgba(255,255,255,0.9)", color: "#1C1C1A", padding: "12px 32px", borderRadius: 4, fontSize: 17, textDecoration: "none" }}
                         >
                             See All
-                        </a>
+                        </a> */}
 
-                        <svg
+                        {/* <svg
                             className="ctw-animation-text"
                             viewBox="0 0 1320 300"
                             aria-hidden="true"
-                            style={{
-                                position: "absolute",
-
-                                bottom: -180,
-                                left: 80,
-                                fontSize: 40,
-                                width: "60%",
-                                height: "auto",
-                                userSelect: "none",
-                            }}
+                            style={{ position: "absolute", bottom: -180, left: 80, fontSize: 40, width: "60%", height: "auto", userSelect: "none" }}
                         >
                             <text x="0" y="290" textLength="1320" lengthAdjust="spacingAndGlyphs">
                                 GREAT SAVING
                             </text>
-                        </svg>
+                        </svg> */}
                     </div>
                 </div>
             </div>
         </section>
     );
 }
+
 
 /* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
@@ -1990,7 +1985,12 @@ function FurkindPetSection() {
                 overflow: "hidden",
             }}
         >
-            <div style={{ maxWidth: 1200, margin: "0 auto ", position: "relative", zIndex: 1 }}>
+            <div style={{
+                position: "relative",
+                maxWidth: 1200,
+                margin: "0 auto 40px",
+                paddingTop: isDesktop ? "12%" : "22%",   // pushes the whole scene down so the jars aren't cut off
+            }}>
                 {/* Grass map with pets and jars */}
                 <div
                     style={{
@@ -2144,13 +2144,14 @@ function SavingColumn({ items }) {
     );
 }
 
-function SavingItem({ name, sub, price = "$00.00", was = "$00.00", badge, img }) {
+function SavingItem({ name, sub, price = "$00.00", was = "$00.00", badge, img, path = "/shop-list" }) {
     return (
         <div style={{ position: "relative" }}>
+            {/* Product image, full jar visible */}
             <div
                 style={{
                     width: "100%",
-                    aspectRatio: "1 / 0.6",
+                    aspectRatio: "1 / 0.82",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
@@ -2166,55 +2167,61 @@ function SavingItem({ name, sub, price = "$00.00", was = "$00.00", badge, img })
                 )}
             </div>
 
+            {/* Mint info box overlapping the bottom of the image */}
             <div
                 style={{
                     position: "relative",
-                    marginTop: -14,
-                    background: "#EAF3EE",
-                    borderRadius: 8,
-                    padding: "10px 14px",
+                    marginTop: -10,
+                    background: "#EDF8F3",
+                    borderRadius: 6,
+                    padding: "14px 18px",
                     display: "flex",
                     justifyContent: "space-between",
                     alignItems: "flex-start",
-                    gap: 8,
+                    gap: 10,
                 }}
             >
-                <div style={{ flex: 1 }}>
-                    <h6 className="ctw-serif" style={{ margin: "0 0 3px", fontSize: 18, fontWeight: 500, color: "#1C1C1A" }}>
+                <Link to={path} style={{ textDecoration: "none", flex: 1, minWidth: 0, textAlign: "left" }}>
+                    <h6 style={{ margin: "0 0 6px", fontSize: 19, fontWeight: 400, color: "#2D2E2F", fontFamily: "Marcellus, sans-serif" }}>
                         {name}
                     </h6>
-                    <span className="ctw-serif" style={{ fontSize: 15, color: "#41705B", lineHeight: 1.3 }}>
+                    <span style={{ display: "block", fontSize: 16, color: "#41705B", lineHeight: 1.3, fontFamily: "Marcellus, sans-serif" }}>
                         {sub}
                     </span>
-                </div>
+                </Link>
                 <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                    <div className="ctw-serif" style={{ fontSize: 16, fontWeight: 500 }}>{price}</div>
-                    <del className="ctw-serif" style={{ fontSize: 14, color: "#B4B4A8" }}>{was}</del>
+                    <div style={{ fontSize: 19, fontFamily: "Marcellus, sans-serif", color: "#1C1C1A", marginBottom: 4 }}>{price}</div>
+                    <del style={{ fontSize: 15, fontFamily: "Marcellus, sans-serif", color: "#9A9A90" }}>{was}</del>
                 </div>
             </div>
 
+            {/* Green star "00% Sale" badge, top-right corner */}
             {badge && (
                 <span
                     style={{
                         position: "absolute",
-                        top: -12,
-                        right: -14,
-                        background: "#41705B",
+                        top: -52,
+                        right: -72,
+                        width: 124,
+                        height: 124,
+                        background: "#5E9A7F",
                         color: "#fff",
-                        fontSize: 11,
-                        fontWeight: 700,
-                        borderRadius: "50%",
-                        width: 50,
-                        height: 50,
+                        clipPath:
+                            "polygon(50% 0%, 59% 18%, 79% 10%, 76% 31%, 97% 33%, 83% 50%, 97% 67%, 76% 69%, 79% 90%, 59% 82%, 50% 100%, 41% 82%, 21% 90%, 24% 69%, 3% 67%, 17% 50%, 3% 33%, 24% 31%, 21% 10%, 41% 18%)",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
                         textAlign: "center",
-                        lineHeight: 1.1,
+                        fontFamily: "Lufga, sans-serif",
+                        fontSize: 20,
+                        fontWeight: 500,
+                        lineHeight: 1.2,
                         zIndex: 2,
                     }}
                 >
-                    50%<br />Sale
+                    00%
+                    <br />
+                    Sale
                 </span>
             )}
         </div>
@@ -2502,7 +2509,7 @@ function ShortlistSection() {
                             width: "100%",
                         }}
                     >
-                        <h2
+                        {/* <h2
                             style={{
                                 fontSize: 44,
                                 fontWeight: 500,
@@ -2530,10 +2537,10 @@ function ShortlistSection() {
                             }}
                         >
                             See All
-                        </a>
+                        </a> */}
                     </div>
 
-                    <svg
+                    {/* <svg
                         className="ctw-animation-text"
                         viewBox="0 0 1320 300"
                         aria-hidden="true"
@@ -2550,7 +2557,7 @@ function ShortlistSection() {
                         }}
                     >
                         <text x="100%" y="200" textAnchor="end">SHORTLIST</text>
-                    </svg>
+                    </svg> */}
                 </div>
 
                 {/* RIGHT — single large product */}
@@ -2739,7 +2746,7 @@ function Footer() {
             >
                 <div>
                     <div style={{ marginBottom: 24 }}>
-                        <img src={logo} alt="Chantallow" style={{ height: 40, width: "auto", display: "block" }} />
+                        <img src={logo} alt="Chantallow" style={{ height: 48, width: "auto", display: "block" }} />
                     </div>
                     <p style={{ fontSize: 13.5, fontFamily: 'Lufga', lineHeight: 2, color: "#5A5A52", margin: "0 0 6px" }}>
                         <strong style={{ color: "#1C1C1A" }}>Address :</strong> 000 Wall Street, UK, London

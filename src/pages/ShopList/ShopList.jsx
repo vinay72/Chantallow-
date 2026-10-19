@@ -10,12 +10,16 @@ import logo from "../../assets/logo.png";
 // Page banner background — commented out for now, uncomment once the asset is in place.
 // import bannerBg from "../../assets/background/bg2.jpg";
 
-import product1 from "../../assets/shop/product/1.png"; // Amber Glow
-import product2 from "../../assets/shop/product/2.png"; // Amethyst Relief
-import product3 from "../../assets/shop/product/3.png"; // Jasper Revive
+// New-label jar photography (white background)
+import amberGlowJar from "../../assets/beauty/amber-glow.jpg";
+import amethystReliefJar from "../../assets/beauty/amethyst-relief.jpg";
+import jasperReviveJar from "../../assets/beauty/jasper-revive.jpg";
 import malachiteFusionJar from "../../assets/beauty/malachite-fusion.jpg";
-import obsidianInfusionJar from "../../assets/beauty/obsidian-infusion.jpg";
 import olivineReliefJar from "../../assets/beauty/olivine-relief.jpg";
+import obsidianInfusionJar from "../../assets/beauty/obsidian-infusion.jpg";
+import talumaHairCareJar from "../../assets/beauty/taluma-hair-care.jpg";
+import bareWhippedTallowJar from "../../assets/beauty/bare-whipped-tallow.jpg";
+import furkindPetJar from "../../assets/pet/P1.png"; // swap for a single Furkind jar image if you have one
 
 
 import recentPost1 from "../../assets/shop/product/small/1.png";
@@ -49,6 +53,32 @@ const PRODUCTS = [
     },
     {
         id: 2,
+        name: "Bare Whipped Tallow",
+        tag: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil",
+        path: "/product/bare-whipped-tallow",
+        rating: 3,
+        reviews: 255,
+        description:
+            "Grass-fed beef tallow is naturally rich in Vitamins A, D, E, and K, as well as essential fatty acids that closely resemble the lipids found in healthy human skin. Vitamin A helps support skin renewal and promotes a smoother, healthier complexion. Vitamin D supports skin barrier function and overall skin resilience.",
+        price: "$00",
+        was: "$00",
+        img: bareWhippedTallowJar,
+    },
+    {
+        id: 3,
+        name: "Taluma Hair Care",
+        tag: "Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil",
+        path: "/product/taluma-hair-care",
+        rating: 3,
+        reviews: 255,
+        description:
+            "Taluma Hair Care is a deeply nourishing blend crafted with grass-fed grass-finished beef tallow, raw Honduran Batana oil, rosemary, argan oil, castor oil, black seed oil, and black cumin seed oil to help restore moisture, strengthen hair, and promote a healthier-looking scalp. Grass-Fed Beef Tallow is naturally rich in Vitamins A, D, E & K, essential fatty acids, and skin-compatible lipids that deeply condition the scalp, help reduce dryness, support healthy follicles, and improve softness and shine.",
+        price: "$00",
+        was: "$00",
+        img: talumaHairCareJar,
+    },
+    {
+        id: 4,
         name: "Jasper Revive",
         tag: "Coffee Infused Tallow",
         path: "/product/jasper-revive",
@@ -58,10 +88,10 @@ const PRODUCTS = [
             "A rich and moisturizing tallow crème infused with organic whole bean Colombian coffee to help soften, hydrate, and refresh the skin naturally. This handcrafted blend delivers deep nourishment with a smooth feel and warm coffee essence for everyday skincare.",
         price: "$00",
         was: "$00",
-        img: product3,
+        img: jasperReviveJar,
     },
     {
-        id: 3,
+        id: 5,
         name: "Amber Glow",
         tag: "1122+ MGO Manuka + Lavender Infused Tallow",
         path: "/product/amber-glow",
@@ -71,10 +101,10 @@ const PRODUCTS = [
             "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.",
         price: "$80",
         was: "$89",
-        img: product1,
+        img: amberGlowJar,
     },
     {
-        id: 4,
+        id: 6,
         name: "Amethyst Relief",
         tag: "Lavender Infused & Whipped Tallow",
         path: "/product/amethyst-relief",
@@ -84,10 +114,10 @@ const PRODUCTS = [
             "Our Lavender Infused Tallow is a rich, handcrafted moisturizer designed to soften and refresh your skin naturally. By combining the deep nourishment of grass-fed tallow with the soothing essence of organic lavender, this crème provides a smooth feel and a peaceful aroma for your everyday skincare routine.",
         price: "$00",
         was: "$00",
-        img: product2,
+        img: amethystReliefJar,
     },
     {
-        id: 5,
+        id: 7,
         name: "Obsidian Infusion",
         tag: "Cacao Infused Tallow",
         path: "/product/obsidian-infusion",
@@ -100,8 +130,8 @@ const PRODUCTS = [
         img: obsidianInfusionJar,
     },
     {
-        id: 6,
-        name: "Oilivine Relief",
+        id: 8,
+        name: "Olivine Relief",
         tag: "Zechstein Magnesium + Arnica",
         path: "/product/olivine-relief",
         rating: 5,
@@ -111,6 +141,19 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: olivineReliefJar,
+    },
+    {
+        id: 9,
+        name: "Furkind Pet Tallow",
+        tag: "Grass-Fed/Grass-Finished Beef Tallow, Organic Raw Unrefined Coconut Oil",
+        path: "/furkind-pet-tallow",
+        rating: 5,
+        reviews: 370,
+        description:
+            "Our nutrient-rich Pet Balm combines the nourishing power of grass-fed, grass-finished beef tallow with organic raw unrefined coconut oil to help soothe, protect, and restore dry, rough, or irritated skin and paws. Beef tallow is a natural source of Vitamin A, which supports skin renewal and healthy tissue maintenance; Vitamin D, which helps support skin barrier function; Vitamin E, a powerful antioxidant that helps protect against environmental stressors and supports moisture retention; and Vitamin K, which contributes to overall skin health.",
+        price: "$00",
+        was: "$00",
+        img: furkindPetJar,
     },
 ];
 
