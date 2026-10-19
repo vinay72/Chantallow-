@@ -43,12 +43,14 @@ const SECONDARY_NAV = [
 ];
 
 const CATEGORIES = [
-  { name: "Malachite Fusion", desc: "Moringa & Butterfly Pea for deep botanical support." },
-  { name: "Jasper Revive", desc: "Colombian Coffee infusion to refresh and hydrate." },
-  { name: "Amber Glow", desc: "Manuka Honey & Royal Jelly for ultimate skin food." },
-  { name: "Amethyst Relief", desc: "Organic Lavender for a soothing, peaceful aroma." },
-  { name: "Obsidian Infusion", desc: "Organic Cacao & Hazelnut for comforting moisture." },
-  { name: "Olivine Relief", desc: "Magnesium & Arnica for restorative muscle care." },
+  { name: "Malachite Fusion", desc: "Moringa & Butterfly Pea For Deep Botanical Support." },
+  { name: "Jasper Revive", desc: "Colombian Coffee Infusion To Refresh And Hydrate." },
+  { name: "Amber Glow", desc: "Manuka Honey & Royal Jelly For Ultimate Skin Food." },
+  { name: "Amethyst Relief", desc: "Organic Lavender For A Soothing, Peaceful Aroma." },
+  { name: "Obsidian Infusion", desc: "Organic Cacao & Hazelnut For Comforting Moisture." },
+  { name: "Olivine Relief", desc: "Magnesium & Arnica For Restorative Muscle Care." },
+  { name: "Bare Whipped Tallow", desc: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil." },
+  { name: "Taluma Hair Care", desc: "Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil." },
 ];
 
 const RECENT_POSTS = [
@@ -88,7 +90,7 @@ export default function AboutUs() {
 
   return (
     <div className="ct-page">
-      
+
 
       {/* ============ HEADER ============ */}
       <header className="ct-header">
@@ -209,8 +211,8 @@ export default function AboutUs() {
 
           <div className="ct-collage">
             <div className="ct-collage-main">
-  <img src={pic3} alt="Let your real beauty glow with our collection of skin & face products" />
-</div>
+              <img src={pic3} alt="Let your real beauty glow with our collection of skin & face products" />
+            </div>
 
             <div className="ct-collage-row">
               <div className="ct-collage-small dark">
@@ -231,77 +233,77 @@ export default function AboutUs() {
 
       {/* ============ FOOTER ============ */}
       <footer className="site-footer">
-            <div className="footer-top container">
-              <div>
-                <div className="footer-logo">
-                  <img src={logoImg} alt="Chantallow" className="footer-logo-img" />
-                  </div>
-                <p className="footer-contact">
-                  <strong>Address :</strong> 000 Wall Street, UK, London
-                </p>
-                <p className="footer-contact">
-                  <strong>E-mail :</strong> example@info.com
-                </p>
-                <p className="footer-contact">
-                  <strong>Phone :</strong> (000) 000-0000
-                </p>
-                <h6 className="footer-subtitle">Subscribe To Our Newsletter</h6>
-                <form className="footer-newsletter" onSubmit={(event) => event.preventDefault()}>
-                  <input type="email" placeholder="Your Email Address" aria-label="Email address" />
-                  <button type="submit" aria-label="Subscribe">
-                    <ArrowRight size={18} />
-                  </button>
-                </form>
-              </div>
-      
-              <div>
-                <h5 className="footer-title">Recent Posts</h5>
-                {RECENT_POSTS.map((post) => (
-                  <div className="footer-post" key={post.title}>
-                    <div className="footer-post-thumb">
-                      <img src={post.img} alt={post.title} />
-                    </div>
-                    <div className="footer-post-body">
-                      <div className="footer-post-title">{post.title}</div>
-                      <div className="footer-post-date">{post.date}</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-      
-              <div>
-                <h5 className="footer-title">Useful Links</h5>
-                <div className="footer-links">
-                  {USEFUL_LINKS.map((link) => (
-                    <a key={link} href="#" className="ctw-underline-link">
-                      {link}
-                    </a>
-                  ))}
+        <div className="footer-top container">
+          <div>
+            <div className="footer-logo">
+              <img src={logoImg} alt="Chantallow" className="footer-logo-img" />
+            </div>
+            <p className="footer-contact">
+              <strong>Address :</strong> 000 Wall Street, UK, London
+            </p>
+            <p className="footer-contact">
+              <strong>E-mail :</strong> example@info.com
+            </p>
+            <p className="footer-contact">
+              <strong>Phone :</strong> (000) 000-0000
+            </p>
+            <h6 className="footer-subtitle">Subscribe To Our Newsletter</h6>
+            <form className="footer-newsletter" onSubmit={(event) => event.preventDefault()}>
+              <input type="email" placeholder="Your Email Address" aria-label="Email address" />
+              <button type="submit" aria-label="Subscribe">
+                <ArrowRight size={18} />
+              </button>
+            </form>
+          </div>
+
+          <div>
+            <h5 className="footer-title">Recent Posts</h5>
+            {RECENT_POSTS.map((post) => (
+              <div className="footer-post" key={post.title}>
+                <div className="footer-post-thumb">
+                  <img src={post.img} alt={post.title} />
+                </div>
+                <div className="footer-post-body">
+                  <div className="footer-post-title">{post.title}</div>
+                  <div className="footer-post-date">{post.date}</div>
                 </div>
               </div>
-      
-              <div>
-                <h5 className="footer-title">Social Media</h5>
-                <div className="footer-links social">
-                  {SOCIALS.map((s) => (
-                    <a key={s.label} href="#" className="ctw-underline-link">
-                      <s.icon size={15} /> {s.label}
-                    </a>
-                  ))}
-                </div>
-              </div>
+            ))}
+          </div>
+
+          <div>
+            <h5 className="footer-title">Useful Links</h5>
+            <div className="footer-links">
+              {USEFUL_LINKS.map((link) => (
+                <a key={link} href="#" className="ctw-underline-link">
+                  {link}
+                </a>
+              ))}
             </div>
-      
-            <div className="footer-bottom container">
-              <p>
-                © 2026 <span className="footer-copyright-brand">Chantallow</span> Theme. All Rights Reserved.
-              </p>
-              <div className="footer-pay">
-                <span>We Accept:</span>
-                <img src={footerImg} alt="Accepted payment methods" />
-              </div>
+          </div>
+
+          <div>
+            <h5 className="footer-title">Social Media</h5>
+            <div className="footer-links social">
+              {SOCIALS.map((s) => (
+                <a key={s.label} href="#" className="ctw-underline-link">
+                  <s.icon size={15} /> {s.label}
+                </a>
+              ))}
             </div>
-          </footer>
+          </div>
+        </div>
+
+        <div className="footer-bottom container">
+          <p>
+            © 2026 <span className="footer-copyright-brand">Chantallow</span> Theme. All Rights Reserved.
+          </p>
+          <div className="footer-pay">
+            <span>We Accept:</span>
+            <img src={footerImg} alt="Accepted payment methods" />
+          </div>
+        </div>
+      </footer>
 
       <button
         className="ct-scrolltop"
