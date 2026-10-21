@@ -6,9 +6,10 @@ import "./login.css";
 import logo from "../../assets/logo.png";
 
 // Banner slider images — commented out for now, uncomment once the assets are in place.
-// import bannerImg1 from "../../assets/registration/pic1.jpg";
-// import bannerImg2 from "../../assets/registration/pic2.jpg";
-// import bannerImg3 from "../../assets/registration/pic3.jpg";
+// Banner slider images
+import bannerImg1 from "../../assets/registration/slide-bare.jpg";
+import bannerImg2 from "../../assets/registration/slide-malachite.jpg";
+import bannerImg3 from "../../assets/registration/slide-obsidian.jpg";
 
 import recentPost1 from "../../assets/shop/product/small/1.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
@@ -25,19 +26,19 @@ const NAV_LINKS = [
 
 const SLIDES = [
     {
-        // img: bannerImg1,
+        img: bannerImg1,
         quote: "Skin, a canvas of life's journey, bears the marks of resilience and the glow of inner vitality.",
         name: "Sophie Hall",
         rating: 3,
     },
     {
-        // img: bannerImg2,
+        img: bannerImg2,
         quote: "Serums, the alchemy of skincare, unlock the secrets of radiant beauty with every drop.",
         name: "Sophie Hall",
         rating: 3,
     },
     {
-        // img: bannerImg3,
+        img: bannerImg3,
         quote: "Beauty is not confined to symmetry; it flourishes in the uniqueness of every body's story.",
         name: "Sophie Hall",
         rating: 3,
@@ -194,7 +195,7 @@ function SignInSection() {
             {/* RIGHT — Banner slider */}
             <div
                 className="ctw-signin-right"
-            // style={{ backgroundImage: `url(${SLIDES[slide].img})` }}
+            style={{ backgroundImage: `url(${SLIDES[slide].img})` }}
             >
                 <div className="ctw-signin-right-overlay" />
                 <div className="ctw-signin-right-content">
