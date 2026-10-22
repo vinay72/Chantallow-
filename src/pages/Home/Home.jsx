@@ -14,6 +14,10 @@ import pic1 from "../../assets/pic1.png";
 import pic2 from "../../assets/pic2.png";
 import lavender from "../../assets/lavender.png";
 
+import CollectionCard from "../../components/CollectionCard";
+import { useShop } from "../../context/ShopContext";
+import { formatPrice } from "../../data/products";
+
 
 
 import petMap from "../../assets/map/map2.png";
@@ -177,6 +181,24 @@ const NEW_ARRIVALS = [
 
 const CATEGORY_MARQUEE = ["Accessories", "Haircare", "Nailcare", "Beautycare", "Bodycare", "Skincare"];
 
+// Small count bubble shown on the header heart / cart icons
+const COUNT_BADGE_STYLE = {
+    position: "absolute",
+    top: -4,
+    right: -6,
+    minWidth: 18,
+    height: 18,
+    padding: "0 5px",
+    borderRadius: 9,
+    background: "#41705B",
+    color: "#fff",
+    fontSize: 11,
+    lineHeight: "18px",
+    textAlign: "center",
+    fontFamily: "'DM Sans', sans-serif",
+    pointerEvents: "none",
+};
+
 export default function Home() {
     const navigate = useNavigate();
     const [menuOpen, setMenuOpen] = useState(false);
@@ -200,6 +222,7 @@ export default function Home() {
                 menuOpen={menuOpen}
                 setMenuOpen={setMenuOpen}
                 setCartOpen={setCartOpen}
+                setCartTab={setCartTab}
                 setSearchOpen={setSearchOpen}
             />
 
@@ -307,7 +330,15 @@ function GlobalStyle() {
 
 /* -------------------------------- Header -------------------------------- */
 
-function Header({ menuOpen, setMenuOpen, setCartOpen, setSearchOpen }) {
+function Header({ menuOpen, setMenuOpen, setCartOpen, setCartTab, setSearchOpen }) {
+    const { cartCount, wishlistCount } = useShop();
+
+    // Same drawer as before, but each icon now opens its own tab
+    const openDrawer = (tab) => {
+        setCartTab(tab);
+        setCartOpen(true);
+    };
+
     return (
         <header style={{ position: "sticky", top: 0, zIndex: 40 }}>
             <div className="ctw-header">
@@ -334,11 +365,23 @@ function Header({ menuOpen, setMenuOpen, setCartOpen, setSearchOpen }) {
                     <button className="ctw-icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}>
                         <Search size={21} strokeWidth={1.5} color="#000" />
                     </button>
-                    <button className="ctw-icon-btn" aria-label="Wishlist" onClick={() => setCartOpen(true)}>
+                    <button
+                        className="ctw-icon-btn"
+                        aria-label={`Wishlist (${wishlistCount})`}
+                        onClick={() => openDrawer("wishlist")}
+                        style={{ position: "relative" }}
+                    >
                         <Heart size={21} strokeWidth={1.5} color="#000" />
+                        {wishlistCount > 0 && <span style={COUNT_BADGE_STYLE}>{wishlistCount}</span>}
                     </button>
-                    <button className="ctw-icon-btn" aria-label="Cart" onClick={() => setCartOpen(true)}>
+                    <button
+                        className="ctw-icon-btn"
+                        aria-label={`Cart (${cartCount})`}
+                        onClick={() => openDrawer("cart")}
+                        style={{ position: "relative" }}
+                    >
                         <ShoppingCart size={21} strokeWidth={1.5} color="#000" />
+                        {cartCount > 0 && <span style={COUNT_BADGE_STYLE}>{cartCount}</span>}
                     </button>
                     <button className="ctw-icon-btn ctw-menu-btn" aria-label="Toggle menu" onClick={() => setMenuOpen((v) => !v)}>
                         <Menu size={22} />
@@ -352,6 +395,8 @@ function Header({ menuOpen, setMenuOpen, setCartOpen, setSearchOpen }) {
 /* --------------------------------- Hero --------------------------------- */
 
 function Hero({ navigate }) {
+    const { addToCart, showToast } = useShop();
+
     return (
         <section
             id="home"
@@ -497,11 +542,11 @@ function Hero({ navigate }) {
                         Add to Cart
                     </button>
 
-                    {/* Mini product cards — unchanged */}
+                    {/* Mini product cards — "+" now adds that product to the cart */}
                     <div style={{ display: "flex", gap: 40, alignItems: "center", flexWrap: "nowrap" }}>
                         {[
-                            { name: "Amber Glow", img: IMAGES.productPic1 },
-                            { name: "Amethyst Relief", img: IMAGES.productPic2 },
+                            { id: 1, name: "Amber Glow", img: IMAGES.productPic1 },
+                            { id: 2, name: "Amethyst Relief", img: IMAGES.productPic2 },
                         ].map((p) => (
                             <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
                                 <div style={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
@@ -527,6 +572,10 @@ function Hero({ navigate }) {
                                     />
                                     <button
                                         aria-label={`Add ${p.name} to cart`}
+                                        onClick={() => {
+                                            addToCart(p.id, 1);
+                                            showToast(`${p.name} added to cart`);
+                                        }}
                                         style={{
                                             position: "absolute",
                                             top: 0,
@@ -763,130 +812,10 @@ function MissionStrip() {
 }
 
 /* --------------------------- Tallow Collection --------------------------- */
-
-function CollectionCard({ c, onQuickView }) {
-    return (
-        <div
-            className="ctw-card-hover"
-            style={{
-                background: "#fff",
-                borderRadius: 16,
-                overflow: "hidden",
-                border: "1px solid #E2E9DA",
-            }}
-        >
-            <div
-                style={{
-                    position: "relative",
-                    aspectRatio: "4 / 4.2",
-                    background: `linear-gradient(150deg, ${c.accent}24, ${c.accent}55)`,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    overflow: "hidden",
-                }}
-            >
-                <img
-                    src={c.img}
-                    alt={`Chantallow ${c.name} tallow skincare jar`}
-                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                />
-                {c.tag && (
-                    <span
-                        style={{
-                            position: "absolute",
-                            top: 12,
-                            left: 12,
-                            background: "#1C1C1A",
-                            color: "#fff",
-                            fontSize: 10,
-                            fontWeight: 700,
-                            padding: "5px 10px",
-                            borderRadius: 20,
-                            textTransform: "uppercase",
-                        }}
-                    >
-                        {c.tag}
-                    </span>
-                )}
-                <button
-                    onClick={() => onQuickView()}
-                    style={{
-                        position: "absolute",
-                        bottom: 14,
-                        left: 14,
-                        background: "#41705B",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: 20,
-                        padding: "9px 16px",
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        cursor: "pointer",
-                    }}
-                >
-                    Quick View
-                </button>
-                <button
-                    aria-label="Add to cart"
-                    style={{
-                        position: "absolute",
-                        bottom: 14,
-                        right: 14,
-                        background: "#1C1C1A",
-                        color: "#fff",
-                        border: "none",
-                        borderRadius: "50%",
-                        width: 38,
-                        height: 38,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                    }}
-                >
-                    <ShoppingBag size={16} />
-                </button>
-                <button
-                    aria-label="Add to wishlist"
-                    style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 12,
-                        background: "#fff",
-                        border: "none",
-                        borderRadius: "50%",
-                        width: 32,
-                        height: 32,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        cursor: "pointer",
-                    }}
-                >
-                    <Heart size={14} />
-                </button>
-            </div>
-            <div style={{ padding: "16px 18px 20px" }}>
-                <h5
-                    style={{
-                        margin: "0 0 6px",
-                        fontSize: 20,
-                        fontFamily: "Marcellus, sans-serif",
-                        fontWeight: 700,
-                        color: "#3B1941",
-                        textTransform: "uppercase",
-                    }}
-                >
-                    {c.name}
-                </h5>
-                <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
-                    $00 <span style={{ textDecoration: "line-through" }}>$00</span>
-                </span>
-            </div>
-        </div>
-    );
-}
+/* Cards come from components/CollectionCard.jsx:
+     image  -> product detail page
+     heart  -> adds/removes favourite, stays on Home
+     bag    -> adds to cart, stays on Home                                    */
 
 function TallowCollection({ onQuickView }) {
     const width = window.innerWidth;
@@ -1966,8 +1895,6 @@ function SavingSection() {
     );
 }
 
-
-/* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
 /* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
@@ -3108,17 +3035,41 @@ function SearchOverlay({ open, onClose }) {
     );
 }
 
+/* Side drawer — same look as before, now filled with the real cart / wishlist */
 function CartDrawer({ open, onClose, tab, setTab }) {
-    const cartItems = [
-        { id: 1, name: "Soothing Body Cream", price: "$50.00" },
-        { id: 2, name: "Body Toner", price: "$40.00" },
-        { id: 3, name: "Brightening Serum", price: "$65.00" },
-    ];
-    const wishlistItems = [
-        { id: 1, name: "Soothing Body Cream", price: "$50.00" },
-        { id: 2, name: "Body Toner", price: "$40.00" },
-    ];
-    const items = tab === "cart" ? cartItems : wishlistItems;
+    const navigate = useNavigate();
+    const {
+        cartItems,
+        wishlistItems,
+        cartCount,
+        wishlistCount,
+        subtotal,
+        removeFromCart,
+        removeFromWishlist,
+    } = useShop();
+
+    const goTo = (path) => {
+        onClose();
+        navigate(path);
+    };
+
+    // Normalise both lists into the same row shape the drawer renders
+    const rows =
+        tab === "cart"
+            ? cartItems.map((line) => ({
+                key: line.key,
+                product: line.product,
+                meta: `${line.size} × ${line.qty}`,
+                price: formatPrice(line.product.price * line.qty),
+                onRemove: () => removeFromCart(line.key),
+            }))
+            : wishlistItems.map((product) => ({
+                key: product.id,
+                product,
+                meta: product.subtitle,
+                price: formatPrice(product.price),
+                onRemove: () => removeFromWishlist(product.id),
+            }));
 
     return (
         <div
@@ -3178,7 +3129,7 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                             color: tab === "cart" ? "#fff" : "#1C1C1A",
                         }}
                     >
-                        Cart (5)
+                        Cart ({cartCount})
                     </button>
                     <button
                         onClick={() => setTab("wishlist")}
@@ -3191,13 +3142,19 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                             color: tab === "wishlist" ? "#fff" : "#1C1C1A",
                         }}
                     >
-                        Wishlist (2)
+                        Wishlist ({wishlistCount})
                     </button>
                 </div>
 
-                {items.map((it) => (
+                {rows.length === 0 && (
+                    <p style={{ fontSize: 14, color: "#8A8A80", textAlign: "center", margin: "32px 0" }}>
+                        {tab === "cart" ? "Your cart is empty." : "Your wishlist is empty."}
+                    </p>
+                )}
+
+                {rows.map((row) => (
                     <div
-                        key={it.id}
+                        key={row.key}
                         style={{
                             display: "flex",
                             alignItems: "center",
@@ -3208,19 +3165,38 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                         }}
                     >
                         <div
+                            onClick={() => goTo(`/product/${row.product.slug}`)}
                             style={{
                                 width: 60,
                                 height: 60,
                                 borderRadius: 10,
                                 background: "linear-gradient(150deg,#EFEBDD,#D9CFAE)",
                                 flexShrink: 0,
+                                overflow: "hidden",
+                                cursor: "pointer",
                             }}
-                        />
-                        <div style={{ flex: 1 }}>
-                            <div style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4 }}>{it.name}</div>
-                            <div style={{ fontSize: 13, color: "#41705B", fontWeight: 700 }}>{it.price}</div>
+                        >
+                            <img
+                                src={row.product.gallery[0]}
+                                alt={row.product.name}
+                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+                            />
                         </div>
-                        <button aria-label="Remove" style={{ background: "none", border: "none", cursor: "pointer" }}>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                            <div
+                                onClick={() => goTo(`/product/${row.product.slug}`)}
+                                style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4, cursor: "pointer" }}
+                            >
+                                {row.product.name}
+                            </div>
+                            <div style={{ fontSize: 12, color: "#8A8A80", marginBottom: 4 }}>{row.meta}</div>
+                            <div style={{ fontSize: 13, color: "#41705B", fontWeight: 700 }}>{row.price}</div>
+                        </div>
+                        <button
+                            aria-label={`Remove ${row.product.name}`}
+                            onClick={row.onRemove}
+                            style={{ background: "none", border: "none", cursor: "pointer" }}
+                        >
                             <X size={16} color="#B4B4A8" />
                         </button>
                     </div>
@@ -3238,10 +3214,12 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                             }}
                         >
                             <span>Subtotal:</span>
-                            <span>$300.00</span>
+                            <span>{formatPrice(subtotal)}</span>
                         </div>
                         <button
                             className="ctw-btn"
+                            onClick={() => goTo("/cart")}
+                            disabled={cartItems.length === 0}
                             style={{
                                 width: "100%",
                                 background: "transparent",
@@ -3250,12 +3228,14 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                                 padding: "14px 0",
                                 borderRadius: 30,
                                 marginBottom: 10,
+                                opacity: cartItems.length === 0 ? 0.5 : 1,
                             }}
                         >
                             Checkout
                         </button>
                         <button
                             className="ctw-btn"
+                            onClick={() => goTo("/cart")}
                             style={{
                                 width: "100%",
                                 background: "#1C1C1A",
@@ -3271,6 +3251,7 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                 {tab === "wishlist" && (
                     <button
                         className="ctw-btn"
+                        onClick={() => goTo("/wishlist")}
                         style={{
                             width: "100%",
                             background: "#1C1C1A",

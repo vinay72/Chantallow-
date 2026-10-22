@@ -1,39 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import "./ProductDetail.css";
-import malachiteFusionJar from "../../assets/beauty/malachite-fusion.jpg";
-import obsidianInfusionJar from "../../assets/beauty/obsidian-infusion.jpg";
 import sealRecycle from "../../assets/a.png";
 import sealNatural from "../../assets/b.png";
 import sealMadeWithLove from "../../assets/c.png";
-import logo from "../../assets/logo.png";
-import recentPost1 from "../../assets/shop/product/small/1.png";
-import recentPost2 from "../../assets/shop/product/small/2.png";
-import recentPost3 from "../../assets/shop/product/small/3.png";
-import footerImg from "../../assets/footer/footer.png";
+import SiteFooter from "../../components/SiteFooter";
+import { useShop } from "../../context/ShopContext";
+import { PRODUCTS, getProductBySlug, formatPrice } from "../../data/products";
 
 /**
- * Chantallow — Product Detail Page
- * Markup/logic here + styles in ProductDetail.css.
- * Includes scroll functionality:
- *  - Sticky product image (stays pinned while right content scrolls)
- *  - Scroll-to-top button that appears after scrolling down
- *  - Smooth scrolling behavior
+ * Chantallow — Product Detail Page (dynamic)
+ * Route: /product/:slug   e.g. /product/malachite-fusion
+ * The product is looked up from src/data/products.js by its slug.
  */
 
-const THUMBNAILS = [
-  { id: 1, alt: "Malachite Fusion jar - front view", src: malachiteFusionJar },
-  { id: 2, alt: "Malachite Fusion jar - label detail", src: malachiteFusionJar },
-  { id: 3, alt: "Malachite Fusion jar - side view", src: malachiteFusionJar },
-];
-
-const RELATED_PRODUCTS = [
-  { id: "cleansing", name: "Cleansing Body Wash", price: 80, oldPrice: 89, image: obsidianInfusionJar },
-  { id: "malachite", name: "Malachite Fusion", price: 80, oldPrice: 89, image: malachiteFusionJar },
-  { id: "nourishing", name: "Nourishing Body Butter", price: 80, oldPrice: 89, image: malachiteFusionJar },
-  { id: "exfoliating", name: "Exfoliating Body Scrub", price: 80, oldPrice: 89, image: malachiteFusionJar },
-];
+const countBadge = {
+  position: "absolute",
+  top: -4,
+  right: -6,
+  minWidth: 18,
+  height: 18,
+  padding: "0 5px",
+  borderRadius: 9,
+  background: "#41705B",
+  color: "#fff",
+  fontSize: 11,
+  lineHeight: "18px",
+  textAlign: "center",
+};
 
 function StarRating({ rating = 3, outOf = 5 }) {
   return (
@@ -53,26 +47,21 @@ function StarRating({ rating = 3, outOf = 5 }) {
   );
 }
 
-/** Scroll-to-top button — appears after the user scrolls down. */
 function ScrollTopButton() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     const onScroll = () => setVisible(window.scrollY > 400);
     window.addEventListener("scroll", onScroll, { passive: true });
-    onScroll(); // set initial state
+    onScroll();
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  };
 
   return (
     <button
       type="button"
       className={`ct-scrolltop ${visible ? "is-visible" : ""}`}
-      onClick={scrollToTop}
+      onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Scroll to top"
       aria-hidden={!visible}
       tabIndex={visible ? 0 : -1}
@@ -85,7 +74,51 @@ function ScrollTopButton() {
   );
 }
 
+function PageHeader() {
+  const { cartCount, wishlistCount } = useShop();
+  return (
+    <header className="ct-header">
+      <div className="ct-header__inner">
+        <Link to="/" className="ct-logo">
+          <span className="ct-logo__mark" aria-hidden="true">⚉</span>
+          <span className="ct-logo__text">CHANTALLOW</span>
+        </Link>
+
+        <nav className="ct-nav" aria-label="Primary">
+          <Link to="/">Home +</Link>
+          <Link to="/aboutus">About Us +</Link>
+          <Link to="/shop-list">Shop +</Link>
+          <Link to="/blog">Blog +</Link>
+          <Link to="/contactus">Contact US +</Link>
+        </nav>
+
+        <div className="ct-header__actions">
+          <Link to="/registration" className="ct-login-link">
+            Login /<br />Register
+          </Link>
+          <button type="button" className="ct-icon-btn" aria-label="Search">
+            <SearchIcon />
+          </button>
+          <Link to="/wishlist" className="ct-icon-btn" aria-label="Favourites" style={{ position: "relative" }}>
+            <HeartIcon />
+            {wishlistCount > 0 && <span style={countBadge}>{wishlistCount}</span>}
+          </Link>
+          <Link to="/cart" className="ct-icon-btn" aria-label="Cart" style={{ position: "relative" }}>
+            <CartIcon />
+            {cartCount > 0 && <span style={countBadge}>{cartCount}</span>}
+          </Link>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 export default function ProductDetail() {
+  const { slug } = useParams();
+  const navigate = useNavigate();
+  const product = getProductBySlug(slug);
+  const { addToCart, addToWishlist, isInWishlist } = useShop();
+
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("2oz");
   const [quantity, setQuantity] = useState(1);
@@ -93,8 +126,14 @@ export default function ProductDetail() {
   const decrementQty = () => setQuantity((q) => Math.max(1, q - 1));
   const incrementQty = () => setQuantity((q) => q + 1);
 
-  /* Enable smooth scrolling for the whole page while this page is mounted
-     (anchor links like "(5 customer reviews)" glide instead of jumping). */
+  // Reset selections and jump to top whenever a different product is opened
+  useEffect(() => {
+    setActiveImage(0);
+    setSelectedSize("2oz");
+    setQuantity(1);
+    window.scrollTo({ top: 0, behavior: "instant" });
+  }, [slug]);
+
   useEffect(() => {
     const prev = document.documentElement.style.scrollBehavior;
     document.documentElement.style.scrollBehavior = "smooth";
@@ -103,45 +142,16 @@ export default function ProductDetail() {
     };
   }, []);
 
-  /* -------- Pinned gallery scroll effect --------
-     Three phases as you scroll:
-       1. BEFORE  — image sits at the top of its column.
-       2. PINNED  — the image is translated down by exactly the amount the
-                    page has scrolled, so the two cancel out and the image
-                    appears completely motionless on screen while the info
-                    column and sidebar scroll past it.
-       3. RELEASED— once the image reaches the bottom of its column, the
-                    translate stops growing and it rides away with the page.
-
-     Implemented with `transform: translate3d` rather than `position: fixed`
-     or `position: sticky`, because:
-       - `sticky` is silently broken by any ancestor with `overflow` set.
-       - `fixed`  is silently broken by any ancestor with `transform`,
-                  `filter`, `perspective`, `backdrop-filter` or `will-change`
-                  (it then resolves against that ancestor, not the viewport).
-       - `transform` on the element itself always works, in every case.
-
-     `galleryWrapperRef` is a normal grid item that stretches to the full
-     row height (see .ct-product in the CSS — it must NOT use align-items:
-     start, or the wrapper collapses and there is no travel distance).
-     `galleryInnerRef` is the element that actually gets translated. */
+  /* -------- Pinned gallery scroll effect (unchanged logic) -------- */
   const galleryWrapperRef = useRef(null);
   const galleryInnerRef = useRef(null);
-  const productRef = useRef(null);
 
   useEffect(() => {
-    const HEADER_OFFSET = 88; // height of the sticky header + breathing room
+    const HEADER_OFFSET = 88;
 
     const reset = () => {
       const inner = galleryInnerRef.current;
-      if (!inner) return;
-      inner.style.position = "";
-      inner.style.top = "";
-      inner.style.left = "";
-      inner.style.bottom = "";
-      inner.style.width = "";
-      inner.style.transform = "";
-      inner.style.zIndex = "";
+      if (inner) inner.style.transform = "";
     };
 
     const update = () => {
@@ -149,7 +159,6 @@ export default function ProductDetail() {
       const inner = galleryInnerRef.current;
       if (!wrapper || !inner) return;
 
-      // On stacked mobile layout, don't pin at all.
       if (window.innerWidth <= 760) {
         reset();
         return;
@@ -157,30 +166,15 @@ export default function ProductDetail() {
 
       const wrapperRect = wrapper.getBoundingClientRect();
       const innerHeight = inner.getBoundingClientRect().height;
-
-      // Total distance the image is allowed to travel down its column
-      // before it reaches the bottom and rides away with the page.
       const maxShift = wrapperRect.height - innerHeight;
 
       if (maxShift <= 0) {
-        // Image is as tall as (or taller than) its column — nothing to pin.
         inner.style.transform = "";
         return;
       }
 
-      // How far the top of the column has scrolled past the header line.
       const rawShift = HEADER_OFFSET - wrapperRect.top;
-
-      // Clamp:
-      //   0        -> phase 1, not reached yet (image at top of column)
-      //   0..max   -> phase 2, pinned (translate cancels out the scroll,
-      //               so the image appears completely motionless)
-      //   maxShift -> phase 3, released (image rides away with the page)
       const shift = Math.min(Math.max(rawShift, 0), maxShift);
-
-      // A transform is used rather than position:fixed because `fixed` is
-      // silently broken by any ancestor with transform/filter/will-change,
-      // whereas a transform on the element itself always works.
       inner.style.transform = `translate3d(0, ${shift}px, 0)`;
     };
 
@@ -197,78 +191,69 @@ export default function ProductDetail() {
 
     window.addEventListener("scroll", onScroll, { passive: true });
     window.addEventListener("resize", onScroll);
-    update(); // set correct position on mount / refresh mid-page
+    update();
 
     return () => {
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
       reset();
     };
-  }, []);
+  }, [slug]);
+
+  /* -------- Unknown slug -------- */
+  if (!product) {
+    return (
+      <div className="ct-page">
+        <PageHeader />
+        <main className="ct-container" style={{ padding: "120px 24px", textAlign: "center" }}>
+          <h2>Product not found</h2>
+          <p>We couldn't find that product.</p>
+          <Link to="/shop-list" className="ct-btn ct-btn--primary">Back to shop</Link>
+        </main>
+        <SiteFooter />
+      </div>
+    );
+  }
+
+  const liked = isInWishlist(product.id);
+  const gallery = product.gallery.map((src, i) => ({ id: i, src, alt: `${product.name} - image ${i + 1}` }));
+  const related = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+  const lineTotal = product.price * quantity;
+  const lineSavings = Math.max(0, product.oldPrice - product.price) * quantity;
+
+  const handleAddToCart = () => {
+    addToCart(product.id, quantity, selectedSize);
+    navigate("/cart");
+  };
+
+  const handleWishlist = () => {
+    addToWishlist(product.id);
+    navigate("/wishlist");
+  };
 
   return (
     <div className="ct-page">
-      {/* ---------------- Header ---------------- */}
-      <header className="ct-header">
-        <div className="ct-header__inner">
-          <a href="/" className="ct-logo">
-            <span className="ct-logo__mark" aria-hidden="true">
-              ⚉
-            </span>
-            <span className="ct-logo__text">CHANTALLOW</span>
-          </a>
-
-          <nav className="ct-nav" aria-label="Primary">
-            <a href="/">Home +</a>
-            <a href="/about-us">About Us +</a>
-            <a href="/shop-list">Shop +</a>
-            <a href="/blog-category">Blog +</a>
-            <a href="/contact-us">Contact US +</a>
-          </nav>
-
-          <div className="ct-header__actions">
-            <a href="/registration" className="ct-login-link">
-              Login /<br />Register
-            </a>
-            <button type="button" className="ct-icon-btn" aria-label="Search">
-              <SearchIcon />
-            </button>
-            <button type="button" className="ct-icon-btn" aria-label="Wishlist">
-              <HeartIcon />
-            </button>
-            <button type="button" className="ct-icon-btn" aria-label="Cart">
-              <CartIcon />
-            </button>
-          </div>
-        </div>
-      </header>
+      <PageHeader />
 
       {/* ---------------- Banner ---------------- */}
       <div className="ct-banner">
         <div className="ct-banner__inner">
           <h1>Products Details</h1>
           <nav aria-label="Breadcrumb" className="ct-breadcrumb">
-            <a href="/">Home</a>
+            <Link to="/">Home</Link>
             <span aria-hidden="true">◆</span>
-            <span>Products Details</span>
+            <span>{product.name}</span>
           </nav>
         </div>
       </div>
 
       {/* ---------------- Product Detail ---------------- */}
-      <main className="ct-container ct-product" ref={productRef}>
-        {/* Gallery — JS-pinned: image is completely static in the
-            viewport while the info column scrolls, released when the
-            text/sidebar content ends */}
+      <main className="ct-container ct-product">
         <section className="ct-gallery" aria-label="Product images" ref={galleryWrapperRef}>
           <div className="ct-gallery__main" ref={galleryInnerRef}>
-            <img
-              className="ct-jar-photo"
-              src={THUMBNAILS[activeImage].src}
-              alt={THUMBNAILS[activeImage].alt}
-            />
+            <img className="ct-jar-photo" src={gallery[activeImage].src} alt={gallery[activeImage].alt} />
             <div className="ct-gallery__thumbs">
-              {THUMBNAILS.map((thumb, i) => (
+              {gallery.map((thumb, i) => (
                 <button
                   key={thumb.id}
                   type="button"
@@ -283,32 +268,25 @@ export default function ProductDetail() {
           </div>
         </section>
 
-        {/* Info */}
         <section className="ct-info" aria-label="Product information">
-          <span className="ct-badge">SALE 20% OFF</span>
-          <h2 className="ct-info__title">Malachite Fusion</h2>
-          <p className="ct-info__subtitle">Malachite Fusion</p>
+          {product.badge && <span className="ct-badge">{product.badge}</span>}
+          <h2 className="ct-info__title">{product.name}</h2>
+          <p className="ct-info__subtitle">{product.subtitle}</p>
 
           <div className="ct-review-row">
             <StarRating rating={3} />
             <span className="ct-review-row__rating">4.7 Rating</span>
-            <a href="#reviews" className="ct-review-row__count">
-              (5 customer reviews)
-            </a>
+            <a href="#reviews" className="ct-review-row__count">(5 customer reviews)</a>
           </div>
 
           <div className="ct-copy-block">
             <h3>Description:</h3>
-            <p>
-              A rich, nourishing tallow crème made with grass-fed, grass-finished beef tallow and
-              infused with botanical herbs to deeply moisturize and support soft, healthy-looking
-              skin naturally.
-            </p>
+            <p>{product.description}</p>
           </div>
 
           <div className="ct-copy-block">
             <h3>Ingredients:</h3>
-            <p>Grass-Fed/Grass-Finished Beef Tallow infused with Moringa</p>
+            <p>{product.ingredients}</p>
           </div>
 
           <div className="ct-copy-block">
@@ -324,79 +302,62 @@ export default function ProductDetail() {
           <fieldset className="ct-size">
             <legend className="ct-label">Select Size</legend>
             <div className="ct-size__options">
-              <label className={`ct-size__option ${selectedSize === "2oz" ? "is-selected" : ""}`}>
-                <input
-                  type="radio"
-                  name="size"
-                  value="2oz"
-                  checked={selectedSize === "2oz"}
-                  onChange={() => setSelectedSize("2oz")}
-                />
-                2 .Oz
-              </label>
-              <label className={`ct-size__option ${selectedSize === "1.7oz" ? "is-selected" : ""}`}>
-                <input
-                  type="radio"
-                  name="size"
-                  value="1.7oz"
-                  checked={selectedSize === "1.7oz"}
-                  onChange={() => setSelectedSize("1.7oz")}
-                />
-                1.7 .Oz
-              </label>
+              {[
+                { value: "2oz", label: "2 .Oz" },
+                { value: "1.7oz", label: "1.7 .Oz" },
+              ].map((s) => (
+                <label key={s.value} className={`ct-size__option ${selectedSize === s.value ? "is-selected" : ""}`}>
+                  <input
+                    type="radio"
+                    name="size"
+                    value={s.value}
+                    checked={selectedSize === s.value}
+                    onChange={() => setSelectedSize(s.value)}
+                  />
+                  {s.label}
+                </label>
+              ))}
             </div>
           </fieldset>
 
           <div className="ct-price-row">
             <span className="ct-label">Price</span>
             <div className="ct-price">
-              <span className="ct-price__current">$000.00</span>
-              <del className="ct-price__old">$000.00</del>
+              <span className="ct-price__current">{formatPrice(product.price)}</span>
+              <del className="ct-price__old">{formatPrice(product.oldPrice)}</del>
             </div>
           </div>
 
           <div className="ct-qty-row">
             <span className="ct-label">Quantity</span>
             <div className="ct-qty-stepper">
-              <button type="button" onClick={decrementQty} aria-label="Decrease quantity">
-                −
-              </button>
+              <button type="button" onClick={decrementQty} aria-label="Decrease quantity">−</button>
               <input type="text" readOnly value={quantity} aria-label="Quantity" />
-              <button type="button" onClick={incrementQty} aria-label="Increase quantity">
-                +
-              </button>
+              <button type="button" onClick={incrementQty} aria-label="Increase quantity">+</button>
             </div>
           </div>
 
           <div className="ct-cta-row">
-            <button type="button" className="ct-btn ct-btn--primary">
+            <button type="button" className="ct-btn ct-btn--primary" onClick={handleAddToCart}>
               ADD TO CART
             </button>
-            <button type="button" className="ct-btn ct-btn--outline">
-              <HeartIcon small /> Add To Wishlist
+            <button type="button" className="ct-btn ct-btn--outline" onClick={handleWishlist}>
+              <HeartIcon small filled={liked} /> {liked ? "In Your Wishlist" : "Add To Wishlist"}
             </button>
           </div>
 
           <hr className="ct-divider" />
 
           <div className="ct-meta-row">
-            <strong>SKU:</strong> <span>PRT584E63A</span>
+            <strong>SKU:</strong> <span>CT-{String(product.id).padStart(4, "0")}</span>
           </div>
 
           <div className="ct-meta-row ct-share">
             <strong>Share:</strong>
-            <a href="https://www.facebook.com/indiankoder" target="_blank" rel="noreferrer" aria-label="Share on Facebook">
-              f
-            </a>
-            <a href="#" aria-label="Share on LinkedIn">
-              in
-            </a>
-            <a href="#" aria-label="Share on Instagram">
-              ig
-            </a>
-            <a href="#" aria-label="Share on X">
-              x
-            </a>
+            <a href="https://www.facebook.com/indiankoder" target="_blank" rel="noreferrer" aria-label="Share on Facebook">f</a>
+            <a href="#" aria-label="Share on LinkedIn">in</a>
+            <a href="#" aria-label="Share on Instagram">ig</a>
+            <a href="#" aria-label="Share on X">x</a>
           </div>
 
           <p className="ct-tagline">Non-toxic. Handmade. Nourishing.</p>
@@ -408,21 +369,15 @@ export default function ProductDetail() {
           </div>
 
           <p className="ct-fineprint">
-            Made by a manufacturer exempt from Florida&rsquo;s cosmetic manufacturing permit
-            requirements.
+            Made by a manufacturer exempt from Florida&rsquo;s cosmetic manufacturing permit requirements.
           </p>
         </section>
 
-        {/* Sidebar */}
         <aside className="ct-sidebar" aria-label="Order summary">
-          <button type="button" className="ct-btn ct-btn--outline ct-btn--block">
-            Bank Offer 5% Cashback
-          </button>
+          <button type="button" className="ct-btn ct-btn--outline ct-btn--block">Bank Offer 5% Cashback</button>
 
           <div className="ct-perk">
-            <div className="ct-perk__icon" aria-hidden="true">
-              🚚
-            </div>
+            <div className="ct-perk__icon" aria-hidden="true">🚚</div>
             <div>
               <span className="ct-perk__label">Easy Returns</span>
               <h4>30 Days</h4>
@@ -430,9 +385,7 @@ export default function ProductDetail() {
           </div>
 
           <div className="ct-perk">
-            <div className="ct-perk__icon" aria-hidden="true">
-              📦
-            </div>
+            <div className="ct-perk__icon" aria-hidden="true">📦</div>
             <div>
               <h4>Enjoy The Product</h4>
               <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>
@@ -440,18 +393,18 @@ export default function ProductDetail() {
           </div>
 
           <div className="ct-savings">
-            <CheckIcon /> You will save ₹504 on this order
+            <CheckIcon /> You will save {formatPrice(lineSavings)} on this order
           </div>
 
           <div className="ct-total-row">
             <span>Total</span>
-            <strong>$125.75</strong>
+            <strong>{formatPrice(lineTotal)}</strong>
           </div>
 
-          <button type="button" className="ct-btn ct-btn--outline ct-btn--block">
-            <HeartIcon small /> Add To Wishlist
+          <button type="button" className="ct-btn ct-btn--outline ct-btn--block" onClick={handleWishlist}>
+            <HeartIcon small filled={liked} /> {liked ? "In Your Wishlist" : "Add To Wishlist"}
           </button>
-          <button type="button" className="ct-btn ct-btn--primary ct-btn--block">
+          <button type="button" className="ct-btn ct-btn--primary ct-btn--block" onClick={handleAddToCart}>
             ADD TO CART
           </button>
         </aside>
@@ -461,42 +414,70 @@ export default function ProductDetail() {
       <section className="ct-container ct-related">
         <div className="ct-related__head">
           <h2>Related products</h2>
-          <a href="/shop-list">See all products ›</a>
+          <Link to="/shop-list">See all products ›</Link>
         </div>
         <div className="ct-related__grid">
-          {RELATED_PRODUCTS.map((product) => (
-            <div className="ct-product-card" key={product.id}>
-              <div className="ct-product-card__media">
-                {product.image ? (
-                  <img className="ct-jar-photo ct-jar-photo--compact" src={product.image} alt={product.name} />
-                ) : (
-                  <JarIllustration compact />
-                )}
-                <button type="button" className="ct-product-card__wish" aria-label="Add to wishlist">
-                  <HeartIcon small />
-                </button>
-              </div>
-              <div className="ct-product-card__body">
-                <h3>{product.name}</h3>
-                <div className="ct-product-card__footer">
-                  <span className="ct-product-card__price">
-                    ${product.price} <del>${product.oldPrice}</del>
-                  </span>
-                  <button type="button" className="ct-product-card__cart" aria-label={`Add ${product.name} to cart`}>
-                    <CartIcon small />
-                  </button>
-                </div>
-              </div>
-            </div>
+          {related.map((p) => (
+            <RelatedCard key={p.id} product={p} />
           ))}
         </div>
       </section>
 
-      {/* ---------------- Footer ---------------- */}
-      <Footer />
-
-      {/* ---------------- Scroll-to-top ---------------- */}
+      <SiteFooter />
       <ScrollTopButton />
+    </div>
+  );
+}
+
+function RelatedCard({ product }) {
+  const navigate = useNavigate();
+  const { addToCart, addToWishlist, isInWishlist } = useShop();
+  const liked = isInWishlist(product.id);
+
+  return (
+    <div className="ct-product-card">
+      <div
+        className="ct-product-card__media"
+        onClick={() => navigate(`/product/${product.slug}`)}
+        style={{ cursor: "pointer" }}
+      >
+        <img className="ct-jar-photo ct-jar-photo--compact" src={product.gallery[0]} alt={product.name} />
+        <button
+          type="button"
+          className="ct-product-card__wish"
+          aria-label={`Add ${product.name} to wishlist`}
+          onClick={(e) => {
+            e.stopPropagation();
+            addToWishlist(product.id);
+            navigate("/wishlist");
+          }}
+        >
+          <HeartIcon small filled={liked} />
+        </button>
+      </div>
+      <div className="ct-product-card__body">
+        <h3>
+          <Link to={`/product/${product.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+            {product.name}
+          </Link>
+        </h3>
+        <div className="ct-product-card__footer">
+          <span className="ct-product-card__price">
+            {formatPrice(product.price)} <del>{formatPrice(product.oldPrice)}</del>
+          </span>
+          <button
+            type="button"
+            className="ct-product-card__cart"
+            aria-label={`Add ${product.name} to cart`}
+            onClick={() => {
+              addToCart(product.id, 1);
+              navigate("/cart");
+            }}
+          >
+            <CartIcon small />
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
@@ -512,11 +493,11 @@ function SearchIcon() {
   );
 }
 
-function HeartIcon({ small }) {
+function HeartIcon({ small, filled }) {
   const size = small ? 16 : 20;
   return (
-    <svg width={size} height={size} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M17.3666 3.84172C16.941 3.41589 16.4356 3.0781 15.8794 2.84763C15.3232 2.61716 14.727 2.49854 14.1249 2.49854C13.5229 2.49854 12.9267 2.61716 12.3705 2.84763C11.8143 3.0781 11.3089 3.41589 10.8833 3.84172L9.99994 4.72506L9.1166 3.84172C8.25686 2.98198 7.0908 2.49898 5.87494 2.49898C4.65907 2.49898 3.49301 2.98198 2.63327 3.84172C1.77353 4.70147 1.29053 5.86753 1.29053 7.08339C1.29053 8.29925 1.77353 9.46531 2.63327 10.3251L3.5166 11.2084L9.99994 17.6917L16.4833 11.2084L17.3666 10.3251C17.7924 9.89943 18.1302 9.39407 18.3607 8.83785C18.5912 8.28164 18.7098 7.68546 18.7098 7.08339C18.7098 6.48132 18.5912 5.88514 18.3607 5.32893C18.1302 4.77271 17.7924 4.26735 17.3666 3.84172Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={size} height={size} viewBox="0 0 20 20" fill={filled ? "#7A0000" : "none"} xmlns="http://www.w3.org/2000/svg">
+      <path d="M17.3666 3.84172C16.941 3.41589 16.4356 3.0781 15.8794 2.84763C15.3232 2.61716 14.727 2.49854 14.1249 2.49854C13.5229 2.49854 12.9267 2.61716 12.3705 2.84763C11.8143 3.0781 11.3089 3.41589 10.8833 3.84172L9.99994 4.72506L9.1166 3.84172C8.25686 2.98198 7.0908 2.49898 5.87494 2.49898C4.65907 2.49898 3.49301 2.98198 2.63327 3.84172C1.77353 4.70147 1.29053 5.86753 1.29053 7.08339C1.29053 8.29925 1.77353 9.46531 2.63327 10.3251L3.5166 11.2084L9.99994 17.6917L16.4833 11.2084L17.3666 10.3251C17.7924 9.89943 18.1302 9.39407 18.3607 8.83785C18.5912 8.28164 18.7098 7.68546 18.7098 7.08339C18.7098 6.48132 18.5912 5.88514 18.3607 5.32893C18.1302 4.77271 17.7924 4.26735 17.3666 3.84172Z" stroke={filled ? "#7A0000" : "currentColor"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -539,247 +520,4 @@ function CheckIcon() {
       <path d="M18.3333 3.33325L10 11.6749L7.5 9.17492" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
-}
-
-/** Placeholder jar illustration standing in for product photography (used for related products without a real photo). */
-function JarIllustration({ compact }) {
-  return (
-    <svg
-      className={`ct-jar-svg ${compact ? "ct-jar-svg--compact" : ""}`}
-      viewBox="0 0 240 320"
-      xmlns="http://www.w3.org/2000/svg"
-      role="presentation"
-    >
-      <ellipse cx="120" cy="300" rx="70" ry="10" fill="#00000015" />
-      <rect x="50" y="60" width="140" height="220" rx="14" fill="#f7f4ee" stroke="#2b2b28" strokeWidth="2" />
-      <rect x="40" y="30" width="160" height="40" rx="10" fill="#1c1c1a" />
-      <rect x="46" y="20" width="148" height="18" rx="8" fill="#2b2b28" />
-      <circle cx="120" cy="150" r="34" fill="none" stroke="#8a6d3b" strokeWidth="2" />
-      <path
-        d="M104 150c4-14 12-22 16-22s12 8 16 22c-4 14-12 22-16 22s-12-8-16-22z"
-        fill="none"
-        stroke="#8a6d3b"
-        strokeWidth="2"
-      />
-      <text x="120" y="205" textAnchor="middle" fontSize="14" fill="#2b2b28" fontFamily="serif">
-        CHANTALLOW
-      </text>
-      <text x="120" y="230" textAnchor="middle" fontSize="11" fill="#8a6d3b" fontFamily="serif">
-        Malachite Fusion
-      </text>
-    </svg>
-  );
-}
-
-/* ---------------- Footer ---------------- */
-
-function Footer() {
-    return (
-        <footer style={{ background: "#FFFFFF", color: "#1C1C1A", padding: "72px 24px 24px", borderTop: "1px solid #F0EEE4" }}>
-            <div
-                style={{
-                    maxWidth: 1360,
-                    margin: "0 auto",
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 4 : window.innerWidth > 560 ? 2 : 1}, 1fr)`,
-                    gap: 40,
-                    marginBottom: 48,
-                    textAlign: "left",
-                }}
-            >
-                <div>
-                    <div style={{ marginBottom: 24 }}>
-                        <img src={logo} alt="Chantallow" style={{ height: 40, width: "auto", display: "block" }} />
-                    </div>
-                    <p style={{ fontSize: 13.5, fontFamily: 'Lufga', lineHeight: 2, color: "#5A5A52", margin: "0 0 6px" }}>
-                        <strong style={{ color: "#1C1C1A" }}>Address :</strong> 000 Wall Street, UK, London
-                    </p>
-                    <p style={{ fontSize: 13.5, fontFamily: 'Lufga', lineHeight: 2, color: "#5A5A52", margin: "0 0 6px" }}>
-                        <strong style={{ color: "#1C1C1A" }}>E-mail :</strong> example@info.com
-                    </p>
-                    <p style={{ fontSize: 13.5, fontFamily: 'Lufga', lineHeight: 2, color: "#5A5A52", margin: "0 0 24px" }}>
-                        <strong style={{ color: "#1C1C1A" }}>Phone :</strong> (000) 000-0000
-                    </p>
-                    <h6 style={{ fontSize: 14.5, fontWeight: 700, margin: "0 0 12px" }}>
-                        Subscribe To Our Newsletter
-                    </h6>
-                    <div
-                        style={{
-                            display: "flex",
-                            background: "#EAF5EA",
-                            borderRadius: 30,
-                            overflow: "hidden",
-                        }}
-                    >
-                        <input
-                            type="email"
-                            placeholder="Your Email Address"
-                            style={{
-                                flex: 1,
-                                background: "transparent",
-                                border: "none",
-                                padding: "14px 20px",
-                                color: "#1C1C1A",
-                                fontSize: 13.5,
-                                outline: "none",
-                            }}
-                        />
-                        <button
-                            aria-label="Subscribe"
-                            style={{
-                                background: "transparent",
-                                border: "none",
-                                width: 52,
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                cursor: "pointer",
-                            }}
-                        >
-                            <ArrowRight size={18} color="#1C1C1A" />
-                        </button>
-                    </div>
-                </div>
-
-                <div>
-                    <h5
-                        style={{
-                            fontSize: 20, fontWeight: 700, color: "#1C1C1A",
-                            margin: "0 0 22px",
-
-
-                        }}
-                    >
-                        Recent Posts
-                    </h5>
-                    {[
-                        { title: "Hydrated Supple Skin", img: recentPost1 },
-                        { title: "Glowing Radiant Skin", img: recentPost2 },
-                        { title: "Silky Soft Skin", img: recentPost3 },
-                    ].map((t) => (
-                        <div
-                            key={t.title}
-                            style={{
-                                display: "flex",
-                                gap: 16,
-                                marginBottom: 20,
-                                alignItems: "flex-start",
-                            }}
-                        >
-                            <div
-                                style={{
-                                    width: 76,
-                                    height: 76,
-                                    borderRadius: 4,
-                                    background: "#F4F1E6",
-                                    flexShrink: 0,
-                                    overflow: "hidden",
-                                }}
-                            >
-                                <img
-                                    src={t.img}
-                                    alt=""
-                                    style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                                />
-                            </div>
-                            <div style={{ paddingTop: 6 }}>
-                                <div
-                                    style={{
-                                        fontSize: 17,
-                                        fontWeight: 700,
-                                        color: "#1C1C1A",
-                                        marginBottom: 6,
-                                        fontFamily: "Lufga",
-                                    }}
-                                >
-                                    {t.title}
-                                </div>
-                                <div style={{ fontSize: 14, color: "#9A9A90", fontFamily: "Lufga" }}>
-                                    July 23, 2023
-                                </div>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-
-                <div>
-                    <h5 style={{ fontSize: 20, fontWeight: 700, color: "#1C1C1A", margin: "0 0 22px" }}>
-                        Useful Links
-                    </h5>
-                    {[
-                        { label: "Home", path: "/" },
-                        { label: "About Us", path: "/aboutus" },
-                        { label: "Returns", path: "#" },
-                        { label: "Terms & Conditions", path: "/terms-and-conditions" },
-                        { label: "Privacy-Policy", path: "/privacy-policy" },
-                        { label: "Contact Us", path: "/contactus" },
-                    ].map((l) => (
-                        <Link
-                            key={l.label}
-                            to={l.path}
-                            className="ctw-underline-link"
-                            style={{
-                                display: "block",
-                                fontSize: 15,
-                                fontFamily: "Lufga, sans-serif",
-                                color: "#2D2E2F",
-                                transition: "all 0.8s ease",
-                                marginBottom: 14,
-                                textDecoration: "none",
-                            }}
-                        >
-                            {l.label}
-                        </Link>
-                    ))}
-                </div>
-
-                <div>
-                    <h5 style={{ fontSize: 20, fontWeight: 700, color: "#1C1C1A", margin: "0 0 22px" }}>
-                        Social Media
-                    </h5>
-                    {["Instagram", "Facebook", "YouTube", "Linkedin", "X.Com"].map((l) => (
-                        <a
-                            key={l}
-                            href="#home"
-                            className="ctw-underline-link"
-                            style={{
-                                display: "block",
-                                fontSize: 14.5,
-                                color: "#3A3A36",
-                                marginBottom: 14,
-                                textDecoration: "none",
-                            }}
-                        >
-                            {l}
-                        </a>
-                    ))}
-                </div>
-            </div>
-
-            <div
-                style={{
-                    maxWidth: 1360,
-                    margin: "0 auto",
-                    paddingTop: 24,
-                    borderTop: "1px solid #F0EEE4",
-                    display: "flex",
-                    flexWrap: "wrap",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    gap: 12,
-                    fontSize: 13.5,
-                    color: "#5A5A52",
-                }}
-            >
-                <p style={{ fontFamily: 'Lufga', margin: 0 }}>
-                    © 2026 <span style={{ color: "#41705B", fontWeight: 600 }}>Chantallow</span> Theme. All
-                    Rights Reserved.
-                </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                    <span>We Accept:</span>
-                    <img src={footerImg} alt="Accepted payment methods" style={{ height: 24, display: "block" }} />
-                </div>
-            </div>
-        </footer>
-    );
 }
