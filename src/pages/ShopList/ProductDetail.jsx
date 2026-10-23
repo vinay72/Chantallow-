@@ -1,12 +1,127 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { Ship, PackageCheck } from "lucide-react";
 import "./ProductDetail.css";
+import logo from "../../assets/logo.png";
 import sealRecycle from "../../assets/a.png";
 import sealNatural from "../../assets/b.png";
 import sealMadeWithLove from "../../assets/c.png";
 import SiteFooter from "../../components/SiteFooter";
 import { useShop } from "../../context/ShopContext";
-import { PRODUCTS, getProductBySlug, formatPrice } from "../../data/products";
+import {
+  PRODUCTS,
+  getProductBySlug,
+  getProductById,
+  formatPrice,
+  DEFAULT_DIRECTIONS,
+  DEFAULT_DIRECTIONS_NOTE,
+} from "../../data/products";
+
+// Same sizes as the Home page hero cards (value is what's saved in the cart)
+const SIZES = [
+  { value: "2oz", label: "2 .Oz" },
+  { value: "4oz", label: "4 .Oz" },
+];
+
+/* ---- Brand look (matches the original design) ---- */
+const BRAND_GREEN = "#1B4D3E";
+const LINE = "#D5E2DA";
+
+// Font + colour overrides so this page matches the original design:
+// Marcellus for titles, Lufga for all body text, green primary buttons.
+const PAGE_STYLES = `
+  .ct-page, .ct-page p, .ct-page li, .ct-page span, .ct-page a,
+  .ct-page button, .ct-page input, .ct-page label, .ct-page legend,
+  .ct-page h3, .ct-page h4, .ct-page h5, .ct-page h6, .ct-page strong {
+    font-family: 'Lufga', 'DM Sans', sans-serif;
+  }
+  .ct-page .ct-banner h1,
+  .ct-page .ct-info__title,
+  .ct-page .ct-related__head h2,
+  .ct-page .ct-product-card__body h3 {
+    font-family: 'Marcellus', serif;
+    font-weight: 400;
+  }
+  .ct-page .ct-info__title { font-size: 34px; margin: 8px 0 6px; color: #2D2E2F; }
+  .ct-page .ct-info__subtitle { font-size: 15px; color: #5A5A52; }
+
+  /* Description / Ingredients / Directions — one consistent text style */
+  .ct-page .ct-copy-block { margin-bottom: 26px; }
+  .ct-page .ct-copy-block h3 {
+    font-size: 15px; font-weight: 600; color: #2D2E2F; margin: 0 0 6px;
+  }
+  .ct-page .ct-copy-block p {
+    font-size: 15px; line-height: 1.7; color: #5A5A52; margin: 0;
+  }
+  .ct-page .ct-copy-block p.ct-copy-note { color: #2D2E2F; font-weight: 600; }
+
+  /* Buttons + radios in brand green */
+  .ct-page .ct-btn--primary {
+    background: ${BRAND_GREEN}; border-color: ${BRAND_GREEN}; color: #fff;
+  }
+  .ct-page .ct-btn--primary:hover { filter: brightness(1.12); }
+  .ct-page .ct-size input[type="radio"] { accent-color: ${BRAND_GREEN}; }
+
+  /* Related products: left-aligned names like the original */
+  .ct-page .ct-product-card__body h3 { text-align: left; font-size: 20px; }
+
+  /* Footer headings */
+  .ct-page footer h5, .ct-page footer h6 { font-family: 'Lufga', 'DM Sans', sans-serif; color: ${BRAND_GREEN}; }
+`;
+
+const sb = {
+  box: { border: `1px solid ${LINE}`, padding: "28px 26px", alignSelf: "start", background: "transparent" },
+  outlineBtn: {
+    width: "100%",
+    background: "transparent",
+    border: "1px solid #2D2E2F",
+    color: "#1C1C1A",
+    padding: "13px 16px",
+    fontSize: 15,
+    fontWeight: 500,
+    cursor: "pointer",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+  },
+  perk: {
+    border: `1px solid ${LINE}`,
+    padding: "18px 18px",
+    display: "flex",
+    alignItems: "center",
+    gap: 16,
+    marginBottom: 14,
+    textAlign: "left",
+  },
+  perkSmall: { display: "block", fontSize: 13, color: "#5A5A52", marginBottom: 2 },
+  perkTitle: { margin: 0, fontSize: 16, fontWeight: 600, color: "#1C1C1A" },
+  perkDesc: { margin: "6px 0 0", fontSize: 13.5, lineHeight: 1.6, color: "#5A5A52" },
+  save: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    padding: "18px 0",
+    borderBottom: `1px solid ${LINE}`,
+    fontSize: 15,
+    fontWeight: 500,
+    color: "#1C1C1A",
+  },
+  total: { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "22px 0" },
+  primaryBtn: {
+    width: "100%",
+    background: BRAND_GREEN,
+    color: "#fff",
+    border: "none",
+    padding: "16px",
+    fontSize: 16,
+    fontWeight: 600,
+    letterSpacing: "0.02em",
+    textTransform: "uppercase",
+    cursor: "pointer",
+    marginTop: 14,
+  },
+};
 
 /**
  * Chantallow — Product Detail Page (dynamic)
@@ -29,20 +144,32 @@ const countBadge = {
   textAlign: "center",
 };
 
-function StarRating({ rating = 3, outOf = 5 }) {
+/* Star rating that supports decimals: 4.7 -> 4 full stars + a 70%-filled 5th star */
+function StarRating({ rating = 4.7, outOf = 5 }) {
+  const uid = React.useId().replace(/:/g, "");
+  const STAR =
+    "M6.74805 0.234375L8.72301 4.51608L13.4054 5.07126L9.9436 8.27267L10.8625 12.8975L6.74805 10.5944L2.63355 12.8975L3.5525 8.27267L0.090651 5.07126L4.77309 4.51608L6.74805 0.234375Z";
+
   return (
     <ul className="dz-rating" aria-label={`${rating} out of ${outOf} stars`}>
-      {Array.from({ length: outOf }).map((_, i) => (
-        <li key={i} className={i < rating ? "star-fill" : ""}>
-          <svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-              d="M6.74805 0.234375L8.72301 4.51608L13.4054 5.07126L9.9436 8.27267L10.8625 12.8975L6.74805 10.5944L2.63355 12.8975L3.5525 8.27267L0.090651 5.07126L4.77309 4.51608L6.74805 0.234375Z"
-              fill={i < rating ? "#FF8A00" : "#5E626F"}
-              opacity={i < rating ? 1 : 0.2}
-            />
-          </svg>
-        </li>
-      ))}
+      {Array.from({ length: outOf }).map((_, i) => {
+        // how much of this star is filled: 1 = full, 0.7 = 70%, 0 = empty
+        const fill = Math.max(0, Math.min(1, rating - i));
+        const gradId = `star-${uid}-${i}`;
+        return (
+          <li key={i} className={fill > 0 ? "star-fill" : ""}>
+            <svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <defs>
+                <linearGradient id={gradId}>
+                  <stop offset={`${fill * 100}%`} stopColor="#FF8A00" />
+                  <stop offset={`${fill * 100}%`} stopColor="#D4D6DB" />
+                </linearGradient>
+              </defs>
+              <path d={STAR} fill={`url(#${gradId})`} />
+            </svg>
+          </li>
+        );
+      })}
     </ul>
   );
 }
@@ -80,8 +207,7 @@ function PageHeader() {
     <header className="ct-header">
       <div className="ct-header__inner">
         <Link to="/" className="ct-logo">
-          <span className="ct-logo__mark" aria-hidden="true">⚉</span>
-          <span className="ct-logo__text">CHANTALLOW</span>
+          <img src={logo} alt="Chantallow" style={{ height: 56, width: "auto", display: "block" }} />
         </Link>
 
         <nav className="ct-nav" aria-label="Primary">
@@ -116,11 +242,12 @@ function PageHeader() {
 export default function ProductDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  const product = getProductBySlug(slug);
+  // Works with /product/taluma-hair-care and with old-style /shop-list/7
+  const product = getProductBySlug(slug) || getProductById(slug);
   const { addToCart, addToWishlist, isInWishlist } = useShop();
 
   const [activeImage, setActiveImage] = useState(0);
-  const [selectedSize, setSelectedSize] = useState("2oz");
+  const [selectedSize, setSelectedSize] = useState("4oz");
   const [quantity, setQuantity] = useState(1);
 
   const decrementQty = () => setQuantity((q) => Math.max(1, q - 1));
@@ -129,7 +256,7 @@ export default function ProductDetail() {
   // Reset selections and jump to top whenever a different product is opened
   useEffect(() => {
     setActiveImage(0);
-    setSelectedSize("2oz");
+    setSelectedSize("4oz");
     setQuantity(1);
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
@@ -216,6 +343,9 @@ export default function ProductDetail() {
   }
 
   const liked = isInWishlist(product.id);
+  const descriptionParas = Array.isArray(product.description) ? product.description : [product.description];
+  const directions = product.directions || DEFAULT_DIRECTIONS;
+  const directionsNote = product.directions ? product.directionsNote : DEFAULT_DIRECTIONS_NOTE;
   const gallery = product.gallery.map((src, i) => ({ id: i, src, alt: `${product.name} - image ${i + 1}` }));
   const related = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
   const lineTotal = product.price * quantity;
@@ -233,12 +363,13 @@ export default function ProductDetail() {
 
   return (
     <div className="ct-page">
+      <style>{PAGE_STYLES}</style>
       <PageHeader />
 
       {/* ---------------- Banner ---------------- */}
       <div className="ct-banner">
         <div className="ct-banner__inner">
-          <h1>Products Details</h1>
+          <h1>{product.name}</h1>
           <nav aria-label="Breadcrumb" className="ct-breadcrumb">
             <Link to="/">Home</Link>
             <span aria-hidden="true">◆</span>
@@ -274,14 +405,16 @@ export default function ProductDetail() {
           <p className="ct-info__subtitle">{product.subtitle}</p>
 
           <div className="ct-review-row">
-            <StarRating rating={3} />
-            <span className="ct-review-row__rating">4.7 Rating</span>
+            <StarRating rating={product.rating ?? 4.7} />
+            <span className="ct-review-row__rating">{(product.rating ?? 4.7).toFixed(1)} Rating</span>
             <a href="#reviews" className="ct-review-row__count">(5 customer reviews)</a>
           </div>
 
           <div className="ct-copy-block">
             <h3>Description:</h3>
-            <p>{product.description}</p>
+            {descriptionParas.map((para, i) => (
+              <p key={i}>{para}</p>
+            ))}
           </div>
 
           <div className="ct-copy-block">
@@ -291,10 +424,17 @@ export default function ProductDetail() {
 
           <div className="ct-copy-block">
             <h3>Directions:</h3>
-            <p>
-              Apply a small scoop and rub into skin. Use as needed for whole body skin care.
-              External use only. Patch test first. <strong>Use within 1 year.</strong>
-            </p>
+            {/* Same text style as Description — numbered lines, not a big list */}
+            {Array.isArray(directions) ? (
+              directions.map((step, i) => (
+                <p key={i}>
+                  {i + 1}. {step}
+                </p>
+              ))
+            ) : (
+              <p>{directions}</p>
+            )}
+            {directionsNote && <p className="ct-copy-note">{directionsNote}</p>}
           </div>
 
           <hr className="ct-divider" />
@@ -302,10 +442,7 @@ export default function ProductDetail() {
           <fieldset className="ct-size">
             <legend className="ct-label">Select Size</legend>
             <div className="ct-size__options">
-              {[
-                { value: "2oz", label: "2 .Oz" },
-                { value: "1.7oz", label: "1.7 .Oz" },
-              ].map((s) => (
+              {SIZES.map((s) => (
                 <label key={s.value} className={`ct-size__option ${selectedSize === s.value ? "is-selected" : ""}`}>
                   <input
                     type="radio"
@@ -373,39 +510,41 @@ export default function ProductDetail() {
           </p>
         </section>
 
-        <aside className="ct-sidebar" aria-label="Order summary">
-          <button type="button" className="ct-btn ct-btn--outline ct-btn--block">Bank Offer 5% Cashback</button>
+        <aside className="ct-sidebar" aria-label="Order summary" style={sb.box}>
+          <button type="button" style={{ ...sb.outlineBtn, marginBottom: 18 }}>
+            Bank Offer 5% Cashback
+          </button>
 
-          <div className="ct-perk">
-            <div className="ct-perk__icon" aria-hidden="true">🚚</div>
+          <div style={sb.perk}>
+            <Ship size={38} strokeWidth={1.2} color="#1C1C1A" aria-hidden="true" style={{ flexShrink: 0 }} />
             <div>
-              <span className="ct-perk__label">Easy Returns</span>
-              <h4>30 Days</h4>
+              <span style={sb.perkSmall}>Easy Returns</span>
+              <h4 style={sb.perkTitle}>30 Days</h4>
             </div>
           </div>
 
-          <div className="ct-perk">
-            <div className="ct-perk__icon" aria-hidden="true">📦</div>
+          <div style={sb.perk}>
+            <PackageCheck size={38} strokeWidth={1.2} color="#1C1C1A" aria-hidden="true" style={{ flexShrink: 0 }} />
             <div>
-              <h4>Enjoy The Product</h4>
-              <p>Lorem Ipsum is simply dummy text of the printing and typesetting</p>
+              <h4 style={sb.perkTitle}>Enjoy The Product</h4>
+              <p style={sb.perkDesc}>Lorem Ipsum is simply dummy text of the printing and typesetting</p>
             </div>
           </div>
 
-          <div className="ct-savings">
+          <div style={sb.save}>
             <CheckIcon /> You will save {formatPrice(lineSavings)} on this order
           </div>
 
-          <div className="ct-total-row">
-            <span>Total</span>
-            <strong>{formatPrice(lineTotal)}</strong>
+          <div style={sb.total}>
+            <span style={{ fontSize: 15, color: "#5A5A52" }}>Total</span>
+            <strong style={{ fontSize: 24, fontWeight: 600, color: "#1C1C1A" }}>{formatPrice(lineTotal)}</strong>
           </div>
 
-          <button type="button" className="ct-btn ct-btn--outline ct-btn--block" onClick={handleWishlist}>
+          <button type="button" style={sb.outlineBtn} onClick={handleWishlist}>
             <HeartIcon small filled={liked} /> {liked ? "In Your Wishlist" : "Add To Wishlist"}
           </button>
-          <button type="button" className="ct-btn ct-btn--primary ct-btn--block" onClick={handleAddToCart}>
-            ADD TO CART
+          <button type="button" style={sb.primaryBtn} onClick={handleAddToCart}>
+            Add To Cart
           </button>
         </aside>
       </main>
@@ -413,7 +552,7 @@ export default function ProductDetail() {
       {/* ---------------- Related Products ---------------- */}
       <section className="ct-container ct-related">
         <div className="ct-related__head">
-          <h2>Related products</h2>
+          <h2>Related Products</h2>
           <Link to="/shop-list">See all products ›</Link>
         </div>
         <div className="ct-related__grid">

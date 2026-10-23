@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import {
     Search, Heart, ShoppingBag, ShoppingCart, X, Plus, ChevronRight, ChevronLeft,
-    ArrowLeft, ArrowRight, ArrowUpRight, Menu, Star, ArrowUp
+    ArrowLeft, ArrowRight, ArrowUpRight, Menu, Star, ArrowUp, Minus
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -16,7 +16,7 @@ import lavender from "../../assets/lavender.png";
 
 import CollectionCard from "../../components/CollectionCard";
 import { useShop } from "../../context/ShopContext";
-import { formatPrice } from "../../data/products";
+import { formatPrice, getProductById } from "../../data/products";
 
 
 
@@ -109,14 +109,16 @@ const IMAGES = {
 
 const PRODUCTS = [
     // `slug` = the product page each "Buy Now" opens (/product/<slug>)
-    { id: 1, slug: "amber-glow", name: "Amber Glow", accent: "#7A0000", items: "0 items", img: amberGlowJar },
-    { id: 2, slug: "amethyst-relief", name: "Amethyst Relief", accent: "#614966", items: "4 items", img: amethystReliefJar },
-    { id: 3, slug: "jasper-revive", name: "Jasper Revive", accent: "#3B1941", items: "4 items", img: jasperReviveJar },
-    { id: 4, slug: "malachite-fusion", name: "Malachite Fusion", accent: "#5B2861", items: "4 items", img: malachiteFusionJar },
-    { id: 5, slug: "olivine-relief", name: "Olivine Relief", accent: "#505634", items: "4 items", img: olivineReliefJar },
-    { id: 6, slug: "obsidian-infusion", name: "Obsidian Infusion", accent: "#631908", items: "4 items", img: obsidianInfusionJar },
-    { id: 7, slug: "taluma-hair-care", name: "Taluma Hair Care", accent: "#2D2E2F", items: "4 items", img: talumaHairCareJar },
-    { id: 8, slug: "bare-whipped-tallow", name: "Bare Whipped Tallow", accent: "#c5502f", items: "4 items", img: bareWhippedTallowJar },
+    // `jarScale` = evens out jar size in the round images (photos have different
+    //   empty space around the jar). Raise it to make a jar bigger, lower to shrink.
+    { id: 1, slug: "amber-glow", jarScale: 0.92, name: "Amber Glow", accent: "#7A0000", items: "0 items", img: amberGlowJar },
+    { id: 2, slug: "amethyst-relief", jarScale: 0.88, name: "Amethyst Relief", accent: "#614966", items: "4 items", img: amethystReliefJar },
+    { id: 3, slug: "jasper-revive", jarScale: 1, name: "Jasper Revive", accent: "#3B1941", items: "4 items", img: jasperReviveJar },
+    { id: 4, slug: "malachite-fusion", jarScale: 1, name: "Malachite Fusion", accent: "#5B2861", items: "4 items", img: malachiteFusionJar },
+    { id: 5, slug: "olivine-relief", jarScale: 1.02, name: "Olivine Relief", accent: "#505634", items: "4 items", img: olivineReliefJar },
+    { id: 6, slug: "obsidian-infusion", jarScale: 1.02, name: "Obsidian Infusion", accent: "#631908", items: "4 items", img: obsidianInfusionJar },
+    { id: 7, slug: "taluma-hair-care", jarScale: 1.03, name: "Taluma Hair Care", accent: "#2D2E2F", items: "4 items", img: talumaHairCareJar },
+    { id: 8, slug: "bare-whipped-tallow", jarScale: 1.05, name: "Bare Whipped Tallow", accent: "#c5502f", items: "4 items", img: bareWhippedTallowJar },
 ];
 
 const COLLECTION_CARDS = [
@@ -130,12 +132,26 @@ const COLLECTION_CARDS = [
     { id: 6, name: "Olivine Relief", accent: "#5d1100", img: collectionImg6, col: 3 },
 ];
 
+// "Our Best Sellers" — each name matches the jar shown in its image.
+// To add more products, import their arch photo and add a row here.
 const MORE_COLLECTIONS = [
-    { id: 1, name: "Amethyst Relife", img: moreCollection1 },     // about2.png
-    { id: 2, name: "Malachite Fusion", img: moreCollection2 },    // about3.png
-    { id: 3, name: "Jasper Revive", img: moreCollection3 },       // about4.png
-    { id: 4, name: "Taluma Hair Care", img: moreCollection3 },    // about4.png
-    { id: 5, name: "Bare Whipped Tallow", img: moreCollection3 }, // about4.png
+    { id: 1, slug: "olivine-relief", name: "Olivine Relief", img: moreCollection1 },      // about2.png — Olivine Relief jar
+    { id: 2, slug: "malachite-fusion", name: "Malachite Fusion", img: moreCollection2 },  // about3.png — Malachite Fusion jar
+    { id: 3, slug: "taluma-hair-care", name: "Taluma Hair Care", img: moreCollection3 },  // about4.png — Taluma Hair Care jar
+    // 4th product: no arch photo yet, so it uses its collection card photo.
+    // Swap `img` for a Jasper Revive arch photo when you have one.
+    // Jasper Revive removed from Best Sellers:
+    // { id: 4, slug: "jasper-revive", name: "Jasper Revive", img: collectionImg3, bg: "linear-gradient(180deg, #EADCC6 0%, #C8AE8C 100%)", fit: "contain" },
+    {
+        id: 4,
+        slug: "bare-whipped-tallow",
+        name: "Bare Whipped Tallow",
+        img: bareWhippedTallowJar, // beauty/bare-whipped-tallow.jpg — white background
+        // No arch photo yet: the white-background jar sits on a soft backdrop that
+        // matches its orange label (the white blends away, so no box shows).
+        bg: "linear-gradient(180deg, #F7E6DA 0%, #E2B193 100%)",
+        fit: "contain",
+    },
 ];
 
 const SIMILAR_PROFILES = [
@@ -146,8 +162,9 @@ const SIMILAR_PROFILES = [
 const SAVING_LEFT = [
     { id: 1, name: "Malachite Fusion", sub: "Moringa + Butterfly Pea", price: "$00.00", was: "$00.00", img: savingImg1, path: "/shop-list" },
     { id: 2, name: "Amethyst Relief", sub: "Lavender Whipped Tallow", price: "$00.00", was: "$00.00", img: savingImg2, badge: true, path: "/shop-list" },
-    { id: 3, name: "Amber Glow", sub: "Manuka + Lavender", price: "$00.00", was: "$00.00", img: savingImg3, path: "/shop-list" },
-    { id: 4, seeAll: true },
+    // Only two products are shown. Uncomment to bring these back:
+    // { id: 3, name: "Amber Glow", sub: "Manuka + Lavender", price: "$00.00", was: "$00.00", img: savingImg3, path: "/shop-list" },
+    // { id: 4, seeAll: true },
 ];
 
 const SHORTLIST_RIGHT = [
@@ -182,6 +199,13 @@ const NEW_ARRIVALS = [
 
 const CATEGORY_MARQUEE = ["Accessories", "Haircare", "Nailcare", "Beautycare", "Bodycare", "Skincare"];
 
+// Size options for the Amber Glow / Amethyst Relief cards in the hero
+const HERO_SIZES = [
+    { value: "2oz", label: "2 oz" },
+    { value: "4oz", label: "4 oz" },
+];
+const HERO_SIZE_LABEL = { "2oz": "2 oz", "4oz": "4 oz" };
+
 // Small count bubble shown on the header heart / cart icons
 const COUNT_BADGE_STYLE = {
     position: "absolute",
@@ -205,7 +229,7 @@ export default function Home() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [cartOpen, setCartOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
-    const [quickView, setQuickView] = useState(false);
+    const [quickView, setQuickView] = useState(null); // product id shown in Quick View (null = closed)
     const [cartTab, setCartTab] = useState("cart");
 
     return (
@@ -234,14 +258,14 @@ export default function Home() {
                 tab={cartTab}
                 setTab={setCartTab}
             />
-            <QuickViewModal open={quickView} onClose={() => setQuickView(false)} />
+            <QuickViewModal productId={quickView} onClose={() => setQuickView(null)} />
 
             <main>
                 <Hero navigate={navigate} />
                 <MissionStrip />
                 <CompleteCareBanner />
                 {/* <CategoryMarquee /> */}
-                <TallowCollection onQuickView={() => setQuickView(true)} />
+                <TallowCollection onQuickView={(id) => setQuickView(id)} />
                 <MoreCollections />
                 <SimilarProfilesSection />
                 <SavingSection />
@@ -327,7 +351,11 @@ function GlobalStyle() {
       }
 
       /* ---- Mission Strip: hover = grey wash + tilted jar + "Buy Now" pill ---- */
-      .ctw-mission-circle img { transition: transform .5s ease; }
+      .ctw-mission-circle img {
+        transform: scale(var(--jar-scale, 1));
+        transform-origin: center;
+        transition: transform .5s ease;
+      }
       .ctw-mission-circle::after {
         content: '';
         position: absolute;
@@ -341,7 +369,7 @@ function GlobalStyle() {
         z-index: 1;
       }
       .ctw-mission-circle:hover::after { opacity: 1; }
-      .ctw-mission-circle:hover img { transform: rotate(25deg) scale(1.03); }
+      .ctw-mission-circle:hover img { transform: rotate(25deg) scale(calc(var(--jar-scale, 1) * 1.03)); }
 
       .ctw-buy-now {
         position: absolute;
@@ -376,7 +404,7 @@ function GlobalStyle() {
         .ctw-buy-now { opacity: 1; transform: translate(-50%, -50%) scale(1); }
       }
       @media (prefers-reduced-motion: reduce) {
-        .ctw-mission-circle img, .ctw-mission-circle:hover img { transition: none; transform: none; }
+        .ctw-mission-circle img, .ctw-mission-circle:hover img { transition: none; transform: scale(var(--jar-scale, 1)); }
       }
     `}</style>
     );
@@ -451,6 +479,9 @@ function Header({ menuOpen, setMenuOpen, setCartOpen, setCartTab, setSearchOpen 
 function Hero({ navigate }) {
     const { addToCart, showToast } = useShop();
 
+    // Selected size for each hero mini product (product id -> size)
+    const [heroSizes, setHeroSizes] = useState({ 1: "2oz", 2: "2oz" });
+
     return (
         <section
             id="home"
@@ -492,7 +523,7 @@ function Hero({ navigate }) {
 
 
 
-            <img
+            {/* <img
                 src={logo2}
                 alt="Chantallow mark"
                 style={{
@@ -504,7 +535,7 @@ function Hero({ navigate }) {
                     pointerEvents: "none",
                     zIndex: 2,
                 }}
-            />
+            /> */}
 
             {/* Lavender, bottom left */}
             <img
@@ -593,7 +624,7 @@ function Hero({ navigate }) {
                         }}
                         onClick={() => navigate("/shop")}
                     >
-                        Add to Cart
+                        Shop Now
                     </button>
 
                     {/* Mini product cards — "+" now adds that product to the cart */}
@@ -625,10 +656,11 @@ function Hero({ navigate }) {
                                         }}
                                     />
                                     <button
-                                        aria-label={`Add ${p.name} to cart`}
+                                        aria-label={`Add ${p.name} (${HERO_SIZE_LABEL[heroSizes[p.id]]}) to cart`}
                                         onClick={() => {
-                                            addToCart(p.id, 1);
-                                            showToast(`${p.name} added to cart`);
+                                            const size = heroSizes[p.id];
+                                            addToCart(p.id, 1, size);
+                                            showToast(`${p.name} (${HERO_SIZE_LABEL[size]}) added to cart`);
                                         }}
                                         style={{
                                             position: "absolute",
@@ -666,6 +698,40 @@ function Hero({ navigate }) {
                                     <div style={{ fontSize: 17, fontFamily: "Marcellus, sans-serif" }}>
                                         <span style={{ color: "#41705B" }}>$00</span>{" "}
                                         <del style={{ color: "#B4B4A8", marginLeft: 6 }}>$00</del>
+                                    </div>
+
+                                    {/* Size selector: 2 oz / 4 oz */}
+                                    <div
+                                        role="radiogroup"
+                                        aria-label={`${p.name} size`}
+                                        style={{ display: "flex", gap: 8, marginTop: 10 }}
+                                    >
+                                        {HERO_SIZES.map((s) => {
+                                            const active = heroSizes[p.id] === s.value;
+                                            return (
+                                                <button
+                                                    key={s.value}
+                                                    type="button"
+                                                    role="radio"
+                                                    aria-checked={active}
+                                                    onClick={() => setHeroSizes((prev) => ({ ...prev, [p.id]: s.value }))}
+                                                    style={{
+                                                        minWidth: 52,
+                                                        padding: "6px 12px",
+                                                        borderRadius: 20,
+                                                        border: `1px solid ${active ? "#2C7A55" : "#C9D2CC"}`,
+                                                        background: active ? "#2C7A55" : "transparent",
+                                                        color: active ? "#fff" : "#2D2E2F",
+                                                        fontSize: 13,
+                                                        fontFamily: "Lufga, 'DM Sans', sans-serif",
+                                                        cursor: "pointer",
+                                                        transition: "all .2s ease",
+                                                    }}
+                                                >
+                                                    {s.label}
+                                                </button>
+                                            );
+                                        })}
                                     </div>
                                 </div>
                             </div>
@@ -845,6 +911,8 @@ function MissionStrip() {
                                         height: "100%",
                                         objectFit: "cover",
                                         display: "block",
+                                        objectPosition: "center",
+                                        "--jar-scale": p.jarScale || 1,
                                     }}
                                 />
                                 <button
@@ -1454,38 +1522,20 @@ function RotatingLinkBadge({ label = "ALL PRODUCTS", href = "#shop", size = 190 
 /* ---------------------------- More Collections ---------------------------- */
 
 function MoreCollections() {
-    const getPerView = () => (window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1);
-    const [perView, setPerView] = useState(getPerView());
-    const [page, setPage] = useState(0);
-    const [paused, setPaused] = useState(false);
-    const isDesktop = window.innerWidth > 900;
-
-    const pageCount = MORE_COLLECTIONS.length;
-    const loopItems = [...MORE_COLLECTIONS, ...MORE_COLLECTIONS];
-
-    React.useEffect(() => {
-        const onResize = () => setPerView(getPerView());
-        window.addEventListener("resize", onResize);
-        return () => window.removeEventListener("resize", onResize);
-    }, []);
-
-    React.useEffect(() => {
-        if (paused) return;
-        const timer = setTimeout(() => setPage((prev) => (prev + 1) % pageCount), 4000);
-        return () => clearTimeout(timer);
-    }, [page, paused, pageCount]);
-
-    const go = (next) => setPage(((next % pageCount) + pageCount) % pageCount);
+    const width = window.innerWidth;
+    const isDesktop = width > 900;
+    // 4 in one row on desktop, 2 on tablet, 1 on phone
+    const cols = width > 900 ? 4 : width > 560 ? 2 : 1;
 
     return (
         <section style={{ padding: isDesktop ? "50px 0 70px" : "50px 24px", background: "#fff", overflow: "hidden" }}>
             <div
                 style={{
                     display: "grid",
-                    gridTemplateColumns: isDesktop ? "34% 1fr" : "1fr",
-                    gap: isDesktop ? 120 : 32,
+                    gridTemplateColumns: isDesktop ? "30% 1fr" : "1fr",
+                    gap: isDesktop ? 80 : 32,
                     alignItems: "center",
-                    paddingRight: isDesktop ? "7.5%" : 0,
+                    paddingRight: isDesktop ? "5%" : 0,
                 }}
             >
                 {/* Left: large portrait, flush to the left edge */}
@@ -1497,7 +1547,7 @@ function MoreCollections() {
                     />
                 </div>
 
-                {/* Right: heading + slider */}
+                {/* Right: heading + 4 products in one row (no slider, no arrows) */}
                 <div style={{ minWidth: 0 }}>
                     <div
                         style={{
@@ -1505,7 +1555,6 @@ function MoreCollections() {
                             justifyContent: "space-between",
                             alignItems: "center",
                             marginBottom: 30,
-                            padding: "0 19px",
                         }}
                     >
                         <h2
@@ -1520,6 +1569,7 @@ function MoreCollections() {
                         >
                             Our Best Sellers
                         </h2>
+                        {/* ↗ "see all" arrow button — commented out
                         <Link
                             to="/shop-list"
                             aria-label="See all products"
@@ -1537,74 +1587,220 @@ function MoreCollections() {
                         >
                             <ArrowUpRight size={isDesktop ? 40 : 26} strokeWidth={1.5} />
                         </Link>
+                        */}
                     </div>
 
-                    <div
-                        style={{ overflow: "hidden" }}
-                        onMouseEnter={() => setPaused(true)}
-                        onMouseLeave={() => setPaused(false)}
-                    >
-                        <div
-                            style={{
-                                display: "flex",
-                                transform: `translateX(-${page * (100 / perView)}%)`,
-                                transition: "transform .5s cubic-bezier(.4,0,.2,1)",
-                            }}
-                        >
-                            {loopItems.map((c, i) => (
+                    <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 24 }}>
+                        {MORE_COLLECTIONS.map((c) => (
+                            <Link
+                                key={c.id}
+                                to={`/product/${c.slug}`}
+                                style={{ textDecoration: "none", display: "block" }}
+                            >
                                 <div
-                                    key={`${c.id}-${i}`}
-                                    aria-hidden={i >= pageCount}
-                                    style={{ flex: `0 0 ${100 / perView}%`, padding: "0 19px" }}
+                                    style={{
+                                        aspectRatio: "1 / 1",
+                                        borderRadius: "150px 150px 0 0",
+                                        overflow: "hidden",
+                                        marginBottom: 14,
+                                        background: c.bg || "#EDF8F3",
+                                    }}
                                 >
-                                    <div
+                                    <img
+                                        src={c.img}
+                                        alt={`Chantallow ${c.name} tallow skincare jar`}
                                         style={{
-                                            aspectRatio: "1 / 1",
-                                            borderRadius: "150px 150px 0 0",
-                                            overflow: "hidden",
-                                            marginBottom: 14,
-                                            background: "#EDF8F3",
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: c.fit || "cover",
+                                            objectPosition: c.fit === "contain" ? "center bottom" : "center",
+                                            padding: c.fit === "contain" ? "12% 8% 3%" : 0,
+                                            // blends the photo's cream background into the backdrop
+                                            mixBlendMode: c.fit === "contain" ? "multiply" : "normal",
+                                            display: "block",
+                                            transition: "transform .5s ease",
                                         }}
-                                    >
-                                        <img
-                                            src={c.img}
-                                            alt={`Chantallow ${c.name} tallow skincare jar`}
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                objectFit: "cover",
-                                                display: "block",
-                                                transition: "transform .5s ease",
-                                            }}
-                                            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                                            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                                        />
-                                    </div>
-                                    <div style={{ textAlign: "center" }}>
-                                        <Link
-                                            to="/shop-list"
-                                            style={{
-                                                fontFamily: "Lufga, sans-serif",
-                                                fontSize: 17,
-                                                fontWeight: 500,
-                                                color: "#1C1C1A",
-                                                textDecoration: "none",
-                                            }}
-                                        >
-                                            {c.name}
-                                        </Link>
-                                    </div>
+                                        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                                    />
                                 </div>
-                            ))}
-                        </div>
+                                <div
+                                    style={{
+                                        textAlign: "center",
+                                        fontFamily: "Lufga, sans-serif",
+                                        fontSize: 17,
+                                        fontWeight: 500,
+                                        color: "#1C1C1A",
+                                    }}
+                                >
+                                    {c.name}
+                                </div>
+                            </Link>
+                        ))}
                     </div>
 
+                    {/* Slider arrows + 01/02/03 numbers — commented out
                     <CarouselControls page={page} pageCount={pageCount} onGo={go} />
+                    */}
                 </div>
             </div>
         </section>
     );
 }
+
+/* ---- Old Best Sellers slider (auto-slide + arrows), kept for reference ---- */
+// function MoreCollections() {
+//     const getPerView = () => (window.innerWidth > 900 ? 3 : window.innerWidth > 600 ? 2 : 1);
+//     const [perView, setPerView] = useState(getPerView());
+//     const [page, setPage] = useState(0);
+//     const [paused, setPaused] = useState(false);
+//     const isDesktop = window.innerWidth > 900;
+//
+//     const pageCount = MORE_COLLECTIONS.length;
+//     const loopItems = [...MORE_COLLECTIONS, ...MORE_COLLECTIONS];
+//
+//     React.useEffect(() => {
+//         const onResize = () => setPerView(getPerView());
+//         window.addEventListener("resize", onResize);
+//         return () => window.removeEventListener("resize", onResize);
+//     }, []);
+//
+//     React.useEffect(() => {
+//         if (paused) return;
+//         const timer = setTimeout(() => setPage((prev) => (prev + 1) % pageCount), 4000);
+//         return () => clearTimeout(timer);
+//     }, [page, paused, pageCount]);
+//
+//     const go = (next) => setPage(((next % pageCount) + pageCount) % pageCount);
+//
+//     return (
+//         <section style={{ padding: isDesktop ? "50px 0 70px" : "50px 24px", background: "#fff", overflow: "hidden" }}>
+//             <div
+//                 style={{
+//                     display: "grid",
+//                     gridTemplateColumns: isDesktop ? "34% 1fr" : "1fr",
+//                     gap: isDesktop ? 120 : 32,
+//                     alignItems: "center",
+//                     paddingRight: isDesktop ? "7.5%" : 0,
+//                 }}
+//             >
+//                 {/* Left: large portrait, flush to the left edge */}
+//                 <div style={{ display: isDesktop ? "block" : "none" }}>
+//                     <img
+//                         src={missionPortrait}
+//                         alt="Woman with glowing skin from Chantallow tallow skincare"
+//                         style={{ width: "100%", height: "auto", display: "block" }}
+//                     />
+//                 </div>
+//
+//                 {/* Right: heading + slider */}
+//                 <div style={{ minWidth: 0 }}>
+//                     <div
+//                         style={{
+//                             display: "flex",
+//                             justifyContent: "space-between",
+//                             alignItems: "center",
+//                             marginBottom: 30,
+//                             padding: "0 19px",
+//                         }}
+//                     >
+//                         <h2
+//                             style={{
+//                                 fontSize: "clamp(36px, 4vw, 75px)",
+//                                 fontFamily: "Marcellus, sans-serif",
+//                                 color: "#2D2E2F",
+//                                 fontWeight: 400,
+//                                 margin: 0,
+//                                 lineHeight: 1.1,
+//                             }}
+//                         >
+//                             Our Best Sellers
+//                         </h2>
+//                         <Link
+//                             to="/shop-list"
+//                             aria-label="See all products"
+//                             style={{
+//                                 width: isDesktop ? 100 : 60,
+//                                 height: isDesktop ? 100 : 60,
+//                                 flexShrink: 0,
+//                                 borderRadius: "50%",
+//                                 background: "#EDF8F3",
+//                                 display: "flex",
+//                                 alignItems: "center",
+//                                 justifyContent: "center",
+//                                 color: "#1C1C1A",
+//                             }}
+//                         >
+//                             <ArrowUpRight size={isDesktop ? 40 : 26} strokeWidth={1.5} />
+//                         </Link>
+//                     </div>
+//
+//                     <div
+//                         style={{ overflow: "hidden" }}
+//                         onMouseEnter={() => setPaused(true)}
+//                         onMouseLeave={() => setPaused(false)}
+//                     >
+//                         <div
+//                             style={{
+//                                 display: "flex",
+//                                 transform: `translateX(-${page * (100 / perView)}%)`,
+//                                 transition: "transform .5s cubic-bezier(.4,0,.2,1)",
+//                             }}
+//                         >
+//                             {loopItems.map((c, i) => (
+//                                 <div
+//                                     key={`${c.id}-${i}`}
+//                                     aria-hidden={i >= pageCount}
+//                                     style={{ flex: `0 0 ${100 / perView}%`, padding: "0 19px" }}
+//                                 >
+//                                     <div
+//                                         style={{
+//                                             aspectRatio: "1 / 1",
+//                                             borderRadius: "150px 150px 0 0",
+//                                             overflow: "hidden",
+//                                             marginBottom: 14,
+//                                             background: "#EDF8F3",
+//                                         }}
+//                                     >
+//                                         <img
+//                                             src={c.img}
+//                                             alt={`Chantallow ${c.name} tallow skincare jar`}
+//                                             style={{
+//                                                 width: "100%",
+//                                                 height: "100%",
+//                                                 objectFit: "cover",
+//                                                 display: "block",
+//                                                 transition: "transform .5s ease",
+//                                             }}
+//                                             onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+//                                             onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+//                                         />
+//                                     </div>
+//                                     <div style={{ textAlign: "center" }}>
+//                                         <Link
+//                                             to="/shop-list"
+//                                             style={{
+//                                                 fontFamily: "Lufga, sans-serif",
+//                                                 fontSize: 17,
+//                                                 fontWeight: 500,
+//                                                 color: "#1C1C1A",
+//                                                 textDecoration: "none",
+//                                             }}
+//                                         >
+//                                             {c.name}
+//                                         </Link>
+//                                     </div>
+//                                 </div>
+//                             ))}
+//                         </div>
+//                     </div>
+//
+//                     <CarouselControls page={page} pageCount={pageCount} onGo={go} />
+//                 </div>
+//             </div>
+//         </section>
+//     );
+// }
 
 function CarouselControls({ page, pageCount, onGo }) {
     const arrowStyle = {
@@ -1699,6 +1895,7 @@ function SimilarProfilesSection() {
                         }}>
                             Ready to Transform Your Skin?
                         </h2>
+                        {/* "All Products →" link — commented out
                         <a
                             href="#shop"
                             className="ctw-underline-link"
@@ -1706,6 +1903,7 @@ function SimilarProfilesSection() {
                         >
                             All Products →
                         </a>
+                        */}
                     </div>
                     <div
                         style={{
@@ -1840,6 +2038,7 @@ function SavingSection() {
                     display: "grid",
                     gridTemplateColumns: isDesktop ? "minmax(0, 1fr) minmax(0, 1fr)" : "minmax(0, 1fr)",
                     gap: 40,
+                    alignItems: "stretch",
                 }}
             >
                 {/* LEFT: title + product cards */}
@@ -1908,11 +2107,13 @@ function SavingSection() {
                     </div>
                 </div>
 
-                {/* RIGHT: banner image (unchanged) */}
+                {/* RIGHT: banner image — stretches to exactly the height of the left
+                    column, so the image bottom lines up with the product cards */}
                 <div
                     style={{
                         position: "relative",
-                        minHeight: 700,
+                        minHeight: isDesktop ? 0 : 360,
+                        alignSelf: "stretch",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -1986,12 +2187,17 @@ function FurkindPetSection() {
                 margin: "0 auto 40px",
                 paddingTop: isDesktop ? "12%" : "22%",   // pushes the whole scene down so the jars aren't cut off
             }}>
-                {/* Grass map with pets and jars */}
+                {/* Grass map with pets and jars.
+                    The grass island sits left of centre inside the map image itself
+                    (extra empty space on its right), so the whole scene — island,
+                    dog, jars, cat — is nudged right to sit in the middle of the screen.
+                    Fine-tune with the 7% value below (bigger = further right). */}
                 <div
                     style={{
                         position: "relative",
                         maxWidth: 1200,
                         margin: "0 auto 40px",
+                        transform: "translateX(var(--furkind-shift, 7%))",
                     }}
                 >
                     <img
@@ -2054,18 +2260,17 @@ function FurkindPetSection() {
                     </div>
                 </div>
 
-                {/* Text content */}
-                <div style={{ maxWidth: 900, margin: "0 auto", textAlign: "center" }}>
+                {/* Text content — heading, justified paragraph and button share one centre line */}
+                <div style={{ maxWidth: 1100, margin: "0 auto", textAlign: "center" }}>
                     <a
                         onClick={() => navigate("/furkind-pet-tallow")}
                         style={{ textDecoration: "none", cursor: "pointer" }}
-
                     >
                         <h2
                             style={{
                                 fontSize: "clamp(2.4rem, 4vw, 3.8rem)",
                                 fontFamily: "Marcellus, sans-serif",
-                                color: "#2D2E2F",
+                                color: "#0F3D2E",
                                 fontWeight: 400,
                                 margin: "0 0 24px",
                             }}
@@ -2076,42 +2281,54 @@ function FurkindPetSection() {
 
                     <p
                         style={{
-                            fontSize: 16,
-                            lineHeight: 1.9,
+                            fontSize: 17,
+                            lineHeight: 1.85,
                             fontFamily: "Lufga, sans-serif",
                             color: "#5A5A52",
-                            margin: "0 0 32px",
-                            textAlign: "left",
+                            margin: "0 0 40px",
+                            textAlign: "justify",      // straight edges on both sides
+                            textAlignLast: "left",     // last line stays normal
+                            hyphens: "auto",
                         }}
                     >
                         Our nutrient-rich Pet Balm combines the nourishing power of grass-fed,
                         grass-finished beef tallow with organic raw unrefined coconut oil to help
                         soothe, protect, and restore dry, rough, or irritated skin and paws. Beef
-                        tallow is a natural source of Vitamin A, D, E, and K, supporting skin
-                        renewal, barrier function, and moisture retention. The naturally occurring
-                        fatty acids in tallow closely resemble the oils found in healthy skin,
-                        making it highly absorbable and deeply moisturizing. Together, these
-                        ingredients help soften rough paws, reduce dryness and cracking, calm
-                        irritation, and create a protective moisture barrier to keep your pet's skin
-                        and paws healthy, smooth, and comfortable.
+                        tallow is a natural source of Vitamin A, which supports skin renewal and
+                        healthy tissue maintenance; Vitamin D, which helps support skin barrier
+                        function; Vitamin E, a powerful antioxidant that helps protect against
+                        environmental stressors and supports moisture retention; and Vitamin K,
+                        which contributes to overall skin health. The naturally occurring fatty
+                        acids in tallow closely resemble the oils found in healthy skin, making it
+                        highly absorbable and deeply moisturizing. Organic raw unrefined coconut
+                        oil provides additional hydration and contains lauric acid, caprylic acid,
+                        and capric acid, which help condition the skin and support a clean, healthy
+                        environment on your pet’s skin surface. Together, these ingredients help
+                        soften rough paws, reduce dryness and cracking, calm irritation, and create
+                        a protective moisture barrier to keep your pet's skin and paws healthy,
+                        smooth, and comfortable.
                     </p>
 
-                    <a
-                        href="#shop"
+                    <button
+                        type="button"
+                        onClick={() => navigate("/furkind-pet-tallow")}
                         style={{
                             display: "inline-block",
-                            background: "#2D2E2F",
-                            color: "#FFFFFF",
-                            padding: "15px 40px",
-                            fontSize: 15,
+                            background: "#FFFFFF",
+                            color: "#1C1C1A",
+                            border: "1px solid #1C1C1A",
+                            padding: "16px 44px",
+                            fontSize: 18,
+                            fontWeight: 500,
                             fontFamily: "Lufga, sans-serif",
-                            letterSpacing: "0.06em",
-                            textTransform: "uppercase",
-                            textDecoration: "none",
+                            cursor: "pointer",
+                            transition: "background .25s ease, color .25s ease",
                         }}
+                        onMouseEnter={(e) => { e.currentTarget.style.background = "#0F3D2E"; e.currentTarget.style.color = "#fff"; }}
+                        onMouseLeave={(e) => { e.currentTarget.style.background = "#FFFFFF"; e.currentTarget.style.color = "#1C1C1A"; }}
                     >
                         Buy Now
-                    </a>
+                    </button>
                 </div>
             </div>
         </section>
@@ -3337,10 +3554,116 @@ function CartDrawer({ open, onClose, tab, setTab }) {
     );
 }
 
-function QuickViewModal({ open, onClose }) {
-    if (!open) return null;
+/* ----------------------------- Quick View ----------------------------- */
+/* Opens from a card's "Quick View" button and shows THAT product:
+   image on the left (cream panel), details on the right (mint panel). */
+
+const QV_GREEN = "#1B4D3E";
+const QV_SIZES = [
+    { value: "2oz", label: "2 .Oz" },
+    { value: "4oz", label: "4 .Oz" },
+];
+
+function QvStars({ rating = 4.7 }) {
+    const uid = React.useId().replace(/:/g, "");
+    return (
+        <span style={{ display: "inline-flex", gap: 3 }} aria-label={`${rating} out of 5 stars`}>
+            {[0, 1, 2, 3, 4].map((i) => {
+                const fill = Math.max(0, Math.min(1, rating - i));
+                const id = `qv-star-${uid}-${i}`;
+                return (
+                    <svg key={i} width="17" height="16" viewBox="0 0 24 24" aria-hidden="true">
+                        <defs>
+                            <linearGradient id={id}>
+                                <stop offset={`${fill * 100}%`} stopColor="#1C1C1A" />
+                                <stop offset={`${fill * 100}%`} stopColor="#D4D6DB" />
+                            </linearGradient>
+                        </defs>
+                        <path
+                            d="M12 2l2.9 6.26 6.85.7-5.12 4.6 1.45 6.74L12 16.9l-6.08 3.4 1.45-6.74L2.25 8.96l6.85-.7L12 2z"
+                            fill={`url(#${id})`}
+                        />
+                    </svg>
+                );
+            })}
+        </span>
+    );
+}
+
+const QV_SOCIAL = [
+    { label: "Facebook", d: "M14 8h3V4h-3c-2.8 0-4 1.7-4 4.3V10H7v4h3v8h4v-8h3l1-4h-4V8.6c0-.4.3-.6.7-.6z" },
+    { label: "LinkedIn", d: "M4 9h3.6v11H4V9zm1.8-5.5a2.1 2.1 0 110 4.2 2.1 2.1 0 010-4.2zM10 9h3.4v1.6c.5-.9 1.7-1.9 3.5-1.9 3.7 0 4.4 2.4 4.4 5.6V20h-3.6v-5c0-1.2 0-2.8-1.7-2.8s-2 1.3-2 2.7V20H10V9z" },
+    { label: "Instagram", d: "M7.5 3h9A4.5 4.5 0 0121 7.5v9a4.5 4.5 0 01-4.5 4.5h-9A4.5 4.5 0 013 16.5v-9A4.5 4.5 0 017.5 3zm0 1.8A2.7 2.7 0 004.8 7.5v9a2.7 2.7 0 002.7 2.7h9a2.7 2.7 0 002.7-2.7v-9a2.7 2.7 0 00-2.7-2.7h-9zM12 8a4 4 0 110 8 4 4 0 010-8zm0 1.8a2.2 2.2 0 100 4.4 2.2 2.2 0 000-4.4zm4.3-3.1a1 1 0 110 2 1 1 0 010-2z" },
+    { label: "X", d: "M4 3h4.7l4.2 5.9L18 3h2.3l-6.4 7.4L21 21h-4.7l-4.6-6.4L6.1 21H3.8l6.9-7.9L4 3zm3 1.6l10.2 14.8h1.6L8.6 4.6H7z" },
+];
+
+function QuickViewModal({ productId, onClose }) {
+    const navigate = useNavigate();
+    const { addToCart, toggleWishlist, isInWishlist, showToast } = useShop();
+    const product = productId != null ? getProductById(productId) : null;
+
+    const [qty, setQty] = useState(1);
+    const [size, setSize] = useState("4oz");
+
+    // reset when a different product is opened
+    React.useEffect(() => {
+        setQty(1);
+        setSize("4oz");
+    }, [productId]);
+
+    // Esc to close + stop the page scrolling behind the modal
+    React.useEffect(() => {
+        if (!product) return;
+        const onKey = (e) => e.key === "Escape" && onClose();
+        window.addEventListener("keydown", onKey);
+        const prevOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+        return () => {
+            window.removeEventListener("keydown", onKey);
+            document.body.style.overflow = prevOverflow;
+        };
+    }, [product, onClose]);
+
+    if (!product) return null;
+
+    const liked = isInWishlist(product.id);
+    const isDesktop = window.innerWidth > 760;
+    const summary = Array.isArray(product.description) ? product.description[0] : product.description;
+
+    const handleAdd = () => {
+        addToCart(product.id, qty, size);
+        showToast(`${product.name} (${size.replace("oz", " oz")}) added to cart`);
+        onClose();
+    };
+
+    const handleWishlist = () => {
+        toggleWishlist(product.id);
+        showToast(liked ? `${product.name} removed from favourites` : `${product.name} added to favourites ♥`);
+    };
+
+    const openDetails = () => {
+        onClose();
+        navigate(`/product/${product.slug}`);
+    };
+
+    const label = { fontSize: 16, color: "#2D2E2F", marginBottom: 8, fontFamily: "Lufga, 'DM Sans', sans-serif" };
+    const stepBtn = {
+        width: 34,
+        height: 34,
+        border: "none",
+        background: "#1C1C1A",
+        color: "#fff",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        cursor: "pointer",
+    };
+    const metaRow = { display: "flex", flexWrap: "wrap", gap: 8, fontSize: 15, color: "#5A5A52", marginBottom: 9 };
+    const metaKey = { color: "#1C1C1A", fontWeight: 600 };
+
     return (
         <div
+            onClick={onClose}
             style={{
                 position: "fixed",
                 inset: 0,
@@ -3351,126 +3674,232 @@ function QuickViewModal({ open, onClose }) {
                 justifyContent: "center",
                 padding: 20,
             }}
-            onClick={onClose}
         >
             <div
+                role="dialog"
+                aria-modal="true"
+                aria-label={`${product.name} quick view`}
                 onClick={(e) => e.stopPropagation()}
                 style={{
-                    background: "#fff",
-                    borderRadius: 20,
-                    maxWidth: 780,
                     width: "100%",
-                    maxHeight: "88vh",
-                    overflowY: "auto",
+                    maxWidth: 1240,
+                    maxHeight: "90vh",
+                    overflowY: isDesktop ? "hidden" : "auto",
                     display: "grid",
-                    gridTemplateColumns: window.innerWidth > 640 ? "1fr 1fr" : "1fr",
+                    gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr",
                     position: "relative",
+                    background: "#EDF8F3",
+                    fontFamily: "Lufga, 'DM Sans', sans-serif",
+                    textAlign: "left",
                 }}
             >
+                {/* Close */}
                 <button
                     onClick={onClose}
-                    aria-label="Close"
+                    aria-label="Close quick view"
                     style={{
                         position: "absolute",
-                        top: 16,
-                        right: 16,
-                        background: "#fff",
-                        border: "1px solid #ECEAE0",
-                        borderRadius: "50%",
-                        width: 32,
-                        height: 32,
+                        top: 20,
+                        right: 24,
+                        background: "none",
+                        border: "none",
                         cursor: "pointer",
+                        color: "#1C1C1A",
                         zIndex: 2,
+                        padding: 4,
                     }}
                 >
-                    <X size={16} />
+                    <X size={28} strokeWidth={1.6} />
                 </button>
+
+                {/* LEFT — product image on a cream card */}
                 <div
+                    onClick={openDetails}
                     style={{
-                        background: "linear-gradient(150deg,#EFEBDD,#D9CFAE)",
-                        minHeight: 280,
+                        background: "#FFFDF0",
+                        height: isDesktop ? "auto" : 280,
+                        padding: isDesktop ? "40px 30px" : 20,
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        overflow: "hidden",
+                        cursor: "pointer",
                     }}
-                />
-                <div style={{ padding: 28 }}>
-                    <span
+                >
+                    <img
+                        src={product.cardImage || product.gallery[0]}
+                        alt={`Chantallow ${product.name} tallow jar`}
                         style={{
-                            display: "inline-block",
-                            background: "#41705B",
-                            color: "#fff",
-                            fontSize: 10.5,
-                            fontWeight: 700,
-                            padding: "5px 10px",
-                            borderRadius: 20,
-                            marginBottom: 12,
+                            width: "100%",
+                            maxWidth: 460,
+                            maxHeight: isDesktop ? "62vh" : 240,
+                            objectFit: "contain",
+                            display: "block",
+                        }}
+                    />
+                </div>
+
+                {/* RIGHT — details */}
+                <div style={{ padding: isDesktop ? "44px 44px 32px" : "32px 22px 26px" }}>
+                    {product.badge && (
+                        <span
+                            style={{
+                                display: "inline-block",
+                                background: "#2C7A55",
+                                color: "#fff",
+                                fontSize: 13,
+                                fontWeight: 500,
+                                padding: "3px 6px",
+                                marginBottom: 12,
+                            }}
+                        >
+                            {product.badge}
+                        </span>
+                    )}
+
+                    <h4
+                        onClick={openDetails}
+                        style={{
+                            fontFamily: "Marcellus, serif",
+                            fontSize: isDesktop ? 38 : 28,
+                            fontWeight: 400,
+                            textTransform: "uppercase",
+                            color: "#1C1C1A",
+                            margin: "0 0 8px",
+                            cursor: "pointer",
                         }}
                     >
-                        Sale 20% Off
-                    </span>
-                    <h4 className="ctw-serif" style={{ fontSize: 24, margin: "0 0 8px" }}>
-                        Crystal Clear Cleanser
+                        {product.name}
                     </h4>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                        <div style={{ display: "flex", gap: 2 }}>
-                            {[1, 2, 3, 4, 5].map((i) => (
-                                <Star
-                                    key={i}
-                                    size={14}
-                                    fill={i <= 3 ? "#E4B549" : "none"}
-                                    color={i <= 3 ? "#E4B549" : "#D4D2C6"}
-                                />
+
+                    <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, fontSize: 15 }}>
+                        <QvStars rating={product.rating ?? 4.7} />
+                        <span style={{ color: "#2D2E2F" }}>{(product.rating ?? 4.7).toFixed(1)} Rating</span>
+                        <span style={{ color: "#5A5A52" }}>(5 customer reviews)</span>
+                    </div>
+
+                    <p
+                        style={{
+                            fontSize: 16,
+                            lineHeight: 1.6,
+                            color: "#5A5A52",
+                            margin: "0 0 18px",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            overflow: "hidden",
+                        }}
+                    >
+                        {summary}
+                    </p>
+
+                    {/* Size */}
+                    <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 22 }}>
+                        <div style={{ ...label, marginBottom: 0 }}>Size:</div>
+                        <div style={{ display: "flex", gap: 22 }}>
+                            {QV_SIZES.map((s) => (
+                                <label key={s.value} style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 16, cursor: "pointer" }}>
+                                    <input
+                                        type="radio"
+                                        name={`qv-size-${product.id}`}
+                                        checked={size === s.value}
+                                        onChange={() => setSize(s.value)}
+                                        style={{ accentColor: QV_GREEN, width: 18, height: 18 }}
+                                    />
+                                    {s.label}
+                                </label>
                             ))}
                         </div>
-                        <span style={{ fontSize: 12.5, color: "#41705B", fontWeight: 700 }}>4.7 Rating</span>
-                        <span style={{ fontSize: 12, color: "#8A8A80" }}>(5 customer reviews)</span>
                     </div>
-                    <p style={{ fontSize: 13.5, fontFamily: 'Lufga', color: "#5A5A52", lineHeight: 1.7, marginBottom: 20 }}>
-                        Lorem Ipsum is simply dummy text of the printing & typesetting
-                        industry. Ipsum has been the industry's standard dummy text.
-                    </p>
-                    <div style={{ display: "flex", gap: 28, alignItems: "flex-end", marginBottom: 20 }}>
+
+                    {/* Price + quantity */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 44, alignItems: "flex-end", marginBottom: 22 }}>
                         <div>
-                            <div style={{ fontSize: 11, color: "#8A8A80", marginBottom: 4 }}>Price</div>
-                            <div style={{ fontSize: 18, fontWeight: 700 }}>
-                                $45.00 <del style={{ color: "#B4B4A8", fontWeight: 400, fontSize: 14 }}>$72.17</del>
+                            <div style={label}>Price</div>
+                            <div style={{ fontFamily: "Marcellus, serif", fontSize: 30, color: "#1C1C1A" }}>
+                                {formatPrice(product.price)}{" "}
+                                <del style={{ fontSize: 18, color: "#9A9A90", marginLeft: 6 }}>{formatPrice(product.oldPrice)}</del>
                             </div>
                         </div>
                         <div>
-                            <div style={{ fontSize: 11, color: "#8A8A80", marginBottom: 4 }}>Quantity</div>
-                            <input
-                                defaultValue={1}
-                                style={{
-                                    width: 52,
-                                    padding: "8px 10px",
-                                    border: "1px solid #ECEAE0",
-                                    borderRadius: 8,
-                                }}
-                            />
+                            <div style={label}>Quantity</div>
+                            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                                <button type="button" aria-label="Decrease quantity" onClick={() => setQty((q) => Math.max(1, q - 1))} style={stepBtn}>
+                                    <Minus size={18} />
+                                </button>
+                                <input
+                                    readOnly
+                                    value={qty}
+                                    aria-label="Quantity"
+                                    style={{ width: 40, height: 34, textAlign: "center", border: "1px solid #D5E2DA", background: "#fff", fontSize: 16 }}
+                                />
+                                <button type="button" aria-label="Increase quantity" onClick={() => setQty((q) => q + 1)} style={stepBtn}>
+                                    <Plus size={18} />
+                                </button>
+                            </div>
                         </div>
                     </div>
-                    <div style={{ display: "flex", gap: 10, marginBottom: 20 }}>
+
+                    {/* Buttons */}
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 24, marginBottom: 24 }}>
                         <button
-                            className="ctw-btn"
-                            style={{ flex: 1, background: "#1C1C1A", color: "#fff", padding: "13px 0", borderRadius: 30 }}
+                            type="button"
+                            onClick={handleAdd}
+                            style={{
+                                background: QV_GREEN,
+                                color: "#fff",
+                                border: "none",
+                                padding: "14px 28px",
+                                fontSize: 17,
+                                fontWeight: 600,
+                                textTransform: "uppercase",
+                                cursor: "pointer",
+                            }}
                         >
                             Add To Cart
                         </button>
                         <button
-                            aria-label="Add to wishlist"
+                            type="button"
+                            onClick={handleWishlist}
+                            aria-pressed={liked}
                             style={{
-                                width: 46,
+                                background: "transparent",
+                                color: "#1C1C1A",
                                 border: "1px solid #1C1C1A",
-                                borderRadius: "50%",
-                                background: "none",
+                                padding: "12px 26px",
+                                fontSize: 17,
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 12,
                                 cursor: "pointer",
                             }}
                         >
-                            <Heart size={16} style={{ margin: "auto" }} />
+                            <Heart size={22} strokeWidth={1.6} color={liked ? "#7A0000" : "#1C1C1A"} fill={liked ? "#7A0000" : "none"} />
+                            {liked ? "In Your Wishlist" : "Add To Wishlist"}
                         </button>
                     </div>
-                    <div style={{ fontSize: 12, color: "#8A8A80", lineHeight: 2 }}>
-                        <div><strong style={{ color: "#1C1C1A" }}>SKU:</strong> PRT584E63A</div>
-                        <div><strong style={{ color: "#1C1C1A" }}>Category:</strong> Skincare, Makeup, Beauty Tools, Gift Sets</div>
-                        <div><strong style={{ color: "#1C1C1A" }}>Tags:</strong> Skincare, Makeup, Accessories</div>
+
+                    {/* Meta */}
+                    <div style={{ borderTop: "1px solid #D5E2DA", paddingTop: 16 }}>
+                        <div style={metaRow}>
+                            <span style={metaKey}>SKU:</span> CT-{String(product.id).padStart(4, "0")}
+                        </div>
+                        <div style={metaRow}>
+                            <span style={metaKey}>Category:</span> {product.category || (product.slug === "taluma-hair-care" ? "Hair Care" : "Skincare, Body Care")}
+                        </div>
+                        <div style={metaRow}>
+                            <span style={metaKey}>Tags:</span> {product.tags || "Tallow, Natural, Handmade"}
+                        </div>
+                        <div style={{ ...metaRow, alignItems: "center", gap: 22, marginBottom: 0 }}>
+                            <span style={metaKey}>Share:</span>
+                            {QV_SOCIAL.map((s) => (
+                                <a key={s.label} href="#share" aria-label={`Share on ${s.label}`} style={{ color: "#2D2E2F", display: "flex" }}>
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                                        <path d={s.d} />
+                                    </svg>
+                                </a>
+                            ))}
+                        </div>
                     </div>
                 </div>
             </div>
