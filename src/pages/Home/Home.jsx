@@ -108,14 +108,15 @@ const IMAGES = {
 };
 
 const PRODUCTS = [
-    { id: 1, name: "Amber Glow", accent: "#7A0000", items: "0 items", img: amberGlowJar },
-    { id: 2, name: "Amethyst Relief", accent: "#614966", items: "4 items", img: amethystReliefJar },
-    { id: 3, name: "Jasper Revive", accent: "#3B1941", items: "4 items", img: jasperReviveJar },
-    { id: 4, name: "Malachite Fusion", accent: "#5B2861", items: "4 items", img: malachiteFusionJar },
-    { id: 5, name: "Olivine Relief", accent: "#505634", items: "4 items", img: olivineReliefJar },
-    { id: 6, name: "Obsidian Infusion", accent: "#631908", items: "4 items", img: obsidianInfusionJar },
-    { id: 7, name: "Taluma Hair Care", accent: "#2D2E2F", items: "4 items", img: talumaHairCareJar },
-    { id: 8, name: "Bare Whipped Tallow", accent: "#c5502f", items: "4 items", img: bareWhippedTallowJar },
+    // `slug` = the product page each "Buy Now" opens (/product/<slug>)
+    { id: 1, slug: "amber-glow", name: "Amber Glow", accent: "#7A0000", items: "0 items", img: amberGlowJar },
+    { id: 2, slug: "amethyst-relief", name: "Amethyst Relief", accent: "#614966", items: "4 items", img: amethystReliefJar },
+    { id: 3, slug: "jasper-revive", name: "Jasper Revive", accent: "#3B1941", items: "4 items", img: jasperReviveJar },
+    { id: 4, slug: "malachite-fusion", name: "Malachite Fusion", accent: "#5B2861", items: "4 items", img: malachiteFusionJar },
+    { id: 5, slug: "olivine-relief", name: "Olivine Relief", accent: "#505634", items: "4 items", img: olivineReliefJar },
+    { id: 6, slug: "obsidian-infusion", name: "Obsidian Infusion", accent: "#631908", items: "4 items", img: obsidianInfusionJar },
+    { id: 7, slug: "taluma-hair-care", name: "Taluma Hair Care", accent: "#2D2E2F", items: "4 items", img: talumaHairCareJar },
+    { id: 8, slug: "bare-whipped-tallow", name: "Bare Whipped Tallow", accent: "#c5502f", items: "4 items", img: bareWhippedTallowJar },
 ];
 
 const COLLECTION_CARDS = [
@@ -323,6 +324,59 @@ function GlobalStyle() {
       .ctw-scroll-x::-webkit-scrollbar-thumb { background: #C9D2BE; border-radius: 8px; }
       @media (prefers-reduced-motion: reduce) {
         .ctw-fade-in, .ctw-card-hover { animation: none !important; transition: none !important; }
+      }
+
+      /* ---- Mission Strip: hover = grey wash + tilted jar + "Buy Now" pill ---- */
+      .ctw-mission-circle img { transition: transform .5s ease; }
+      .ctw-mission-circle::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        background: #BDBDBD;
+        mix-blend-mode: multiply;   /* turns the white photo background grey */
+        opacity: 0;
+        transition: opacity .4s ease;
+        pointer-events: none;
+        z-index: 1;
+      }
+      .ctw-mission-circle:hover::after { opacity: 1; }
+      .ctw-mission-circle:hover img { transform: rotate(25deg) scale(1.03); }
+
+      .ctw-buy-now {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        z-index: 2;
+        transform: translate(-50%, -50%) scale(.85);
+        opacity: 0;
+        background: #fff;
+        color: #1C1C1A;
+        border: none;
+        border-radius: 30px;
+        padding: 10px 22px;
+        font-family: 'DM Sans', sans-serif;
+        font-size: 15px;
+        font-weight: 600;
+        letter-spacing: .04em;
+        text-transform: uppercase;
+        white-space: nowrap;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(0,0,0,.15);
+        transition: opacity .35s ease, transform .35s ease, background .25s ease, color .25s ease;
+      }
+      .ctw-buy-now:hover { background: #2D2E2F; color: #fff; }
+      .ctw-mission-circle:hover .ctw-buy-now,
+      .ctw-buy-now:focus-visible {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+      /* Touch screens have no hover, so keep the button visible there */
+      @media (hover: none) {
+        .ctw-buy-now { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .ctw-mission-circle img, .ctw-mission-circle:hover img { transition: none; transform: none; }
       }
     `}</style>
     );
@@ -722,6 +776,8 @@ function Hero({ navigate }) {
 /* ----------------------------- Mission Strip ----------------------------- */
 
 function MissionStrip() {
+    const navigate = useNavigate();
+
     return (
         <section style={{ background: "#EDF8F3", padding: "64px 24px", position: "relative", overflow: "hidden" }}>
 
@@ -766,7 +822,7 @@ function MissionStrip() {
                             style={{ textDecoration: "none", textAlign: "center" }}
                         >
                             <div
-                                className="ctw-card-hover"
+                                className="ctw-card-hover ctw-mission-circle"
                                 style={{
                                     position: "relative",
                                     width: "100%",
@@ -791,6 +847,18 @@ function MissionStrip() {
                                         display: "block",
                                     }}
                                 />
+                                <button
+                                    type="button"
+                                    className="ctw-buy-now"
+                                    aria-label={`Buy ${p.name} now`}
+                                    onClick={(e) => {
+                                        e.preventDefault();   // don't follow the card's #shop link
+                                        e.stopPropagation();
+                                        navigate(`/product/${p.slug}`);
+                                    }}
+                                >
+                                    Buy Now
+                                </button>
                             </div>
                             <h3
                                 style={{
