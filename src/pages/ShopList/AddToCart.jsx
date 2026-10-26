@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./AddToCart.css";
 import cartBanner from "../../assets/background/bg1.jpg";
 import logo from "../../assets/logo.png";
@@ -96,6 +96,7 @@ const tabLinkStyle = () => ({
 
 export default function AddToCart() {
   const location = useLocation();
+  const navigate = useNavigate();
   const tab = location.pathname.startsWith("/wishlist") ? "wishlist" : "cart";
 
   const {
@@ -206,12 +207,12 @@ export default function AddToCart() {
                           <tr key={line.key}>
                             <td className="sc-td-img">
                               <Link to={`/product/${product.slug}`}>
-                                <img src={product.gallery[0]} alt={product.name} />
+                                <img src={product.cardImage || product.gallery[0]} alt={product.displayName || product.name} />
                               </Link>
                             </td>
                             <td className="sc-td-name">
                               <Link to={`/product/${product.slug}`} className="sc-item-title" style={{ color: "inherit", textDecoration: "none" }}>
-                                {product.name}
+                                {product.displayName || product.name}
                               </Link>
                               <ul className="sc-item-attrs">
                                 <li>Size: {line.size}</li>
@@ -294,12 +295,12 @@ export default function AddToCart() {
                       <tr key={product.id}>
                         <td className="sc-td-img">
                           <Link to={`/product/${product.slug}`}>
-                            <img src={product.gallery[0]} alt={product.name} />
+                            <img src={product.cardImage || product.gallery[0]} alt={product.displayName || product.name} />
                           </Link>
                         </td>
                         <td className="sc-td-name">
                           <Link to={`/product/${product.slug}`} className="sc-item-title" style={{ color: "inherit", textDecoration: "none" }}>
-                            {product.name}
+                            {product.displayName || product.name}
                           </Link>
                           <ul className="sc-item-attrs">
                             <li>{product.subtitle}</li>
@@ -367,7 +368,12 @@ export default function AddToCart() {
                 <span className="sc-total-amount">{formatPrice(total)}</span>
               </div>
 
-              <button type="button" className="sc-place-order-btn" disabled={cartItems.length === 0}>
+              <button
+                type="button"
+                className="sc-place-order-btn"
+                disabled={cartItems.length === 0}
+                onClick={() => navigate("/checkout")}
+              >
                 Place Order
               </button>
             </div>

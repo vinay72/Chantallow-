@@ -9,14 +9,14 @@
 //   directions    -> string, or array of strings (shown as a numbered list)
 //   directionsNote-> bold line under the directions (e.g. "Use within 12 months of opening.")
 
-import amberGlowCard from "../assets/product/new/1.png";
-import amethystReliefCard from "../assets/product/new/2.png";
-import jasperReviveCard from "../assets/product/new/3.png";
-import malachiteFusionCard from "../assets/product/new/4.png";
-import obsidianInfusionCard from "../assets/product/new/5.png";
-import olivineReliefCard from "../assets/product/new/6.png";
-import bareWhippedTallowCard from "../assets/product/new/7.png";
-import talumaHairCareCard from "../assets/product/new/8.png";
+import amberGlowCard from "../assets/product/new/1.jpg";
+import amethystReliefCard from "../assets/product/new/2.jpg";
+import jasperReviveCard from "../assets/product/new/3.jpg";
+import malachiteFusionCard from "../assets/product/new/4.jpg";
+import obsidianInfusionCard from "../assets/product/new/5.jpg";
+import olivineReliefCard from "../assets/product/new/6.jpg";
+import bareWhippedTallowCard from "../assets/product/new/7.jpg";
+import talumaHairCareCard from "../assets/product/new/8.jpg";
 
 import amberGlowJar from "../assets/beauty/amber-glow.jpg";
 import amethystReliefJar from "../assets/beauty/amethyst-relief.jpg";
@@ -44,11 +44,13 @@ export const PRODUCTS = [
         id: 1,
         slug: "amber-glow",
         name: "Amber Glow",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Amber Glow + Bare Whipped Tallow",
         subtitle: "1122+ MGO Manuka Honey + Lavender Infused Tallow",
         price: 80,
         oldPrice: 89,
         badge: "SALE 20% OFF",
-        cardImage: amberGlowCard,
+        cardImage: amethystReliefCard,
         gallery: [amberGlowJar, amberGlowCard],
         description: [
             "Amber Glow is an ultra-nourishing tallow crème crafted with grass-fed suet tallow, premium 1122+ MGO Manuka honey, organic lavender, royal jelly, bee pollen, pure honey, and jojoba oil. This luxurious blend provides intense hydration while helping maintain smooth, healthy-looking skin.",
@@ -65,10 +67,12 @@ export const PRODUCTS = [
         id: 2,
         slug: "amethyst-relief",
         name: "Amethyst Relief",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Amethyst Relief + Jasper Revive",
         subtitle: "Lavender Infused & Whipped Tallow",
         price: 0,
         oldPrice: 0,
-        cardImage: amethystReliefCard,
+        cardImage: olivineReliefCard,
         gallery: [amethystReliefJar, amethystReliefCard],
         description: [
             "Amethyst Relief is a light, airy whipped tallow crème handcrafted to provide deep nourishment with a soothing botanical touch. Made with grass-fed, grass-finished beef tallow infused with organic lavender, this luxurious moisturizer melts effortlessly into the skin, leaving it feeling soft, hydrated, and comforted.",
@@ -83,6 +87,8 @@ export const PRODUCTS = [
         id: 3,
         slug: "jasper-revive",
         name: "Jasper Revive",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Jasper Revive + Obsidian Infusion",
         subtitle: "Coffee Infused Tallow",
         price: 0,
         oldPrice: 0,
@@ -102,11 +108,13 @@ export const PRODUCTS = [
         id: 4,
         slug: "malachite-fusion",
         name: "Malachite Fusion",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Malachite Fusion + Amethyst Relief",
         subtitle: "Moringa + Butterfly Pea Infused Tallow",
         price: 66,
         oldPrice: 89,
         badge: "SALE 20% OFF",
-        cardImage: malachiteFusionCard,
+        cardImage: amberGlowCard,
         gallery: [malachiteFusionJar, malachiteFusionCard],
         description: [
             "Malachite Fusion is a luxurious botanical tallow crème crafted from grass-fed, grass-finished beef tallow infused with nutrient-rich moringa and butterfly pea flower. This deeply nourishing formula helps moisturize, soften, and support healthy-looking skin while promoting a radiant, revitalized complexion.",
@@ -122,10 +130,12 @@ export const PRODUCTS = [
         id: 5,
         slug: "obsidian-infusion",
         name: "Obsidian Infusion",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Obsidian Infusion + Taluma Hair Care",
         subtitle: "Cacao Infused Tallow",
         price: 0,
         oldPrice: 0,
-        cardImage: obsidianInfusionCard,
+        cardImage: talumaHairCareCard,
         gallery: [obsidianInfusionJar, obsidianInfusionCard],
         description: [
             "Obsidian Infusion is a decadent tallow crème infused with organic cacao nibs, cacao powder, and hazelnut ground coffee to provide rich nourishment and luxurious hydration. Crafted with grass-fed, grass-finished beef tallow, this indulgent formula helps support smooth, healthy-looking skin while delivering a comforting sensory experience.",
@@ -140,10 +150,12 @@ export const PRODUCTS = [
         id: 6,
         slug: "olivine-relief",
         name: "Olivine Relief",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Olivine Relief + Malachite Fusion",
         subtitle: "Zechstein Magnesium + Arnica Tallow Balm",
         price: 0,
         oldPrice: 0,
-        cardImage: olivineReliefCard,
+        cardImage: malachiteFusionCard,
         gallery: [olivineReliefJar, olivineReliefCard],
         description: [
             "Olivine Relief is a powerful restorative tallow balm designed to provide targeted comfort, deep nourishment, and intensive body care support. Crafted with grass-fed, grass-finished beef tallow and infused with Zechstein magnesium chloride, Arnica Montana, willow bark, lavender, frankincense, myrrh, and gingko biloba, this rich balm helps soothe, comfort, and revitalize both skin and body.",
@@ -159,11 +171,13 @@ export const PRODUCTS = [
         id: 7,
         slug: "taluma-hair-care",
         name: "Taluma Hair Care",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Taluma Hair Care + Amber Glow",
         subtitle: "Grass-Fed/Grass-Finished Beef Tallow, Raw Honduran Batana Oil",
         price: 0,
         oldPrice: 0,
         badge: "SALE 10% OFF",
-        cardImage: talumaHairCareCard,
+        cardImage: obsidianInfusionCard,
         gallery: [talumaHairCareJar, talumaHairCareCard],
         description:
             "Taluma Hair Care is a deeply nourishing blend crafted with grass-fed grass-finished beef tallow, raw Honduran Batana oil, rosemary, argan oil, castor oil, black seed oil, and black cumin seed oil to help restore moisture, strengthen hair, and promote a healthier-looking scalp. Grass-Fed Beef Tallow is naturally rich in Vitamins A, D, E & K, essential fatty acids, and skin-compatible lipids that deeply condition the scalp, help reduce dryness, support healthy follicles, and improve softness and shine. Raw Honduran Batana Oil contains Vitamin E, Omega-3, Omega-6 & Omega-9 fatty acids, helping nourish damaged hair, improve elasticity, reduce breakage, and restore the appearance of thicker, fuller hair. Rosemary is rich in antioxidants such as rosmarinic acid and carnosic acid, which help support a healthy scalp environment, reduce oxidative stress, and promote stronger-looking hair. Argan Oil provides Vitamin E, antioxidants, and essential fatty acids that help smooth frizz, repair dryness, improve shine, and protect hair from environmental damage. Castor Oil is naturally rich in ricinoleic acid, Vitamin E, and Omega-6 & Omega-9 fatty acids, helping lock in moisture, reduce split ends, and improve the appearance of stronger, healthier hair. Black Seed Oil and Black Cumin Seed Oil contain thymoquinone, Vitamin E, antioxidants, and essential fatty acids that help soothe the scalp, nourish hair roots, improve moisture retention, and support healthy hair growth.",
@@ -178,6 +192,8 @@ export const PRODUCTS = [
         id: 8,
         slug: "bare-whipped-tallow",
         name: "Bare Whipped Tallow",
+        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
+        displayName: "Bare Whipped Tallow + Olivine Relief",
         subtitle: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil",
         price: 0,
         oldPrice: 0,

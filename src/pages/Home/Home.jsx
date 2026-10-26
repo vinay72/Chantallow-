@@ -89,14 +89,14 @@ import talumaHairCareJar from "../../assets/beauty/taluma-hair-care.jpg";
 import bareWhippedTallowJar from "../../assets/beauty/bare-whipped-tallow.jpg";
 
 // Product photography used in the "Experience, The Tallow Collection" cards
-import collectionImg1 from "../../assets/product/new/1.png";
-import collectionImg2 from "../../assets/product/new/2.png";
-import collectionImg3 from "../../assets/product/new/3.png";
-import collectionImg4 from "../../assets/product/new/4.png";
-import collectionImg5 from "../../assets/product/new/5.png";
-import collectionImg6 from "../../assets/product/new/6.png";
-import collectionImg7 from "../../assets/product/new/7.png"; // Bare Whipped Tallow
-import collectionImg8 from "../../assets/product/new/8.png"; // Taluma Hair Care
+import collectionImg1 from "../../assets/product/new/1.jpg";
+import collectionImg2 from "../../assets/product/new/2.jpg";
+import collectionImg3 from "../../assets/product/new/3.jpg";
+import collectionImg4 from "../../assets/product/new/4.jpg";
+import collectionImg5 from "../../assets/product/new/5.jpg";
+import collectionImg6 from "../../assets/product/new/6.jpg";
+import collectionImg7 from "../../assets/product/new/7.jpg"; // Bare Whipped Tallow
+import collectionImg8 from "../../assets/product/new/8.jpg"; // Taluma Hair Care
 
 
 
@@ -121,15 +121,19 @@ const PRODUCTS = [
     { id: 8, slug: "bare-whipped-tallow", jarScale: 1.05, name: "Bare Whipped Tallow", accent: "#c5502f", items: "4 items", img: bareWhippedTallowJar },
 ];
 
+// Each photo shows two jars: a big one in front and a small one beside it.
+// `name` = big jar + small jar.  `id` = the BIG jar's product, so clicking the
+// card, the heart and the cart button all use the product that's in front.
+// `key` keeps each card unique for React.
 const COLLECTION_CARDS = [
-    { id: 1, name: "Amber Glow", tag: "Get 20% Off", accent: "#7A0000", img: collectionImg1, col: 1 },
-    { id: 2, name: "Amethyst Relief", accent: "#3B1941", img: collectionImg2, col: 2 },
-    { id: 3, name: "Jasper Revive", tag: "Featured", accent: "#3B1941", img: collectionImg3, col: 3 },
-    { id: 4, name: "Malachite Fusion", accent: "#5B2861", img: collectionImg4, col: 1 },
-    { id: 7, name: "Taluma Hair Care", accent: "#5d1100", img: collectionImg8, col: 2 },
-    { id: 5, name: "Obsidian Infusion", accent: "#536807", img: collectionImg5, col: 3 },
-    { id: 8, name: "Bare Whipped Tallow", accent: "#5d1100", img: collectionImg7, col: 1 },
-    { id: 6, name: "Olivine Relief", accent: "#5d1100", img: collectionImg6, col: 3 },
+    { key: "c1", id: 4, name: "Malachite Fusion + Amethyst Relief", tag: "Get 20% Off", accent: "#7A0000", img: collectionImg1, col: 1 },
+    { key: "c2", id: 1, name: "Amber Glow + Bare Whipped Tallow", accent: "#3B1941", img: collectionImg2, col: 2 },
+    { key: "c3", id: 3, name: "Jasper Revive + Obsidian Infusion", tag: "Featured", accent: "#3B1941", img: collectionImg3, col: 3 },
+    { key: "c4", id: 6, name: "Olivine Relief + Malachite Fusion", accent: "#5B2861", img: collectionImg4, col: 1 },
+    { key: "c5", id: 5, name: "Obsidian Infusion + Taluma Hair Care", accent: "#5d1100", img: collectionImg8, col: 2 },
+    { key: "c6", id: 7, name: "Taluma Hair Care + Amber Glow", accent: "#536807", img: collectionImg5, col: 3 },
+    { key: "c7", id: 8, name: "Bare Whipped Tallow + Olivine Relief", accent: "#5d1100", img: collectionImg7, col: 1 },
+    { key: "c8", id: 2, name: "Amethyst Relief + Jasper Revive", accent: "#5d1100", img: collectionImg6, col: 3 },
 ];
 
 // "Our Best Sellers" — each name matches the jar shown in its image.
@@ -229,7 +233,7 @@ export default function Home() {
     const [menuOpen, setMenuOpen] = useState(false);
     const [cartOpen, setCartOpen] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
-    const [quickView, setQuickView] = useState(null); // product id shown in Quick View (null = closed)
+    const [quickView, setQuickView] = useState(null); // card shown in Quick View (null = closed)
     const [cartTab, setCartTab] = useState("cart");
 
     return (
@@ -258,14 +262,14 @@ export default function Home() {
                 tab={cartTab}
                 setTab={setCartTab}
             />
-            <QuickViewModal productId={quickView} onClose={() => setQuickView(null)} />
+            <QuickViewModal card={quickView} onClose={() => setQuickView(null)} />
 
             <main>
                 <Hero navigate={navigate} />
                 <MissionStrip />
                 <CompleteCareBanner />
                 {/* <CategoryMarquee /> */}
-                <TallowCollection onQuickView={(id) => setQuickView(id)} />
+                <TallowCollection onQuickView={(card) => setQuickView(card)} />
                 <MoreCollections />
                 <SimilarProfilesSection />
                 <SavingSection />
@@ -912,7 +916,7 @@ function MissionStrip() {
                                         objectFit: "cover",
                                         display: "block",
                                         objectPosition: "center",
-                                        "--jar-scale": p.jarScale || 1,
+                                        // "--jar-scale": p.jarScale || 1,
                                     }}
                                 />
                                 <button
@@ -1052,7 +1056,7 @@ function TallowCollection({ onQuickView }) {
                                 }}
                             >
                                 {COLLECTION_CARDS.filter((c) => c.col === col).map((c) => (
-                                    <CollectionCard key={c.id} c={c} onQuickView={onQuickView} />
+                                    <CollectionCard key={c.key || c.id} c={c} onQuickView={() => onQuickView(c)} />
                                 ))}
                             </div>
                         ))}
@@ -1068,7 +1072,7 @@ function TallowCollection({ onQuickView }) {
                         }}
                     >
                         {COLLECTION_CARDS.map((c) => (
-                            <CollectionCard key={c.id} c={c} onQuickView={onQuickView} />
+                            <CollectionCard key={c.key || c.id} c={c} onQuickView={() => onQuickView(c)} />
                         ))}
                     </div>
                 )}
@@ -3462,8 +3466,8 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                             }}
                         >
                             <img
-                                src={row.product.gallery[0]}
-                                alt={row.product.name}
+                                src={row.product.cardImage || row.product.gallery[0]}
+                                alt={row.product.displayName || row.product.name}
                                 style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                             />
                         </div>
@@ -3472,13 +3476,13 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                                 onClick={() => goTo(`/product/${row.product.slug}`)}
                                 style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4, cursor: "pointer" }}
                             >
-                                {row.product.name}
+                                {row.product.displayName || row.product.name}
                             </div>
                             <div style={{ fontSize: 12, color: "#8A8A80", marginBottom: 4 }}>{row.meta}</div>
                             <div style={{ fontSize: 13, color: "#41705B", fontWeight: 700 }}>{row.price}</div>
                         </div>
                         <button
-                            aria-label={`Remove ${row.product.name}`}
+                            aria-label={`Remove ${row.product.displayName || row.product.name}`}
                             onClick={row.onRemove}
                             style={{ background: "none", border: "none", cursor: "pointer" }}
                         >
@@ -3597,7 +3601,9 @@ const QV_SOCIAL = [
     { label: "X", d: "M4 3h4.7l4.2 5.9L18 3h2.3l-6.4 7.4L21 21h-4.7l-4.6-6.4L6.1 21H3.8l6.9-7.9L4 3zm3 1.6l10.2 14.8h1.6L8.6 4.6H7z" },
 ];
 
-function QuickViewModal({ productId, onClose }) {
+function QuickViewModal({ card, onClose }) {
+    // `card` = the clicked collection card: { id (big jar's product), name ("Big + Small"), img }
+    const productId = card ? card.id : null;
     const navigate = useNavigate();
     const { addToCart, toggleWishlist, isInWishlist, showToast } = useShop();
     const product = productId != null ? getProductById(productId) : null;
@@ -3629,6 +3635,9 @@ function QuickViewModal({ productId, onClose }) {
     const liked = isInWishlist(product.id);
     const isDesktop = window.innerWidth > 760;
     const summary = Array.isArray(product.description) ? product.description[0] : product.description;
+    // Same "big jar + small jar" name and photo as the card that was clicked
+    const displayName = card?.name || product.name;
+    const [bigName, smallName] = displayName.split(" + ");
 
     const handleAdd = () => {
         addToCart(product.id, qty, size);
@@ -3678,7 +3687,7 @@ function QuickViewModal({ productId, onClose }) {
             <div
                 role="dialog"
                 aria-modal="true"
-                aria-label={`${product.name} quick view`}
+                aria-label={`${displayName} quick view`}
                 onClick={(e) => e.stopPropagation()}
                 style={{
                     width: "100%",
@@ -3727,8 +3736,8 @@ function QuickViewModal({ productId, onClose }) {
                     }}
                 >
                     <img
-                        src={product.cardImage || product.gallery[0]}
-                        alt={`Chantallow ${product.name} tallow jar`}
+                        src={card?.img || product.cardImage || product.gallery[0]}
+                        alt={`Chantallow ${displayName} tallow jars`}
                         style={{
                             width: "100%",
                             maxWidth: 460,
@@ -3769,7 +3778,7 @@ function QuickViewModal({ productId, onClose }) {
                             cursor: "pointer",
                         }}
                     >
-                        {product.name}
+                        {displayName}
                     </h4>
 
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, fontSize: 15 }}>
@@ -3792,6 +3801,11 @@ function QuickViewModal({ productId, onClose }) {
                     >
                         {summary}
                     </p>
+                    {smallName && (
+                        <p style={{ fontSize: 15, lineHeight: 1.6, color: "#2D2E2F", margin: "-16px 0 22px" }}>
+                            <strong style={{ fontWeight: 600 }}>Includes:</strong> {bigName} (4 oz) + {smallName} (2 oz)
+                        </p>
+                    )}
 
                     {/* Size */}
                     <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 22 }}>
@@ -3831,7 +3845,7 @@ function QuickViewModal({ productId, onClose }) {
                                     readOnly
                                     value={qty}
                                     aria-label="Quantity"
-                                    style={{ width: 40, height: 34, textAlign: "center", border: "1px solid #D5E2DA", background: "#fff", fontSize: 16 }}
+                                    style={{ width: 40, height: 34, textAlign: "center", border: "1px solid #D5E2DA", background: "#fff", fontSize: 16, color: "#1C1C1A", fontFamily: "Lufga, 'DM Sans', sans-serif" }}
                                 />
                                 <button type="button" aria-label="Increase quantity" onClick={() => setQty((q) => q + 1)} style={stepBtn}>
                                     <Plus size={18} />
