@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AboutUs from "../pages/AboutUs/AboutUs";
 import Home from "../pages/Home/Home";
 import ShopCart from "../pages/Home/ShopCart";
@@ -16,13 +16,19 @@ import TermsConditionsPage from "../pages/Terms&Conditions/Terms&Conditions";
 import ReturnRefundPolicy from "../pages/ReturnandRefundPolicy/Return&RefundPolicy";
 import FurkindPetTallow from "../pages/Home/FurkindPetTallow";
 
+import ProtectedRoute from "../components/ProtectedRoute";
+import AdminLayout from "../admin/AdminLayout";
+import AdminProducts from "../admin/AdminProducts";
+import AdminProductForm from "../admin/AdminProductForm";
+import AdminUsers from "../admin/AdminUsers";
+
 function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/aboutus" element={<AboutUs />} />
-        <Route path="/shop" element={<ShopCart />} />
+        <Route path="/shopcart" element={<ShopCart />} />
         <Route path="/shop-list" element={<ShopSection />} />
 
         {/* Cart & wishlist (same page, two tabs) */}
@@ -41,9 +47,29 @@ function AppRouter() {
         <Route path="/furkind-pet-tallow" element={<FurkindPetTallow />} />
         <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
         <Route path="/contactus" element={<ContactUs />} />
+
+        {/* Auth — one login page for both roles; admins are sent on to /admin */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<SignUpSection />} />
+        {/* Headers across the site link to /registration */}
+        <Route path="/registration" element={<Navigate to="/login" replace />} />
         {/* <Route path="/register" element={<Register />} /> */}
+
+        {/* Admin panel — admin role only */}
+        <Route
+          path="/admin"
+          element={
+            <ProtectedRoute role="admin">
+              <AdminLayout />
+            </ProtectedRoute>
+          }
+        >
+          <Route index element={<Navigate to="products" replace />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="products/new" element={<AdminProductForm />} />
+          <Route path="products/:id" element={<AdminProductForm />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

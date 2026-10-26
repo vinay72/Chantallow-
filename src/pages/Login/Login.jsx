@@ -1,7 +1,8 @@
 import React, { useState } from "react";
 import { Search, Heart, ShoppingCart, Menu, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
-import "./login.css";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
+import { homeForRole, useAuth } from "../../context/AuthContext";
+import "./Login.css";
 
 import logo from "../../assets/logo.png";
 
@@ -76,7 +77,7 @@ function Header() {
                 </nav>
 
                 <div className="ctw-header-actions">
-                    <Link to="/registration" className="ctw-login-link">
+                    <Link to="/login" className="ctw-login-link">
                         Login /<br />Register
                     </Link>
                     <button aria-label="Search" className="ctw-icon-btn">
@@ -105,14 +106,41 @@ function Header() {
 
 function SignInSection() {
     const navigate = useNavigate();
+    const location = useLocation();
+    const { user, login } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [slide, setSlide] = useState(0);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+    const [remember, setRemember] = useState(true);
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
-        e.preventDefault();
-        // wire up real auth here
-        navigate("/");
+    // Page they were bounced from (e.g. /admin/products), if any.
+    const from = location.state?.from;
+
+    // Admins land in the panel; users go back where they were, or home.
+    const destination = (role) => {
+        const wantsAdmin = Boolean(from?.startsWith("/admin"));
+        if (from && wantsAdmin === (role === "admin")) return from;
+        return homeForRole(role);
     };
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        setError("");
+        setSubmitting(true);
+        try {
+            const signedIn = await login(email, password, remember);
+            navigate(destination(signedIn.role), { replace: true });
+        } catch (err) {
+            setError(err.message);
+            setSubmitting(false);
+        }
+    };
+
+    // Already signed in — skip the form.
+    if (user && !submitting) return <Navigate to={destination(user.role)} replace />;
 
     const nextSlide = () => setSlide((s) => (s + 1) % SLIDES.length);
     const prevSlide = () => setSlide((s) => (s - 1 + SLIDES.length) % SLIDES.length);
@@ -143,9 +171,23 @@ function SignInSection() {
                     </div>
 
                     <form onSubmit={handleSubmit}>
+                        {error && (
+                            <p className="ctw-form-error" role="alert">
+                                {error}
+                            </p>
+                        )}
+
                         <div className="ctw-field">
                             <label className="ctw-label">Email Address</label>
-                            <input type="email" required placeholder="Email Address" className="ctw-input" />
+                            <input
+                                type="email"
+                                required
+                                autoComplete="email"
+                                placeholder="Email Address"
+                                className="ctw-input"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                            />
                         </div>
 
                         <div className="ctw-field ctw-field-password">
@@ -154,8 +196,11 @@ function SignInSection() {
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     required
+                                    autoComplete="current-password"
                                     placeholder="Password"
                                     className="ctw-input"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
                                 />
                                 <button
                                     type="button"
@@ -170,21 +215,21 @@ function SignInSection() {
 
                         <div className="ctw-form-row">
                             <label className="ctw-checkbox-label">
-                                <input type="checkbox" />
-                                Remember For 30 Days
+                                <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
+                                Remember Me
                             </label>
                             <a href="#forgot" className="ctw-underline-link ctw-forgot-link">
                                 Forgot Password
                             </a>
                         </div>
 
-                        <button type="submit" className="ctw-btn ctw-signin-btn">
-                            Sign In
+                        <button type="submit" className="ctw-btn ctw-signin-btn" disabled={submitting}>
+                            {submitting ? "Signing In…" : "Sign In"}
                         </button>
 
                         <p className="ctw-signup-text">
                             Don't Have an Account?{" "}
-                            <Link to="/registration" className="ctw-signup-link">
+                            <Link to="/register" className="ctw-signup-link">
                                 Sign up For Free
                             </Link>
                         </p>

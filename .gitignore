@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Backend secrets + uploaded media
+.env
+backend/public/uploads/products/*
+!backend/public/uploads/products/.gitkeep

@@ -43,7 +43,7 @@ import moreCollection4 from "../../assets/banner/about4.png"; // Jasper Revive
 
 // SIMILAR PROFILES IMAGES
 
-import similarPortrait from "../../assets/about/pic12.jpg";
+import similarPortrait from "../../assets/about/pic12.jpeg";
 
 import similarImg2 from "../../assets/shop/product/Similar/3.png"; // Malachite Fusion
 import similarImg3 from "../../assets/shop/product/Similar/4.png"; // Obsidian Infusion

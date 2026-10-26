@@ -67,6 +67,41 @@ const PAGE_STYLES = `
 
   /* Footer headings */
   .ct-page footer h5, .ct-page footer h6 { font-family: 'Lufga', 'DM Sans', sans-serif; color: ${BRAND_GREEN}; }
+
+  /* ---------- Alignment ----------
+     Horizontal: text is justified, so every line runs edge to edge
+     (straight left AND right edges). The last line of each paragraph
+     stays left-aligned so short last lines don't stretch.
+     Vertical: the three columns start on the same top line, and every
+     block / paragraph uses the same even spacing. */
+  .ct-page .ct-product { align-items: stretch; }
+  .ct-page .ct-info { padding-right: 8px; }
+  .ct-page .ct-info > :first-child { margin-top: 0; }
+  .ct-page .ct-badge { margin: 0 0 12px; }
+
+  .ct-page .ct-copy-block,
+  .ct-page .ct-divider { max-width: none; }
+
+  .ct-page .ct-copy-block p,
+  .ct-page .ct-fineprint,
+  .ct-page .ct-sidebar p {
+    text-align: justify;
+    text-align-last: left;
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    word-spacing: normal;
+  }
+  /* even gap between description paragraphs */
+  .ct-page .ct-copy-block p + p { margin-top: 10px; }
+  /* even gap between Description / Ingredients / Directions */
+  .ct-page .ct-copy-block { margin: 0 0 24px; }
+  .ct-page .ct-copy-block:last-of-type { margin-bottom: 0; }
+  .ct-page .ct-divider { margin: 24px 0; }
+
+  .ct-page .ct-fineprint { max-width: none; }
+
+  /* sidebar sits on the same top line as the image and text */
+  .ct-page .ct-sidebar { margin-top: 0; }
 `;
 
 const sb = {

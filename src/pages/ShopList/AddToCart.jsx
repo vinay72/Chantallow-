@@ -89,11 +89,9 @@ const CheckIcon = () => (
   </svg>
 );
 
-const tabLinkStyle = (active) => ({
+const tabLinkStyle = () => ({
   color: "inherit",
-  textDecoration: active ? "underline" : "none",
-  textUnderlineOffset: 4,
-  fontWeight: active ? 600 : 400,
+  textDecoration: "none",
 });
 
 export default function AddToCart() {
@@ -110,6 +108,7 @@ export default function AddToCart() {
     removeFromCart,
     removeFromWishlist,
     moveToCart,
+    showToast,
   } = useShop();
 
   const [couponCode, setCouponCode] = useState("");
@@ -128,7 +127,7 @@ export default function AddToCart() {
   const total = subtotal - savings;
 
   return (
-    <div className="sc-page">
+    <div className="sc-page ac-page">
       {/* Header */}
       <header className="sc-header">
         <div className="sc-header__bar">
@@ -171,13 +170,13 @@ export default function AddToCart() {
           <h1>{tab === "cart" ? "Cart" : "Wish List"}</h1>
           <nav className="sc-breadcrumb" aria-label="Cart and wish list">
             <Link to="/cart" style={tabLinkStyle(tab === "cart")} aria-current={tab === "cart" ? "page" : undefined}>
-              Cart ({cartCount})
+              Cart
             </Link>
             <span className="sc-breadcrumb__sep">
               <Sparkle />
             </span>
             <Link to="/wishlist" style={tabLinkStyle(tab === "wishlist")} aria-current={tab === "wishlist" ? "page" : undefined}>
-              Wish List ({wishlistCount})
+              Wish List
             </Link>
           </nav>
         </div>
@@ -268,6 +267,13 @@ export default function AddToCart() {
                     />
                     <button type="submit">Apply Coupon</button>
                   </form>
+                  <button
+                    type="button"
+                    className="sc-update-cart-btn"
+                    onClick={() => showToast && showToast("Cart updated")}
+                  >
+                    Update Cart
+                  </button>
                   {couponMessage && <p className="sc-coupon-msg">{couponMessage}</p>}
                 </div>
               </>

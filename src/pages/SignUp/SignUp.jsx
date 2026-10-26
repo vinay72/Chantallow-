@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Search, Heart, ShoppingCart, Menu, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
+import { homeForRole, useAuth } from "../../context/AuthContext";
 import "./SignUp.css";
 
 import logo from "../../assets/logo.png";
@@ -75,7 +76,7 @@ function Header() {
                 </nav>
 
                 <div className="ctw-header-actions">
-                    <Link to="/registration" className="ctw-login-link">
+                    <Link to="/login" className="ctw-login-link">
                         Login /<br />Register
                     </Link>
                     <button aria-label="Search" className="ctw-icon-btn">
@@ -104,14 +105,29 @@ function Header() {
 
 function SignUpSection() {
     const navigate = useNavigate();
+    const { user, register } = useAuth();
     const [showPassword, setShowPassword] = useState(false);
     const [slide, setSlide] = useState(0);
+    const [error, setError] = useState("");
+    const [submitting, setSubmitting] = useState(false);
 
-    const handleSubmit = (e) => {
+    // Sign-up always creates a regular "user" account (admins are promoted from /admin/users).
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // wire up real auth here
-        navigate("/");
+        const form = new FormData(e.currentTarget);
+        setError("");
+        setSubmitting(true);
+        try {
+            await register(form.get("username"), form.get("email"), form.get("password"));
+            navigate("/", { replace: true });
+        } catch (err) {
+            setError(err.message);
+            setSubmitting(false);
+        }
     };
+
+    // Already signed in — nothing to sign up for.
+    if (user && !submitting) return <Navigate to={homeForRole(user.role)} replace />;
 
     const nextSlide = () => setSlide((s) => (s + 1) % SLIDES.length);
     const prevSlide = () => setSlide((s) => (s - 1 + SLIDES.length) % SLIDES.length);
@@ -142,6 +158,12 @@ function SignUpSection() {
                     </div>
 
                     <form onSubmit={handleSubmit}>
+                        {error && (
+                            <p className="ctw-form-error" role="alert">
+                                {error}
+                            </p>
+                        )}
+
                         <div className="ctw-field">
                             <label className="ctw-label" htmlFor="ctw-username">Username</label>
                             <input
@@ -191,13 +213,13 @@ function SignUpSection() {
 
                         <p className="ctw-password-hint">Must be at least 8 Characters.</p>
 
-                        <button type="submit" className="ctw-btn ctw-submit-btn">
-                            Sign Up
+                        <button type="submit" className="ctw-btn ctw-submit-btn" disabled={submitting}>
+                            {submitting ? "Creating Account…" : "Sign Up"}
                         </button>
 
                         <p className="ctw-alt-text">
                             Already have an Account?{" "}
-                            <Link to="/registration" className="ctw-alt-link">
+                            <Link to="/login" className="ctw-alt-link">
                                 Log in
                             </Link>
                         </p>

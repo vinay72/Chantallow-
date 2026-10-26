@@ -1,48 +1,49 @@
-/* Fonts used by the original theme — add to index.html <head> if not already loaded:
-   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500&family=Poppins:wght@300;400;500;600;700&family=Marcellus&display=swap" rel="stylesheet">
-   Note: "Lufga" is NOT on Google Fonts — it's a commercial/licensed font. You'll need to
-   self-host it (via @font-face with your own .woff2 files) or swap it for a similar
-   free alternative (e.g. "Sora" or "General Sans") if you don't have a license for it. */
+/* ===========================================================
+   Chantallow — Cart / Wish List page
+   Matches the original design.
 
-:root {
-  --sc-bg: #eaf3ec;
-  --sc-bg-header: #ffffff;
-  --sc-green-dark: #17392c;
-  --sc-green: #2f6a4f;
-  --sc-banner-green: #2c5c4b;
-  --sc-brand: #8a6a4f;
-  /* logo brown */
-  --sc-accent: #b08d5f;
-  /* sparkle gold */
-  --sc-ink: #1c2620;
-  --sc-muted: #6b7770;
-  --sc-line: #cfe0d5;
-  --sc-white: #ffffff;
-  --sc-black: #111111;
-  --sc-radius: 2px;
-  --sc-font-body: "Poppins", "Roboto", Arial, sans-serif;
-  --sc-font-display: "Playfair Display", Georgia, serif;
+   Every rule is scoped under `.ac-page.sc-page` so styles from other
+   pages that reuse "sc-" class names (e.g. ShopCart.css) can't override
+   this page — that was making the current page look different.
+   =========================================================== */
+
+.ac-page.sc-page {
+  --ac-bg: #edf8f3;
+  --ac-ink: #1c1c1a;
+  --ac-text: #2d2e2f;
+  --ac-muted: #6b6f6c;
+  --ac-green: #1b4d3e;
+  --ac-line: #d5e2da;
+  --ac-white: #ffffff;
+  --ac-title: "Marcellus", Georgia, serif;
+  --ac-body: "Lufga", "DM Sans", "Poppins", Arial, sans-serif;
+
+  background: var(--ac-bg);
+  color: var(--ac-ink);
+  font-family: var(--ac-body);
+  min-height: 100vh;
 }
 
-.sc-page {
-  font-family: var(--sc-font-body);
-  color: var(--sc-ink);
-  background: var(--sc-bg);
-}
-
-.sc-page * {
+.ac-page.sc-page *,
+.ac-page.sc-page *::before,
+.ac-page.sc-page *::after {
   box-sizing: border-box;
 }
 
-/* ---------------- Header ---------------- */
-.sc-header {
-  background: var(--sc-bg-header);
+.ac-page.sc-page a {
+  color: inherit;
+  text-decoration: none;
 }
 
-.sc-header__bar {
-  max-width: 1600px;
+/* ---------------- Header ---------------- */
+.ac-page.sc-page .sc-header {
+  background: var(--ac-bg);
+}
+
+.ac-page.sc-page .sc-header__bar {
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 22px 60px;
+  padding: 18px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -50,352 +51,349 @@
   flex-wrap: wrap;
 }
 
-/* Logo */
-.sc-logo {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  text-decoration: none;
-  color: var(--sc-brand);
-}
-
-.sc-logo__img {
-  height: 40px;
+.ac-page.sc-page .sc-logo__img {
+  height: 64px;
   width: auto;
   display: block;
 }
 
-/* Nav */
-.sc-nav {
+.ac-page.sc-page .sc-nav {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 42px;
-  flex: 1 1 420px;
+  justify-content: flex-end;
   flex-wrap: wrap;
-  row-gap: 18px;
+  gap: 18px 40px;
+  flex: 1 1 360px;
+  max-width: 460px;
+  margin-left: auto;
 }
 
-.sc-nav a {
+.ac-page.sc-page .sc-nav a {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-  color: var(--sc-ink);
-  text-decoration: none;
-  font-size: 17px;
-  font-weight: 400;
+  gap: 6px;
+  font-size: 16px;
+  color: var(--ac-text);
+  font-family: var(--ac-body);
   transition: color 0.2s ease;
 }
 
-
-.sc-nav a:hover {
-  color: var(--sc-brand);
+.ac-page.sc-page .sc-nav a:hover {
+  color: var(--ac-green);
 }
 
-.sc-sparkle {
-  color: var(--sc-accent);
+.ac-page.sc-page .sc-sparkle {
+  color: #9aa79f;
   flex-shrink: 0;
 }
 
-/* Actions */
-.sc-header__actions {
+.ac-page.sc-page .sc-header__actions {
   display: flex;
   align-items: center;
   gap: 26px;
 }
 
-.sc-login-link {
-  color: var(--sc-ink);
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  font-size: 16px;
-  line-height: 1.45;
+.ac-page.sc-page .sc-login-link {
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--ac-text);
+  border-bottom: 1px solid var(--ac-text);
+  padding-bottom: 2px;
 }
 
-.sc-login-link:hover {
-  color: var(--sc-brand);
-}
-
-.sc-icon-btn {
+.ac-page.sc-page .sc-icon-btn {
   position: relative;
   background: none;
   border: none;
-  color: var(--sc-ink);
+  padding: 2px;
+  color: var(--ac-ink);
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  padding: 2px;
 }
 
-.sc-icon-btn:hover {
-  color: var(--sc-brand);
-}
-
-.sc-badge {
+.ac-page.sc-page .sc-badge {
   position: absolute;
   top: -6px;
   right: -8px;
-  background: var(--sc-brand);
-  color: var(--sc-white);
+  min-width: 17px;
+  height: 17px;
+  padding: 0 4px;
+  border-radius: 9px;
+  background: var(--ac-green);
+  color: var(--ac-white);
   font-size: 10px;
-  line-height: 1;
-  padding: 3px 5px;
-  border-radius: 50%;
-}
-
-@media (max-width: 1200px) {
-  .sc-header__bar {
-    padding: 20px 28px;
-  }
-
-  .sc-nav {
-    gap: 28px;
-  }
+  line-height: 17px;
+  text-align: center;
 }
 
 /* ---------------- Banner ---------------- */
-/* The image comes in from the JSX as --sc-banner-img.
-   ::before holds the photo, ::after lays the green tint over it,
-   so the heading stays crisp and untinted. */
-.sc-banner {
+.ac-page.sc-page .sc-banner {
   position: relative;
   isolation: isolate;
-  background-color: var(--sc-banner-green);
   overflow: hidden;
+  background-color: #1f4a3b;
 }
 
-.sc-banner::before {
+.ac-page.sc-page .sc-banner::before {
   content: "";
   position: absolute;
-  inset: -24px;                /* was 0 — bleed prevents feathered edges */
+  inset: -24px;
   z-index: -2;
   background-image: var(--sc-banner-img);
   background-size: cover;
   background-position: center;
-  background-repeat: no-repeat;
-  filter: blur(10px) saturate(0.7) brightness(1.05);
+  filter: blur(6px) saturate(0.8);
 }
 
-.sc-banner::after {
+.ac-page.sc-page .sc-banner::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(
-    180deg,
-    rgba(28, 68, 55, 0.72) 0%,
-    rgba(20, 52, 42, 0.80) 100%
-  );
+  background: linear-gradient(180deg, rgba(27, 77, 62, 0.72) 0%, rgba(20, 58, 46, 0.78) 100%);
 }
 
-.sc-banner__inner {
-  position: relative;
+.ac-page.sc-page .sc-banner__inner {
   max-width: 1320px;
   margin: 0 auto;
-  padding: 110px 32px;
+  padding: 92px 24px 90px;
   text-align: center;
-  color: var(--sc-white);
+  color: var(--ac-white);
 }
 
-.sc-banner__inner h1 {
-  font-family: var(--sc-font-display);
+.ac-page.sc-page .sc-banner__inner h1 {
+  font-family: var(--ac-title);
   font-weight: 400;
-  font-size: 88px;
+  font-size: clamp(48px, 6vw, 76px);
   line-height: 1.05;
-  margin: 0 0 18px;
+  margin: 0 0 20px;
+  color: var(--ac-white);
 }
 
-.sc-breadcrumb {
+.ac-page.sc-page .sc-breadcrumb {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 14px;
   font-size: 16px;
-  letter-spacing: 0.01em;
+  font-family: var(--ac-body);
 }
 
-.sc-breadcrumb__sep {
+.ac-page.sc-page .sc-breadcrumb a {
+  color: var(--ac-white);
+}
+
+.ac-page.sc-page .sc-breadcrumb a[aria-current="page"] {
+  font-weight: 500;
+}
+
+.ac-page.sc-page .sc-breadcrumb__sep {
   display: inline-flex;
-  color: rgba(255, 255, 255, 0.8);
+  color: rgba(255, 255, 255, 0.6);
 }
 
-.sc-breadcrumb__sep .sc-sparkle {
+.ac-page.sc-page .sc-breadcrumb__sep .sc-sparkle {
   color: inherit;
-}
-
-@media (max-width: 768px) {
-  .sc-banner__inner {
-    padding: 70px 24px;
-  }
-
-  .sc-banner__inner h1 {
-    font-size: 52px;
-  }
+  width: 8px;
+  height: 8px;
 }
 
 /* ---------------- Content layout ---------------- */
-.sc-content {
-  padding: 56px 32px 72px;
+.ac-page.sc-page .sc-content {
+  padding: 90px 24px 100px;
 }
 
-.sc-content__grid {
-  max-width: 1320px;
+.ac-page.sc-page .sc-content__grid {
+  max-width: 1180px;
   margin: 0 auto;
   display: grid;
-  grid-template-columns: 2.1fr 1fr;
-  gap: 32px;
+  grid-template-columns: minmax(0, 2.05fr) minmax(0, 1fr);
+  gap: 36px;
   align-items: start;
 }
 
 @media (max-width: 960px) {
-  .sc-content__grid {
+  .ac-page.sc-page .sc-content__grid {
     grid-template-columns: 1fr;
   }
 }
 
 /* ---------------- Cart table ---------------- */
-.sc-table-wrap {
+.ac-page.sc-page .sc-table-wrap {
   overflow-x: auto;
+}
+
+.ac-page.sc-page .sc-table {
+  width: 100%;
+  min-width: 680px;
+  border-collapse: collapse;
   background: transparent;
 }
 
-.sc-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 640px;
-}
-
-.sc-table thead th {
+.ac-page.sc-page .sc-table th,
+.ac-page.sc-page .sc-table td {
   text-align: left;
-  font-family: "Lufga", sans-serif;
-  font-size: 16px;
-  -webkit-text-stroke: 0.4px currentColor;
-
-  font-weight: 700;
-  padding: 0 0 20px 15px;
-
-  border-bottom: 1px solid var(--sc-line);
-  color: #24262b;
-}
-
-.sc-table tbody tr {
-  border-bottom: 1px solid var(--sc-line);
-}
-
-
-.sc-table td {
-  padding: 20px 12px;
   vertical-align: middle;
+  background: transparent;
+  border: none;
 }
 
-.sc-td-img {
-  width: 110px;
-}
-
-.sc-td-img img {
-  width: 76px;
-  height: 92px;
-  object-fit: cover;
-  background: var(--sc-white);
-  border: 1px solid var(--sc-line);
-}
-
-.sc-td-name {
-  text-align: left;
-}
-
-.sc-item-title {
-  display: block;
-
-  color: #2D2E2F;
-  font-size: 20px;
-  font-family: "Marcellus", sans-serif;
-  font-weight: 400;
-
-}
-
-.sc-item-attrs {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-
-  line-height: 1.6;
-
-  font-size: 13px;
-  font-family: var(--font-family-base);
-  color: #666666;
-  font-weight: 400;
-}
-
-.sc-td-price,
-.sc-td-subtotal {
-  font-family: -apple-system, "Segoe UI", Roboto, "Poppins", Arial, Helvetica, sans-serif !important;
-  font-variant-numeric: lining-nums proportional-nums !important;
-  font-feature-settings: "lnum" 1, "pnum" 1 !important;
-  font-size: 14px;
+.ac-page.sc-page .sc-table thead th {
+  font-family: var(--ac-body);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ac-ink);
+  padding: 0 12px 24px 0;
+  border-bottom: 1px solid var(--ac-line);
   white-space: nowrap;
 }
 
-.sc-quantity {
+.ac-page.sc-page .sc-table tbody tr {
+  border-bottom: 1px solid var(--ac-line);
+}
+
+.ac-page.sc-page .sc-table td {
+  padding: 18px 12px 18px 0;
+}
+
+/* image */
+.ac-page.sc-page .sc-td-img {
+  width: 114px;
+}
+
+.ac-page.sc-page .sc-td-img a {
+  display: block;
+  width: 100px;
+  height: 100px;
+  background: var(--ac-white);
+}
+
+.ac-page.sc-page .sc-td-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
+  display: block;
+  border: none;
+  background: var(--ac-white);
+}
+
+/* name + attributes */
+.ac-page.sc-page .sc-td-name {
+  text-align: left;
+  min-width: 190px;
+}
+
+.ac-page.sc-page .sc-item-title {
+  display: block;
+  margin: 0 0 6px;
+  font-family: var(--ac-title);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--ac-text);
+}
+
+.ac-page.sc-page .sc-item-attrs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-family: var(--ac-body);
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--ac-muted);
+  text-align: left;
+}
+
+/* price + subtotal */
+.ac-page.sc-page .sc-td-price,
+.ac-page.sc-page .sc-td-subtotal {
+  font-family: var(--ac-title);
+  font-size: 20px;
+  color: var(--ac-text);
+  white-space: nowrap;
+}
+
+/* quantity: black square − / + with a white box between */
+.ac-page.sc-page .sc-quantity {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--sc-ink);
+  gap: 8px;
+  border: none;
 }
 
-.sc-quantity button {
-  width: 32px;
-  height: 32px;
-  background: var(--sc-black);
-  color: var(--sc-white);
+.ac-page.sc-page .sc-quantity button {
+  width: 28px;
+  height: 28px;
   border: none;
-  cursor: pointer;
-  font-size: 16px;
+  border-radius: 0;
+  background: var(--ac-ink);
+  color: var(--ac-white);
+  font-size: 18px;
   line-height: 1;
-}
-
-.sc-quantity button:hover {
-  background: var(--sc-green-dark);
-}
-
-.sc-quantity input {
-  width: 40px;
-  height: 32px;
-  border: none;
-  text-align: center;
-  font-family: -apple-system, "Segoe UI", Roboto, "Poppins", Arial, Helvetica, sans-serif !important;
-  font-variant-numeric: lining-nums proportional-nums !important;
-  font-feature-settings: "lnum" 1, "pnum" 1 !important;
-  font-size: 14px;
-  color: var(--sc-ink);
-  background: var(--sc-white);
-}
-
-.sc-remove-btn {
-  background: none;
-  border: 1px solid var(--sc-ink);
-  width: 34px;
-  height: 34px;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  color: var(--sc-ink);
+  padding: 0;
 }
 
-.sc-remove-btn:hover {
-  color: var(--sc-white);
-  background: #b23b3b;
-  border-color: #b23b3b;
+.ac-page.sc-page .sc-quantity button:hover {
+  background: var(--ac-green);
 }
 
-.sc-empty-row {
+.ac-page.sc-page .sc-quantity input {
+  width: 30px;
+  height: 28px;
+  border: 1px solid var(--ac-line);
+  border-radius: 0;
+  background: var(--ac-white);
   text-align: center;
-  padding: 40px 0;
-  color: var(--sc-muted);
+  font-family: var(--ac-body);
+  font-size: 13px;
+  color: var(--ac-ink);
+  padding: 0;
 }
 
-/* ---------------- Cart actions row ---------------- */
-.sc-cart-actions {
+/* remove: outlined square */
+.ac-page.sc-page .sc-td-remove {
+  text-align: right;
+  padding-right: 0;
+}
+
+.ac-page.sc-page .sc-remove-btn {
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--ac-ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ac-ink);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.ac-page.sc-page .sc-remove-btn:hover {
+  background: var(--ac-ink);
+  color: var(--ac-white);
+}
+
+.ac-page.sc-page .sc-empty-row {
+  text-align: center !important;
+  padding: 48px 0 !important;
+  color: var(--ac-muted);
+  font-size: 15px;
+}
+
+.ac-page.sc-page .sc-empty-row a {
+  color: var(--ac-green);
+  text-decoration: underline;
+}
+
+/* ---------------- Coupon + Update Cart ---------------- */
+.ac-page.sc-page .sc-cart-actions {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -404,227 +402,260 @@
   margin-top: 28px;
 }
 
-.sc-coupon {
+.ac-page.sc-page .sc-coupon {
   display: flex;
-  border: 1px solid var(--sc-ink);
-  max-width: 360px;
+  align-items: center;
   width: 100%;
+  max-width: 374px;
+  height: 46px;
+  border: 1px solid #c8d6cd;
+  background: transparent;
 }
 
-.sc-coupon input {
+.ac-page.sc-page .sc-coupon input {
   flex: 1;
+  min-width: 0;
+  height: 100%;
   border: none;
   background: transparent;
-  padding: 12px 14px;
-  font-size: 14px;
+  padding: 0 18px;
+  font-family: var(--ac-body);
+  font-size: 15px;
+  color: var(--ac-ink);
   outline: none;
 }
 
-.sc-coupon button {
+.ac-page.sc-page .sc-coupon input::placeholder {
+  color: var(--ac-text);
+}
+
+.ac-page.sc-page .sc-coupon button {
   border: none;
-  background: var(--sc-green-dark);
-  color: var(--sc-white);
-  padding: 0 18px;
-  font-size: 13px;
+  background: transparent;
+  padding: 0 14px;
+  height: 100%;
+  font-family: var(--ac-body);
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.03em;
+  color: var(--ac-ink);
   cursor: pointer;
   white-space: nowrap;
 }
 
-.sc-coupon button:hover {
-  background: var(--sc-green);
+.ac-page.sc-page .sc-coupon button:hover {
+  color: var(--ac-green);
 }
 
-.sc-coupon-msg {
-  font-size: 13px;
-  color: var(--sc-green);
+.ac-page.sc-page .sc-coupon-msg {
+  width: 100%;
+  order: 3;
   margin: 0;
+  font-size: 13px;
+  color: var(--ac-green);
 }
 
-.sc-update-cart-btn {
-  border: 1px solid var(--sc-ink);
+.ac-page.sc-page .sc-update-cart-btn {
+  height: 46px;
+  padding: 0 30px;
+  border: 1px solid var(--ac-ink);
+  border-radius: 0;
   background: transparent;
-  padding: 13px 26px;
-  font-size: 13px;
+  color: var(--ac-ink);
+  font-family: var(--ac-body);
+  font-size: 15px;
   font-weight: 600;
-  letter-spacing: 0.06em;
   text-transform: uppercase;
   cursor: pointer;
-  color: var(--sc-ink);
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.sc-update-cart-btn:hover {
-  background: var(--sc-ink);
-  color: var(--sc-white);
+.ac-page.sc-page .sc-update-cart-btn:hover {
+  background: var(--ac-ink);
+  color: var(--ac-white);
 }
 
-/* ---------------- Summary sidebar ---------------- */
-.sc-summary-col {
+/* ---------------- Cart Total sidebar ---------------- */
+.ac-page.sc-page .sc-summary-col {
   position: sticky;
   top: 24px;
 }
 
-.sc-summary-title {
-  font-family: lufga sans-serif;
-  font-size: 20px;
-  margin: 0 0 14px;
+.ac-page.sc-page .sc-summary-title {
+  margin: 0 0 12px;
   text-align: left;
-  color: #2D2E2F;
+  font-family: var(--ac-body);
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--ac-green);
 }
 
-.sc-summary-card {
-  border: 1px solid var(--sc-line);
-  background: var(--sc-white);
-  padding: 20px;
+.ac-page.sc-page .sc-summary-card {
+  border: 1px solid var(--ac-line);
+  border-radius: 0;
+  background: transparent;
+  padding: 30px 26px 26px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 14px;
 }
 
-.sc-bank-offer {
+.ac-page.sc-page .sc-bank-offer {
   width: 100%;
-  border: 1px solid var(--sc-ink);
+  height: 48px;
+  border: 1px solid var(--ac-ink);
+  border-radius: 0;
   background: transparent;
-  padding: 14px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
+  color: var(--ac-ink);
+  font-family: var(--ac-body);
+  font-size: 15px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
   cursor: pointer;
-  color: var(--sc-ink);
 }
 
-.sc-bank-offer:hover {
-  background: var(--sc-ink);
-  color: var(--sc-white);
-}
-
-.sc-perk {
+.ac-page.sc-page .sc-perk {
   display: flex;
-  gap: 12px;
-  align-items: flex-start;
-  background: var(--sc-bg);
-  border: 1px solid var(--sc-line);
-  border-radius: var(--sc-radius);
-  padding: 14px;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border: 1px solid var(--ac-line);
+  border-radius: 0;
+  background: transparent;
   text-align: left;
 }
 
-.sc-perk>div {
-  text-align: left;
-}
-
-.sc-perk__icon {
-  color: var(--sc-green-dark);
+.ac-page.sc-page .sc-perk__icon {
+  width: 42px;
+  height: 42px;
   flex-shrink: 0;
-  width: 34px;
-  height: 34px;
+  color: var(--ac-ink);
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.sc-perk__icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
+.ac-page.sc-page .sc-perk__icon svg {
+  width: 40px;
+  height: 40px;
 }
 
-.sc-perk__eyebrow {
+.ac-page.sc-page .sc-perk__eyebrow {
   display: block;
-  font-family: "Lufga", sans-serif;
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--sc-green);
-  letter-spacing: 0.06em;
   margin-bottom: 2px;
-  text-align: left;
+  font-family: var(--ac-body);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ac-muted);
 }
 
-.sc-perk__title {
+.ac-page.sc-page .sc-perk__title {
   margin: 0;
-  font-family: "Marcellus", serif;
+  font-family: var(--ac-body);
   font-size: 15px;
-  color: var(--sc-ink);
+  font-weight: 600;
+  color: var(--ac-green);
   text-align: left;
 }
 
-.sc-perk__desc {
-  margin: 4px 0 0;
-  font-family: "Lufga", sans-serif;
-  font-size: 12.5px;
-  color: var(--sc-muted);
-  line-height: 1.5;
+.ac-page.sc-page .sc-perk__desc {
+  margin: 6px 0 0;
+  font-family: var(--ac-body);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--ac-muted);
   text-align: left;
 }
 
-.sc-save-line {
+.ac-page.sc-page .sc-save-line {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13.5px;
-  color: var(--sc-green-dark);
-  margin: 0;
+  gap: 10px;
+  margin: 10px 0 0;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--ac-line);
+  font-family: var(--ac-body);
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ac-green);
 }
 
-.sc-total-row {
+.ac-page.sc-page .sc-total-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-top: 1px solid var(--sc-line);
-  padding-top: 16px;
-  font-size: 16px;
+  padding: 4px 0;
+  border: none;
+  font-family: var(--ac-body);
+  font-size: 15px;
   font-weight: 500;
+  color: var(--ac-green);
 }
 
-.sc-total-amount {
-  font-family: lufga sans-serif;
-  text-align: end;
-  font-weight: 500;
-  font-size: 24px;
-  color: #2D2E2F
-}
-
-.sc-place-order-btn {
-  width: 100%;
-  border: 1px solid var(--sc-ink);
-  background: transparent;
-  color: var(--sc-ink);
-  padding: 14px;
-  font-size: 13.5px;
+.ac-page.sc-page .sc-total-amount {
+  font-family: var(--ac-body);
+  font-size: 22px;
   font-weight: 600;
-  letter-spacing: 0.06em;
+  color: var(--ac-text);
+}
+
+.ac-page.sc-page .sc-place-order-btn {
+  width: 100%;
+  height: 48px;
+  margin-top: 6px;
+  border: 1px solid var(--ac-ink);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ac-ink);
+  font-family: var(--ac-body);
+  font-size: 15px;
+  font-weight: 600;
   text-transform: uppercase;
   cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
 }
 
-.sc-place-order-btn:hover:not(:disabled) {
-  background: var(--sc-ink);
-  color: var(--sc-white);
-  border-color: var(--sc-ink);
+.ac-page.sc-page .sc-place-order-btn:hover:not(:disabled) {
+  background: var(--ac-ink);
+  color: var(--ac-white);
 }
 
-.sc-place-order-btn:disabled {
+.ac-page.sc-page .sc-place-order-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-/* ---------------- Footer (site-footer) ---------------- */
-
-.ctw-underline-link {
-  transition: color 0.2s ease;
-}
-
-.ctw-underline-link:hover {
-  color: var(--sc-green-dark) !important;
+/* ---------------- Footer link hover ---------------- */
+.ac-page.sc-page .ctw-underline-link:hover {
+  color: var(--ac-green) !important;
   text-decoration: underline !important;
 }
 
-/* Accessibility */
-.sc-page a:focus-visible,
-.sc-page button:focus-visible,
-.sc-page input:focus-visible {
-  outline: 2px solid var(--sc-brand);
+/* ---------------- Accessibility ---------------- */
+.ac-page.sc-page a:focus-visible,
+.ac-page.sc-page button:focus-visible,
+.ac-page.sc-page input:focus-visible {
+  outline: 2px solid var(--ac-green);
   outline-offset: 2px;
+}
+
+/* ---------------- Small screens ---------------- */
+@media (max-width: 768px) {
+  .ac-page.sc-page .sc-header__bar {
+    padding: 14px 16px;
+  }
+  .ac-page.sc-page .sc-nav {
+    order: 3;
+    max-width: none;
+    justify-content: center;
+    gap: 12px 22px;
+  }
+  .ac-page.sc-page .sc-content {
+    padding: 50px 16px 70px;
+  }
+  .ac-page.sc-page .sc-coupon {
+    max-width: none;
+  }
 }

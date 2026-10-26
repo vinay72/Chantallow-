@@ -643,3 +643,13 @@
   height: 24px;
   display: block;
 }
+.ctw-form-error {
+  background: #FCEEEE;
+  color: #B3261E;
+  border: 1px solid #F3C8C5;
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin: 0 0 16px;
+  font-family: 'Lufga', sans-serif;
+  font-size: 14px;
+}
