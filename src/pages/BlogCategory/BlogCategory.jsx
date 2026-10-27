@@ -55,15 +55,15 @@ const ArrowUp = () => (
 
 const NAV = ["Home", "About Us", "Shop", "Blog", "Contact US"];
 
-/* Blog post images now point to the local assets/blogpost-4 folder,
+/* Blog post images now point to the public/assets/blogpost-4 folder,
    using the 6 real Chantallow product photos (pic1.jpg – pic6.jpg). */
 const POSTS = [
-  { id: 1, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "src/assets/blogpost-4/pic1.jpg" },
-  { id: 2, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "src/assets/blogpost-4/pic2.jpg" },
-  { id: 3, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "src/assets/blogpost-4/pic3.jpg" },
-  { id: 4, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "src/assets/blogpost-4/pic4.jpg" },
-  { id: 5, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "src/assets/blogpost-4/pic5.jpg" },
-  { id: 6, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "src/assets/blogpost-4/pic6.jpg" },
+  { id: 1, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "/assets/blogpost-4/pic1.jpg" },
+  { id: 2, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "/assets/blogpost-4/pic2.jpg" },
+  { id: 3, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "/assets/blogpost-4/pic3.jpg" },
+  { id: 4, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "/assets/blogpost-4/pic4.jpg" },
+  { id: 5, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "/assets/blogpost-4/pic5.jpg" },
+  { id: 6, date: "10 Sep 2023", title: "Trendsetter Chronicles: Unveiling the Latest in Fashion", img: "/assets/blogpost-4/pic6.jpg" },
 ];
 
 const CATEGORIES = [
@@ -74,41 +74,41 @@ const CATEGORIES = [
 ];
 
 const LATEST = [
-  { date: "2 Apr, 2023", title: "Uncovering the Beauty Benefits of Plant-Based Skincare", img: "src/assets/blogpost-4/pic1.jpg" },
-  { date: "25 March, 2023", title: "Harness the Power of Plants for Healthy Glowing Skin", img: "src/assets/blogpost-4/pic2.jpg" },
-  { date: "7 Dec, 2023", title: "Embrace the Revitalizing Benefits of Plant-Based Product", img: "src/assets/blogpost-4/pic3.jpg" },
+  { date: "2 Apr, 2023", title: "Uncovering the Beauty Benefits of Plant-Based Skincare", img: "/assets/blogpost-4/pic1.jpg" },
+  { date: "25 March, 2023", title: "Harness the Power of Plants for Healthy Glowing Skin", img: "/assets/blogpost-4/pic2.jpg" },
+  { date: "7 Dec, 2023", title: "Embrace the Revitalizing Benefits of Plant-Based Product", img: "/assets/blogpost-4/pic3.jpg" },
 ];
 
 const TAGS = ["Mascara", "Cosmetic", "Serum", "Primer", "Makeup", "Contour", "Blush", "Highlighter"];
 
 const YOU_MAY_LIKE = [
-  { name: "Jewel Tone Nail Polish", price: 40, img: "images/cosmetic/1.png" },
-  { name: "Balancing Body Cream", price: 30, img: "images/cosmetic/2.png" },
-  { name: "Smoothing Body Butter", price: 35, img: "images/cosmetic/3.png" },
-  { name: "Repairing Body Gel", price: 20, img: "images/cosmetic/4.png" },
-  { name: "Skin Product", price: 70, img: "images/cosmetic/5.png" },
-  { name: "Skin Product", price: 45, img: "images/cosmetic/6.png" },
-  { name: "Skin Product", price: 40, img: "images/cosmetic/7.png" },
-  { name: "Calming Body Lotion", price: 60, img: "images/cosmetic/1.png" },
+  { name: "Jewel Tone Nail Polish", price: 40, img: "/images/cosmetic/1.png" },
+  { name: "Balancing Body Cream", price: 30, img: "/images/cosmetic/2.png" },
+  { name: "Smoothing Body Butter", price: 35, img: "/images/cosmetic/3.png" },
+  { name: "Repairing Body Gel", price: 20, img: "/images/cosmetic/4.png" },
+  { name: "Skin Product", price: 70, img: "/images/cosmetic/5.png" },
+  { name: "Skin Product", price: 45, img: "/images/cosmetic/6.png" },
+  { name: "Skin Product", price: 40, img: "/images/cosmetic/7.png" },
+  { name: "Calming Body Lotion", price: 60, img: "/images/cosmetic/1.png" },
 ];
 
 const CART_ITEMS = [
-  { id: 1, name: "Soothing Body Cream", img: "images/shop/shop-cart/pic1.jpg", price: 50, qty: 1 },
-  { id: 2, name: "Body Toner", img: "images/shop/shop-cart/pic2.jpg", price: 40, qty: 1 },
-  { id: 3, name: "Brightening Serum", img: "images/shop/shop-cart/pic3.jpg", price: 65, qty: 1 },
-  { id: 4, name: "Soothing Body Cream", img: "images/shop/shop-cart/pic1.jpg", price: 50, qty: 1 },
+  { id: 1, name: "Soothing Body Cream", img: "/images/shop/shop-cart/pic1.jpg", price: 50, qty: 1 },
+  { id: 2, name: "Body Toner", img: "/images/shop/shop-cart/pic2.jpg", price: 40, qty: 1 },
+  { id: 3, name: "Brightening Serum", img: "/images/shop/shop-cart/pic3.jpg", price: 65, qty: 1 },
+  { id: 4, name: "Soothing Body Cream", img: "/images/shop/shop-cart/pic1.jpg", price: 50, qty: 1 },
 ];
 
 const WISHLIST = [
-  { id: 1, name: "Soothing Body Cream", img: "images/shop/shop-cart/pic1.jpg", price: 50 },
-  { id: 2, name: "Body Toner", img: "images/shop/shop-cart/pic2.jpg", price: 40 },
-  { id: 3, name: "Brightening Body Serum", img: "images/shop/shop-cart/pic3.jpg", price: 65 },
+  { id: 1, name: "Soothing Body Cream", img: "/images/shop/shop-cart/pic1.jpg", price: 50 },
+  { id: 2, name: "Body Toner", img: "/images/shop/shop-cart/pic2.jpg", price: 40 },
+  { id: 3, name: "Brightening Body Serum", img: "/images/shop/shop-cart/pic3.jpg", price: 65 },
 ];
 
 const RECENT_POSTS = [
-  { title: "Hydrated Supple Skin", date: "July 23, 2023", img: "src/assets/shop/product/small/1.png" },
-  { title: "Glowing Radiant Skin", date: "July 23, 2023", img: "src/assets/shop/product/small/2.png" },
-  { title: "Silky Soft Skin", date: "July 23, 2023", img: "src/assets/shop/product/small/3.png" },
+  { title: "Hydrated Supple Skin", date: "July 23, 2023", img: "/assets/shop/product/small/1.png" },
+  { title: "Glowing Radiant Skin", date: "July 23, 2023", img: "/assets/shop/product/small/2.png" },
+  { title: "Silky Soft Skin", date: "July 23, 2023", img: "/assets/shop/product/small/3.png" },
 ];
 
 /* --------------------------------- Header --------------------------------- */
@@ -322,7 +322,7 @@ function Sidebar() {
       </div>
 
       <div className="widget image-box">
-        <div className="dz-media"><img src="src/assets/lady3.jpg" alt="Woman applying Chantallow skincare" /></div>
+        <div className="dz-media"><img src="/assets/lady3.jpg" alt="Woman applying Chantallow skincare" /></div>
         <div className="dz-info">
           <h4 className="title">Do you Want To Work With Us?</h4>
           <p className="text">Explore exciting opportunities with us. Join our team and be part of the beauty revolution!</p>
