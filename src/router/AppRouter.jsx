@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AboutUs from "../pages/AboutUs/AboutUs";
 import Home from "../pages/Home/Home";
 import ShopCart from "../pages/Home/ShopCart";
@@ -16,6 +16,13 @@ import PrivacyPolicy from "../pages/Privacy/PrivacyPolicy";
 import TermsConditionsPage from "../pages/Terms&Conditions/Terms&Conditions";
 import ReturnRefundPolicy from "../pages/ReturnandRefundPolicy/Return&RefundPolicy";
 import FurkindPetTallow from "../pages/Home/FurkindPetTallow";
+
+import AdminLogin from "../admin/AdminLogin";
+import AdminLayout from "../admin/AdminLayout";
+import AdminProducts from "../admin/AdminProducts";
+import AdminProductForm from "../admin/AdminProductForm";
+import AdminProductDetail from "../admin/AdminProductDetail";
+import AdminUsers from "../admin/AdminUsers";
 
 function AppRouter() {
   return (
@@ -45,9 +52,24 @@ function AppRouter() {
         <Route path="/furkind-pet-tallow" element={<FurkindPetTallow />} />
         <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
         <Route path="/contactus" element={<ContactUs />} />
+
+        {/* Auth — one login page for both roles; admins are sent on to /admin */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<SignUpSection />} />
+        {/* Headers across the site link to /registration */}
+        <Route path="/registration" element={<Navigate to="/login" replace />} />
         {/* <Route path="/register" element={<Register />} /> */}
+
+        {/* Admin panel — admin role only (AdminLayout checks the role) */}
+        <Route path="/admin/login" element={<AdminLogin />} />
+        <Route path="/admin" element={<AdminLayout />}>
+          <Route index element={<Navigate to="products" replace />} />
+          <Route path="products" element={<AdminProducts />} />
+          <Route path="products/new" element={<AdminProductForm mode="create" />} />
+          <Route path="products/:id" element={<AdminProductDetail />} />
+          <Route path="products/:id/edit" element={<AdminProductForm mode="edit" />} />
+          <Route path="users" element={<AdminUsers />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );

@@ -36,10 +36,12 @@ import lavenderSprig from "../../assets/collection/3.png"; // lavender
 // MORE COLLECTIONS IMAGES
 
 import missionPortrait from "../../assets/about/abut.png";
-import moreCollection1 from "../../assets/banner/about2.png"; // Amethyst Relife
-import moreCollection2 from "../../assets/banner/about3.png"; // Malachite Fusion
-import moreCollection3 from "../../assets/banner/about4.png"; // Jasper Revive
-import moreCollection4 from "../../assets/banner/about4.png"; // Jasper Revive
+// "Our Best Sellers" photos (src/assets/banner). If your files are .jpg, change the extensions below.
+// NOTE: the file named "Amber Glow" actually shows the OLIVINE RELIEF jar.
+import bestOlivine from "../../assets/banner/AmberGlow.png";       // Olivine Relief jar
+import bestBare from "../../assets/banner/BareHydrate.png";        // Bare Whipped Tallow jar
+import bestMalachite from "../../assets/banner/MalachiteFusion.png"; // Malachite Fusion jar
+import bestTaluma from "../../assets/banner/TalumaHairCare.png";  // Taluma Hair Care jar
 
 // SIMILAR PROFILES IMAGES
 
@@ -126,36 +128,24 @@ const PRODUCTS = [
 // card, the heart and the cart button all use the product that's in front.
 // `key` keeps each card unique for React.
 const COLLECTION_CARDS = [
-    { key: "c1", id: 4, name: "Malachite Fusion + Amethyst Relief", tag: "Get 20% Off", accent: "#7A0000", img: collectionImg1, col: 1 },
-    { key: "c2", id: 1, name: "Amber Glow + Bare Whipped Tallow", accent: "#3B1941", img: collectionImg2, col: 2 },
-    { key: "c3", id: 3, name: "Jasper Revive + Obsidian Infusion", tag: "Featured", accent: "#3B1941", img: collectionImg3, col: 3 },
-    { key: "c4", id: 6, name: "Olivine Relief + Malachite Fusion", accent: "#5B2861", img: collectionImg4, col: 1 },
-    { key: "c5", id: 5, name: "Obsidian Infusion + Taluma Hair Care", accent: "#5d1100", img: collectionImg8, col: 2 },
-    { key: "c6", id: 7, name: "Taluma Hair Care + Amber Glow", accent: "#536807", img: collectionImg5, col: 3 },
-    { key: "c7", id: 8, name: "Bare Whipped Tallow + Olivine Relief", accent: "#5d1100", img: collectionImg7, col: 1 },
-    { key: "c8", id: 2, name: "Amethyst Relief + Jasper Revive", accent: "#5d1100", img: collectionImg6, col: 3 },
+    { key: "c1", id: 4, name: "Malachite Fusion (4oz) + Amethyst Relief (2oz)", tag: "Get 20% Off", accent: "#7A0000", img: collectionImg1, col: 1 },
+    { key: "c2", id: 1, name: "Amber Glow (4oz) + Bare Whipped Tallow (2oz)", accent: "#3B1941", img: collectionImg2, col: 2 },
+    { key: "c3", id: 3, name: "Jasper Revive (4oz) + Obsidian Infusion (2oz)", tag: "Featured", accent: "#3B1941", img: collectionImg3, col: 3 },
+    { key: "c4", id: 6, name: "Olivine Relief (4oz) + Malachite Fusion (2oz)", accent: "#5B2861", img: collectionImg4, col: 1 },
+    { key: "c5", id: 5, name: "Obsidian Infusion (4oz) + Taluma Hair Care (2oz)", accent: "#5d1100", img: collectionImg8, col: 2 },
+    { key: "c6", id: 7, name: "Taluma Hair Care (4oz) + Amber Glow (2oz)", accent: "#536807", img: collectionImg5, col: 3 },
+    { key: "c7", id: 8, name: "Bare Whipped Tallow (4oz) + Olivine Relief (2oz)", accent: "#5d1100", img: collectionImg7, col: 1 },
+    { key: "c8", id: 2, name: "Amethyst Relief (4oz) + Jasper Revive (2oz)", accent: "#5d1100", img: collectionImg6, col: 3 },
 ];
 
 // "Our Best Sellers" — each name matches the jar shown in its image.
 // To add more products, import their arch photo and add a row here.
+// "Our Best Sellers" — same style photos (jar on a grey-blue stand), each name matches its jar.
 const MORE_COLLECTIONS = [
-    { id: 1, slug: "olivine-relief", name: "Olivine Relief", img: moreCollection1 },      // about2.png — Olivine Relief jar
-    { id: 2, slug: "malachite-fusion", name: "Malachite Fusion", img: moreCollection2 },  // about3.png — Malachite Fusion jar
-    { id: 3, slug: "taluma-hair-care", name: "Taluma Hair Care", img: moreCollection3 },  // about4.png — Taluma Hair Care jar
-    // 4th product: no arch photo yet, so it uses its collection card photo.
-    // Swap `img` for a Jasper Revive arch photo when you have one.
-    // Jasper Revive removed from Best Sellers:
-    // { id: 4, slug: "jasper-revive", name: "Jasper Revive", img: collectionImg3, bg: "linear-gradient(180deg, #EADCC6 0%, #C8AE8C 100%)", fit: "contain" },
-    {
-        id: 4,
-        slug: "bare-whipped-tallow",
-        name: "Bare Whipped Tallow",
-        img: bareWhippedTallowJar, // beauty/bare-whipped-tallow.jpg — white background
-        // No arch photo yet: the white-background jar sits on a soft backdrop that
-        // matches its orange label (the white blends away, so no box shows).
-        bg: "linear-gradient(180deg, #F7E6DA 0%, #E2B193 100%)",
-        fit: "contain",
-    },
+    { id: 1, slug: "olivine-relief", name: "Olivine Relief", img: bestOlivine },
+    { id: 2, slug: "malachite-fusion", name: "Malachite Fusion", img: bestMalachite },
+    { id: 3, slug: "taluma-hair-care", name: "Taluma Hair Care", img: bestTaluma },
+    { id: 4, slug: "bare-whipped-tallow", name: "Bare Whipped Tallow", img: bestBare },
 ];
 
 const SIMILAR_PROFILES = [
@@ -3601,6 +3591,19 @@ const QV_SOCIAL = [
     { label: "X", d: "M4 3h4.7l4.2 5.9L18 3h2.3l-6.4 7.4L21 21h-4.7l-4.6-6.4L6.1 21H3.8l6.9-7.9L4 3zm3 1.6l10.2 14.8h1.6L8.6 4.6H7z" },
 ];
 
+// Shows "(4oz)" / "(2oz)" in normal case even when the name is styled UPPERCASE
+function withSizes(name) {
+    return String(name)
+        .split(/(\(\d+(?:\.\d+)?oz\))/i)
+        .map((part, i) =>
+            /^\(\d/.test(part) ? (
+                <span key={i} style={{ textTransform: "none" }}>{part}</span>
+            ) : (
+                part
+            )
+        );
+}
+
 function QuickViewModal({ card, onClose }) {
     // `card` = the clicked collection card: { id (big jar's product), name ("Big + Small"), img }
     const productId = card ? card.id : null;
@@ -3635,9 +3638,8 @@ function QuickViewModal({ card, onClose }) {
     const liked = isInWishlist(product.id);
     const isDesktop = window.innerWidth > 760;
     const summary = Array.isArray(product.description) ? product.description[0] : product.description;
-    // Same "big jar + small jar" name and photo as the card that was clicked
-    const displayName = card?.name || product.name;
-    const [bigName, smallName] = displayName.split(" + ");
+    // Same "big jar (4oz) + small jar (2oz)" name and photo as the card that was clicked
+    const displayName = card?.name || product.displayName || product.name;
 
     const handleAdd = () => {
         addToCart(product.id, qty, size);
@@ -3770,15 +3772,20 @@ function QuickViewModal({ card, onClose }) {
                         onClick={openDetails}
                         style={{
                             fontFamily: "Marcellus, serif",
-                            fontSize: isDesktop ? 38 : 28,
+                            // long two-jar names wrap onto 2 lines, so use a slightly smaller
+                            // size and an explicit line height (another stylesheet was squeezing it)
+                            fontSize: displayName.length > 28 ? (isDesktop ? 32 : 24) : (isDesktop ? 38 : 28),
+                            lineHeight: 1.25,
+                            letterSpacing: "0.01em",
                             fontWeight: 400,
                             textTransform: "uppercase",
                             color: "#1C1C1A",
-                            margin: "0 0 8px",
+                            margin: "0 0 14px",
+                            paddingRight: 36, // keep clear of the close (X) button
                             cursor: "pointer",
                         }}
                     >
-                        {displayName}
+                        {withSizes(displayName)}
                     </h4>
 
                     <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14, fontSize: 15 }}>
@@ -3801,12 +3808,6 @@ function QuickViewModal({ card, onClose }) {
                     >
                         {summary}
                     </p>
-                    {smallName && (
-                        <p style={{ fontSize: 15, lineHeight: 1.6, color: "#2D2E2F", margin: "-16px 0 22px" }}>
-                            <strong style={{ fontWeight: 600 }}>Includes:</strong> {bigName} (4 oz) + {smallName} (2 oz)
-                        </p>
-                    )}
-
                     {/* Size */}
                     <div style={{ marginBottom: 18, display: "flex", alignItems: "center", gap: 22 }}>
                         <div style={{ ...label, marginBottom: 0 }}>Size:</div>

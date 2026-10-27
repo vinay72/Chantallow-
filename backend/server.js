@@ -66,6 +66,22 @@ function removeMediaFiles(media) {
   }
 }
 
+// Gallery files arrive under `media`, the cover image under `main_image`.
+const productUploads = upload.fields([
+  { name: 'media', maxCount: 15 },
+  { name: 'main_image', maxCount: 1 },
+]);
+
+const galleryFiles = (req) => req.files?.media || [];
+const coverFile = (req) => req.files?.main_image?.[0] || null;
+const coverUrl = (file) => (file ? '/uploads/products/' + file.filename : null);
+
+// Removes everything this request uploaded (used when the request fails).
+function removeRequestUploads(req) {
+  removeMediaFiles(normalizeMedia(galleryFiles(req)));
+  if (coverFile(req)) removeMediaFiles([{ url: coverUrl(coverFile(req)) }]);
+}
+
 // Parses the JSON `images` alternative to file uploads. Returns null if invalid.
 function parseImagesField(raw) {
   try {
@@ -76,11 +92,13 @@ function parseImagesField(raw) {
   }
 }
 
-function validateProductBody(body, media, { isCreate }) {
+function validateProductBody(body, media, cover, { isCreate }) {
   const errors = [];
   const name = (body.name || '').trim();
   const subname = (body.subname || '').trim();
   const description = (body.description || '').trim();
+  const ingredients = (body.ingredients || '').trim();
+  const directions = (body.directions || '').trim();
   const category = (body.category || '').trim();
   const size = (body.size || '').trim();
   const stock_status = (body.stock_status || 'in_stock').trim();
@@ -111,10 +129,15 @@ function validateProductBody(body, media, { isCreate }) {
   if (isCreate && images.length < 4) errors.push('Add at least 4 product images.');
   if (images.length > 10) errors.push('You can add at most 10 images.');
   if (videos.length > 3) errors.push('You can add at most 3 videos.');
+  if (isCreate && !cover) errors.push('Add a cover image.');
+  if (cover && !cover.mimetype.startsWith('image/')) errors.push('Cover image must be an image file.');
 
   return {
     errors,
-    values: { name, subname, description, price, compare_at_price, category, size, stock_status },
+    values: {
+      name, subname, description, ingredients, directions,
+      price, compare_at_price, category, size, stock_status,
+    },
   };
 }
 
@@ -261,46 +284,49 @@ api.get('/auth/me', requireAuth, (req, res) => {
 const adminOnly = [requireAuth, requireRole('admin')];
 
 // --- POST /api/products ---
-api.post('/products', adminOnly, upload.array('media', 15), async (req, res, next) => {
+api.post('/products', adminOnly, productUploads, async (req, res, next) => {
   try {
-    let media = normalizeMedia(req.files);
+    let media = normalizeMedia(galleryFiles(req));
     if (media.length === 0 && req.body.images) {
       const parsed = parseImagesField(req.body.images);
       if (!parsed) return res.status(400).json({ success: false, errors: ['`images` must be a valid JSON array.'] });
       media = parsed;
     }
 
-    const { errors, values } = validateProductBody(req.body, media, { isCreate: true });
+    const { errors, values } = validateProductBody(req.body, media, coverFile(req), { isCreate: true });
     if (errors.length) {
-      removeMediaFiles(normalizeMedia(req.files));
+      removeRequestUploads(req);
       return res.status(400).json({ success: false, errors });
     }
 
     const { rows } = await pool.query(
-      `INSERT INTO products (name, subname, description, price, compare_at_price, category, size, stock_status, images)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO products (name, subname, description, ingredients, directions, price, compare_at_price,
+                             category, size, stock_status, images, main_image)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
        RETURNING *`,
       [
         values.name, values.subname || null, values.description || null,
+        values.ingredients || null, values.directions || null,
         values.price, values.compare_at_price, values.category || null,
         values.size || null, values.stock_status, JSON.stringify(media),
+        coverUrl(coverFile(req)),
       ]
     );
     res.status(201).json({ success: true, product: rows[0] });
   } catch (err) {
-    removeMediaFiles(normalizeMedia(req.files));
+    removeRequestUploads(req);
     next(err);
   }
 });
 
 // --- PUT /api/products/:id ---
-api.put('/products/:id', adminOnly, upload.array('media', 15), async (req, res, next) => {
+api.put('/products/:id', adminOnly, productUploads, async (req, res, next) => {
   try {
     const { rows: existing } = await pool.query('SELECT * FROM products WHERE id = $1', [
       req.params.id,
     ]);
     if (!existing.length) {
-      removeMediaFiles(normalizeMedia(req.files));
+      removeRequestUploads(req);
       return res.status(404).json({ success: false, error: 'Product not found' });
     }
 
@@ -314,39 +340,52 @@ api.put('/products/:id', adminOnly, upload.array('media', 15), async (req, res, 
       keep = previous.filter((m) => keepUrls.has(m.url));
     }
 
-    let media = [...keep, ...normalizeMedia(req.files)];
-    if (!req.files?.length && req.body.images) {
+    let media = [...keep, ...normalizeMedia(galleryFiles(req))];
+    if (!galleryFiles(req).length && req.body.images) {
       const parsed = parseImagesField(req.body.images);
       if (!parsed) return res.status(400).json({ success: false, errors: ['`images` must be a valid JSON array.'] });
       media = parsed;
     }
 
-    const { errors, values } = validateProductBody(req.body, media, { isCreate: false });
+    const { errors, values } = validateProductBody(req.body, media, coverFile(req), { isCreate: false });
     if (errors.length) {
-      removeMediaFiles(normalizeMedia(req.files));
+      removeRequestUploads(req);
       return res.status(400).json({ success: false, errors });
+    }
+
+    // A new upload replaces the cover; remove_main_image=1 clears it; otherwise keep it.
+    const previousCover = existing[0].main_image;
+    let cover = previousCover;
+    if (coverFile(req)) cover = coverUrl(coverFile(req));
+    else if (req.body.remove_main_image === '1') cover = null;
+    if (!cover) {
+      removeRequestUploads(req);
+      return res.status(400).json({ success: false, errors: ['Add a cover image.'] });
     }
 
     const { rows } = await pool.query(
       `UPDATE products
-       SET name = $1, subname = $2, description = $3, price = $4, compare_at_price = $5,
-           category = $6, size = $7, stock_status = $8, images = $9, updated_at = now()
-       WHERE id = $10
+       SET name = $1, subname = $2, description = $3, ingredients = $4, directions = $5,
+           price = $6, compare_at_price = $7, category = $8, size = $9, stock_status = $10,
+           images = $11, main_image = $12, updated_at = now()
+       WHERE id = $13
        RETURNING *`,
       [
         values.name, values.subname || null, values.description || null,
+        values.ingredients || null, values.directions || null,
         values.price, values.compare_at_price, values.category || null,
-        values.size || null, values.stock_status, JSON.stringify(media), req.params.id,
+        values.size || null, values.stock_status, JSON.stringify(media), cover, req.params.id,
       ]
     );
 
     // Media the admin removed is no longer referenced — clean it off disk.
     const stillUsed = new Set(media.map((m) => m.url));
     removeMediaFiles(previous.filter((m) => !stillUsed.has(m.url)));
+    if (previousCover && previousCover !== cover) removeMediaFiles([{ url: previousCover }]);
 
     res.json({ success: true, product: rows[0] });
   } catch (err) {
-    removeMediaFiles(normalizeMedia(req.files));
+    removeRequestUploads(req);
     next(err);
   }
 });
@@ -354,13 +393,14 @@ api.put('/products/:id', adminOnly, upload.array('media', 15), async (req, res, 
 // --- DELETE /api/products/:id ---
 api.delete('/products/:id', adminOnly, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('DELETE FROM products WHERE id = $1 RETURNING images', [
+    const { rows } = await pool.query('DELETE FROM products WHERE id = $1 RETURNING images, main_image', [
       req.params.id,
     ]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Product not found' });
 
     // Clean the files off disk so uploads don't pile up.
     removeMediaFiles(rows[0].images);
+    if (rows[0].main_image) removeMediaFiles([{ url: rows[0].main_image }]);
     res.json({ success: true, deleted: Number(req.params.id) });
   } catch (err) {
     next(err);

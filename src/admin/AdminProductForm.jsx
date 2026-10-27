@@ -1,263 +1,457 @@
 // src/admin/AdminProductForm.jsx
-// Create (/admin/products/new) and edit (/admin/products/:id) a product,
-// including image/video uploads. New products need at least 4 images.
+// /admin/products/new (mode="create") and /admin/products/:id/edit (mode="edit"),
+// including image/video uploads. The backend requires at least 4 images.
 
-import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { ArrowLeft, Upload, X, Film } from "lucide-react";
-import { api, mediaUrl } from "../api/client";
-import useMeta, { STOCK_LABELS } from "./useMeta";
+import { useEffect, useState, useRef } from 'react';
+import { useNavigate, useParams, Link } from 'react-router-dom';
+import { api, mediaUrl } from './api';
 
-const MIN_IMAGES = 4;
-const MAX_IMAGES = 10;
-const MAX_VIDEOS = 3;
-const ACCEPT = "image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm,video/quicktime";
-
-const EMPTY = {
-    name: "",
-    subname: "",
-    description: "",
-    price: "",
-    compare_at_price: "",
-    category: "",
-    size: "",
-    stock_status: "in_stock",
+const BLANK = {
+  name: '',
+  subname: '',
+  description: '',
+  ingredients: '',
+  directions: '',
+  price: '',
+  compare_at_price: '',
+  category: '',
+  size: '',
+  stock_status: 'in_stock',
 };
 
-export default function AdminProductForm() {
-    const { id } = useParams();
-    const isEdit = Boolean(id);
-    const navigate = useNavigate();
-    const meta = useMeta();
+export default function AdminProductForm({ mode }) {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const fileInput = useRef(null);
+  const coverInput = useRef(null);
 
-    const [values, setValues] = useState(EMPTY);
-    const [existing, setExisting] = useState([]); // media already saved: [{url, type}]
-    const [files, setFiles] = useState([]); // new File objects to upload
-    const [loading, setLoading] = useState(isEdit);
-    const [saving, setSaving] = useState(false);
-    const [errors, setErrors] = useState([]);
+  const [values, setValues] = useState(BLANK);
+  const [meta, setMeta] = useState({ categories: [], sizes: [] });
+  const [existing, setExisting] = useState([]); // media already saved: {url, type, keep}
+  const [files, setFiles] = useState([]); // newly picked File objects
+  const [savedCover, setSavedCover] = useState(null); // cover url already saved
+  const [coverFile, setCoverFile] = useState(null); // newly picked cover File
+  const [errors, setErrors] = useState([]);
+  const [loading, setLoading] = useState(mode === 'edit');
+  const [busy, setBusy] = useState(false);
+  const [dragging, setDragging] = useState(false);
 
-    useEffect(() => {
-        if (!isEdit) return;
-        let cancelled = false;
-        api(`/products/${id}`)
-            .then(({ product }) => {
-                if (cancelled) return;
-                setValues({
-                    name: product.name || "",
-                    subname: product.subname || "",
-                    description: product.description || "",
-                    price: product.price ?? "",
-                    compare_at_price: product.compare_at_price ?? "",
-                    category: product.category || "",
-                    size: product.size || "",
-                    stock_status: product.stock_status || "in_stock",
-                });
-                setExisting(product.images || []);
-            })
-            .catch((err) => !cancelled && setErrors([err.message]))
-            .finally(() => !cancelled && setLoading(false));
-        return () => {
-            cancelled = true;
-        };
-    }, [id, isEdit]);
+  useEffect(() => {
+    api.meta().then(setMeta).catch(() => {});
+  }, []);
 
-    // Local previews for files picked but not uploaded yet.
-    const previews = useMemo(
-        () => files.map((f) => ({ url: URL.createObjectURL(f), type: f.type.startsWith("video/") ? "video" : "image", name: f.name })),
-        [files]
+  useEffect(() => {
+    if (mode !== 'edit') return;
+    api
+      .getProduct(id)
+      .then((res) => {
+        const p = res.product;
+        setValues({
+          name: p.name || '',
+          subname: p.subname || '',
+          description: p.description || '',
+          ingredients: p.ingredients || '',
+          directions: p.directions || '',
+          price: p.price ?? '',
+          compare_at_price: p.compare_at_price ?? '',
+          category: p.category || '',
+          size: p.size || '',
+          stock_status: p.stock_status || 'in_stock',
+        });
+        setSavedCover(p.main_image || null);
+        setExisting((Array.isArray(p.images) ? p.images : []).map((m) => ({ ...m, keep: true })));
+      })
+      .catch((err) => setErrors([err.message]))
+      .finally(() => setLoading(false));
+  }, [mode, id]);
+
+  const change = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }));
+
+  // Attach a stable object-URL preview to each picked file, once.
+  const decorate = (fileList) =>
+    Array.from(fileList).map((f) => {
+      f._preview = URL.createObjectURL(f);
+      f._previewKey = `${f.name}-${f.size}-${f.lastModified}-${Math.random().toString(36).slice(2)}`;
+      return f;
+    });
+
+  const addFiles = (picked) => {
+    const decorated = decorate(picked);
+    if (decorated.length) setFiles((f) => [...f, ...decorated]);
+  };
+
+  const onDrop = (e) => {
+    e.preventDefault();
+    setDragging(false);
+    addFiles(e.dataTransfer.files);
+  };
+
+  const toggleExisting = (url) =>
+    setExisting((list) => list.map((m) => (m.url === url ? { ...m, keep: !m.keep } : m)));
+
+  const dropNewFile = (idx) =>
+    setFiles((f) =>
+      f.filter((file, i) => {
+        if (i === idx && file._preview) URL.revokeObjectURL(file._preview);
+        return i !== idx;
+      })
     );
-    useEffect(() => () => previews.forEach((p) => URL.revokeObjectURL(p.url)), [previews]);
 
-    const all = [...existing, ...previews];
-    const imageCount = all.filter((m) => m.type === "image").length;
-    const videoCount = all.filter((m) => m.type === "video").length;
+  const pickCover = (file) => {
+    if (!file) return;
+    if (coverFile?._preview) URL.revokeObjectURL(coverFile._preview);
+    file._preview = URL.createObjectURL(file);
+    setCoverFile(file);
+  };
 
-    const set = (key) => (e) => setValues((v) => ({ ...v, [key]: e.target.value }));
+  const removeCover = () => {
+    if (coverFile) {
+      URL.revokeObjectURL(coverFile._preview);
+      setCoverFile(null);
+    } else {
+      setSavedCover(null);
+    }
+  };
 
-    const addFiles = (e) => {
-        const picked = Array.from(e.target.files || []);
-        setFiles((prev) => [...prev, ...picked]);
-        e.target.value = ""; // lets the same file be picked again after removing it
-    };
+  const submit = async (e) => {
+    e.preventDefault();
+    if (!coverFile && !savedCover) {
+      setErrors(['Add a cover image.']);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+    setBusy(true);
+    setErrors([]);
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+    const fd = new FormData();
+    Object.entries(values).forEach(([k, v]) => fd.append(k, v));
+    const kept = existing.filter((m) => m.keep);
+    kept.forEach((m) => fd.append('keep_media', m.url));
+    // Without any keep_media the backend keeps everything, so send an empty
+    // one when every saved file was removed.
+    if (mode === 'edit' && kept.length === 0) fd.append('keep_media', '');
+    files.forEach((f) => fd.append('media', f));
+    if (coverFile) fd.append('main_image', coverFile);
+    else if (mode === 'edit' && !savedCover) fd.append('remove_main_image', '1');
 
-        const problems = [];
-        if (!isEdit && imageCount < MIN_IMAGES) problems.push(`Add at least ${MIN_IMAGES} product images.`);
-        if (imageCount > MAX_IMAGES) problems.push(`You can add at most ${MAX_IMAGES} images.`);
-        if (videoCount > MAX_VIDEOS) problems.push(`You can add at most ${MAX_VIDEOS} videos.`);
-        if (problems.length) return setErrors(problems);
+    try {
+      if (mode === 'create') await api.createProduct(fd);
+      else await api.updateProduct(id, fd);
+      navigate('/admin/products');
+    } catch (err) {
+      setErrors(err.errors || [err.message]);
+      setBusy(false);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
 
-        const body = new FormData();
-        Object.entries(values).forEach(([k, v]) => body.append(k, v));
-        if (isEdit) {
-            // An empty keep_media means "remove all existing media".
-            if (existing.length) existing.forEach((m) => body.append("keep_media", m.url));
-            else body.append("keep_media", "");
-        }
-        files.forEach((f) => body.append("media", f));
+  if (loading) return <div className="empty-state">Loading product…</div>;
 
-        setSaving(true);
-        setErrors([]);
-        try {
-            await api(isEdit ? `/products/${id}` : "/products", { method: isEdit ? "PUT" : "POST", body });
-            navigate("/admin/products");
-        } catch (err) {
-            setErrors(err.errors);
-            window.scrollTo({ top: 0, behavior: "smooth" });
-        } finally {
-            setSaving(false);
-        }
-    };
+  const keptImages =
+    existing.filter((m) => m.keep && m.type === 'image').length +
+    files.filter((f) => f.type.startsWith('image/')).length;
+  const keptVideos =
+    existing.filter((m) => m.keep && m.type === 'video').length +
+    files.filter((f) => f.type.startsWith('video/')).length;
 
-    if (loading) return <p className="adm-subtitle">Loading product…</p>;
+  return (
+    <>
+      <div className="page-head">
+        <h1>{mode === 'create' ? 'Add Product' : 'Edit Product'}</h1>
+        <Link to="/admin/products" className="btn btn-outline btn-sm">
+          Back to products
+        </Link>
+      </div>
 
-    return (
-        <form onSubmit={handleSubmit}>
-            <div className="adm-page-head">
-                <div>
-                    <Link to="/admin/products" className="adm-back">
-                        <ArrowLeft size={16} /> All products
-                    </Link>
-                    <h1 className="adm-title">{isEdit ? "Edit product" : "Add product"}</h1>
-                </div>
-                <button type="submit" className="adm-btn adm-btn-primary" disabled={saving}>
-                    {saving ? "Saving…" : isEdit ? "Save changes" : "Create product"}
-                </button>
-            </div>
-
-            {errors.length > 0 && (
-                <div className="adm-alert">
-                    {errors.map((msg) => (
-                        <div key={msg}>{msg}</div>
-                    ))}
-                </div>
-            )}
-
-            <div className="adm-form-grid">
-                <div className="adm-card">
-                    <h2 className="adm-card-title">Details</h2>
-                    <label className="adm-field">
-                        <span>Name *</span>
-                        <input className="adm-input" required value={values.name} onChange={set("name")} />
-                    </label>
-                    <label className="adm-field">
-                        <span>Subtitle</span>
-                        <input
-                            className="adm-input"
-                            placeholder="e.g. Moringa + Butterfly Pea Infused Tallow"
-                            value={values.subname}
-                            onChange={set("subname")}
-                        />
-                    </label>
-                    <label className="adm-field">
-                        <span>Description</span>
-                        <textarea className="adm-input" rows={7} value={values.description} onChange={set("description")} />
-                    </label>
-                </div>
-
-                <div className="adm-card">
-                    <h2 className="adm-card-title">Pricing &amp; inventory</h2>
-                    <div className="adm-row">
-                        <label className="adm-field">
-                            <span>Price *</span>
-                            <input className="adm-input" type="number" min="0" step="0.01" required value={values.price} onChange={set("price")} />
-                        </label>
-                        <label className="adm-field">
-                            <span>Compare-at price</span>
-                            <input
-                                className="adm-input"
-                                type="number"
-                                min="0"
-                                step="0.01"
-                                placeholder="Shown struck through"
-                                value={values.compare_at_price}
-                                onChange={set("compare_at_price")}
-                            />
-                        </label>
-                    </div>
-                    <div className="adm-row">
-                        <label className="adm-field">
-                            <span>Category</span>
-                            <select className="adm-input" value={values.category} onChange={set("category")}>
-                                <option value="">—</option>
-                                {meta.categories.map((c) => (
-                                    <option key={c}>{c}</option>
-                                ))}
-                            </select>
-                        </label>
-                        <label className="adm-field">
-                            <span>Size</span>
-                            <select className="adm-input" value={values.size} onChange={set("size")}>
-                                <option value="">—</option>
-                                {meta.sizes.map((s) => (
-                                    <option key={s}>{s}</option>
-                                ))}
-                            </select>
-                        </label>
-                    </div>
-                    <label className="adm-field">
-                        <span>Stock status</span>
-                        <select className="adm-input" value={values.stock_status} onChange={set("stock_status")}>
-                            {(meta.stock_statuses.length ? meta.stock_statuses : ["in_stock", "out_of_stock"]).map((s) => (
-                                <option key={s} value={s}>
-                                    {STOCK_LABELS[s] || s}
-                                </option>
-                            ))}
-                        </select>
-                    </label>
-                </div>
-
-                <div className="adm-card adm-span-2">
-                    <div className="adm-media-head">
-                        <h2 className="adm-card-title">Media</h2>
-                        <span className={!isEdit && imageCount < MIN_IMAGES ? "adm-count adm-count-warn" : "adm-count"}>
-                            {imageCount} image{imageCount === 1 ? "" : "s"}
-                            {!isEdit && ` (min ${MIN_IMAGES})`} · {videoCount} video{videoCount === 1 ? "" : "s"}
-                        </span>
-                    </div>
-
-                    <div className="adm-media-grid">
-                        {existing.map((m) => (
-                            <MediaTile
-                                key={m.url}
-                                media={{ ...m, url: mediaUrl(m.url) }}
-                                onRemove={() => setExisting((list) => list.filter((x) => x.url !== m.url))}
-                            />
-                        ))}
-                        {previews.map((m, i) => (
-                            <MediaTile key={m.url} media={m} isNew onRemove={() => setFiles((list) => list.filter((_, j) => j !== i))} />
-                        ))}
-                        <label className="adm-upload-tile">
-                            <Upload size={20} />
-                            <span>Add images / video</span>
-                            <small>JPG, PNG, WebP, GIF, MP4, WebM · 50MB max</small>
-                            <input type="file" multiple accept={ACCEPT} onChange={addFiles} hidden />
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </form>
-    );
-}
-
-function MediaTile({ media, isNew, onRemove }) {
-    return (
-        <div className="adm-media-tile">
-            {media.type === "video" ? (
-                <div className="adm-media-video">
-                    <video src={media.url} muted />
-                    <Film size={16} className="adm-media-video-icon" />
-                </div>
-            ) : (
-                <img src={media.url} alt="" />
-            )}
-            {isNew && <span className="adm-media-new">New</span>}
-            <button type="button" className="adm-media-remove" aria-label="Remove" onClick={onRemove}>
-                <X size={14} />
-            </button>
+      {errors.length > 0 && (
+        <div className="errors">
+          <strong>Please fix the following:</strong>
+          <ul>
+            {errors.map((e, i) => (
+              <li key={i}>{e}</li>
+            ))}
+          </ul>
         </div>
-    );
+      )}
+
+      <form onSubmit={submit}>
+        {/* Media */}
+        <div className="form-card">
+          <h2>Product media</h2>
+          <p className="hint">
+            Add multiple images and videos. Minimum 4 images. The first image
+            becomes the listing cover.{' '}
+            <strong>
+              {keptImages} image{keptImages === 1 ? '' : 's'}, {keptVideos} video
+              {keptVideos === 1 ? '' : 's'}
+            </strong>
+          </p>
+
+          {existing.length > 0 && (
+            <div className="media-grid">
+              {existing.map((m) => (
+                <div className={'media-item' + (m.keep ? '' : ' removing')} key={m.url}>
+                  {m.type === 'video' ? (
+                    <video src={mediaUrl(m.url)} muted />
+                  ) : (
+                    <img src={mediaUrl(m.url)} alt="" />
+                  )}
+                  <span className="kind">{m.type}</span>
+                  <button
+                    type="button"
+                    className="drop"
+                    onClick={() => toggleExisting(m.url)}
+                    aria-label={m.keep ? 'Remove this file' : 'Undo remove'}
+                  >
+                    {m.keep ? '×' : '↺'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <div
+            className={'dropzone' + (dragging ? ' drag' : '')}
+            onClick={() => fileInput.current.click()}
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={onDrop}
+          >
+            <strong>Choose images and videos</strong>
+            <span>Select multiple files · JPG, PNG, WEBP, GIF, MP4, WEBM, MOV · up to 50MB each</span>
+            <input
+              ref={fileInput}
+              type="file"
+              multiple
+              accept="image/*,video/*"
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                // Copy the FileList to a real array BEFORE clearing the input —
+                // clearing e.target.value invalidates e.target.files synchronously.
+                const picked = Array.from(e.target.files);
+                e.target.value = '';
+                addFiles(picked);
+              }}
+            />
+          </div>
+
+          {files.length > 0 && (
+            <div className="media-grid">
+              {files.map((f, i) => (
+                <div className="media-item" key={f._previewKey || i}>
+                  {f.type.startsWith('video/') ? (
+                    <video src={f._preview} muted />
+                  ) : (
+                    <img src={f._preview} alt="" />
+                  )}
+                  <span className="kind">new</span>
+                  <button
+                    type="button"
+                    className="drop"
+                    onClick={() => dropNewFile(i)}
+                    aria-label="Remove this file"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Cover image */}
+        <div className="form-card">
+          <h2>
+            Cover image <span className="required">*</span>
+          </h2>
+          <p className="hint">Required. One image shown as the product's main picture.</p>
+
+          {coverFile || savedCover ? (
+            <div className="media-grid">
+              <div className="media-item">
+                <img src={coverFile ? coverFile._preview : mediaUrl(savedCover)} alt="" />
+                <span className="kind">{coverFile ? 'new' : 'cover'}</span>
+                <button
+                  type="button"
+                  className="drop"
+                  onClick={removeCover}
+                  aria-label="Remove cover image"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ) : null}
+          <div className="dropzone" onClick={() => coverInput.current.click()}>
+            <strong>{coverFile || savedCover ? 'Replace cover image' : 'Choose cover image'}</strong>
+            <span>JPG, PNG, WEBP, GIF · up to 50MB</span>
+            <input
+              ref={coverInput}
+              type="file"
+              accept="image/*"
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                const picked = e.target.files[0];
+                e.target.value = '';
+                pickCover(picked);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Details */}
+        <div className="form-card">
+          <h2>Product details</h2>
+          <p className="hint">This is what shows on the storefront listing.</p>
+
+          <div className="field">
+            <label htmlFor="name">Product name</label>
+            <input
+              id="name"
+              type="text"
+              placeholder="Malachite Fusion"
+              value={values.name}
+              onChange={change('name')}
+              required
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="subname">
+              Product subname <span className="sub">— the line under the title</span>
+            </label>
+            <input
+              id="subname"
+              type="text"
+              placeholder="Moringa + Butterfly Pea Infused Tallow"
+              value={values.subname}
+              onChange={change('subname')}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="description">Description</label>
+            <textarea
+              id="description"
+              placeholder="A rich, nourishing tallow crème made with grass-fed beef tallow…"
+              value={values.description}
+              onChange={change('description')}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="ingredients">Ingredients</label>
+            <textarea
+              id="ingredients"
+              placeholder="Grass-Fed/Grass-Finished Beef Tallow, Raw Honduran Batana Oil, Organic: Rosemary Argan Oil…"
+              value={values.ingredients}
+              onChange={change('ingredients')}
+            />
+          </div>
+
+          <div className="field">
+            <label htmlFor="directions">Directions</label>
+            <textarea
+              id="directions"
+              placeholder="Massage a generous amount onto the scalp and throughout the hair…"
+              value={values.directions}
+              onChange={change('directions')}
+            />
+          </div>
+        </div>
+
+        {/* Pricing */}
+        <div className="form-card">
+          <h2>Pricing &amp; availability</h2>
+          <p className="hint">Compare-at price shows struck through next to the price.</p>
+
+          <div className="three-col">
+            <div className="field">
+              <label htmlFor="price">Price (USD)</label>
+              <input
+                id="price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="66.00"
+                value={values.price}
+                onChange={change('price')}
+                required
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="compare_at_price">
+                Compare-at price <span className="sub">— optional</span>
+              </label>
+              <input
+                id="compare_at_price"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="89.00"
+                value={values.compare_at_price ?? ''}
+                onChange={change('compare_at_price')}
+              />
+            </div>
+            <div className="field">
+              <label htmlFor="size">Size</label>
+              <select id="size" value={values.size} onChange={change('size')}>
+                <option value="">Select size</option>
+                {meta.sizes.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="field">
+            <label htmlFor="category">Category</label>
+            <select id="category" value={values.category} onChange={change('category')}>
+              <option value="">Select category</option>
+              {meta.categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="field">
+            <label>Availability</label>
+            <div className="radio-row">
+              {[
+                ['in_stock', 'In stock'],
+                ['out_of_stock', 'Out of stock'],
+              ].map(([val, label]) => (
+                <label className="radio-pill" key={val}>
+                  <input
+                    type="radio"
+                    name="stock_status"
+                    value={val}
+                    checked={values.stock_status === val}
+                    onChange={change('stock_status')}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="form-footer">
+          <button type="submit" className="btn" disabled={busy}>
+            {busy ? 'Saving…' : mode === 'create' ? 'Add Product' : 'Save changes'}
+          </button>
+          <Link to="/admin/products" className="btn btn-outline">
+            Cancel
+          </Link>
+        </div>
+      </form>
+    </>
+  );
 }

@@ -179,7 +179,16 @@ export default function CollectionCard({ c, onQuickView }) {
                         cursor: "pointer",
                     }}
                 >
-                    {c.name}
+                    {String(c.name)
+                        .split(/(\(\d+(?:\.\d+)?oz\))/i)
+                        .map((part, i) =>
+                            /^\(\d/.test(part) ? (
+                                // sizes like (4oz) stay lowercase inside the uppercase title
+                                <span key={i} style={{ textTransform: "none" }}>{part}</span>
+                            ) : (
+                                part
+                            )
+                        )}
                 </h5>
                 <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
                     {formatPrice(product?.price)}{" "}

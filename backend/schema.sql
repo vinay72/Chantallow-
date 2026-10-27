@@ -13,6 +13,11 @@ CREATE TABLE IF NOT EXISTS products (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Added after launch; ADD COLUMN IF NOT EXISTS upgrades existing databases.
+ALTER TABLE products ADD COLUMN IF NOT EXISTS ingredients TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS directions TEXT;
+ALTER TABLE products ADD COLUMN IF NOT EXISTS main_image TEXT; -- cover image url
+
 CREATE INDEX IF NOT EXISTS idx_products_category ON products (category);
 CREATE INDEX IF NOT EXISTS idx_products_price ON products (price);
 

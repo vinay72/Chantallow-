@@ -44,8 +44,8 @@ export const PRODUCTS = [
         id: 1,
         slug: "amber-glow",
         name: "Amber Glow",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Amber Glow + Bare Whipped Tallow",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Amber Glow (4oz) + Bare Whipped Tallow (2oz)",
         subtitle: "1122+ MGO Manuka Honey + Lavender Infused Tallow",
         price: 80,
         oldPrice: 89,
@@ -67,8 +67,8 @@ export const PRODUCTS = [
         id: 2,
         slug: "amethyst-relief",
         name: "Amethyst Relief",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Amethyst Relief + Jasper Revive",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Amethyst Relief (4oz) + Jasper Revive (2oz)",
         subtitle: "Lavender Infused & Whipped Tallow",
         price: 0,
         oldPrice: 0,
@@ -87,8 +87,8 @@ export const PRODUCTS = [
         id: 3,
         slug: "jasper-revive",
         name: "Jasper Revive",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Jasper Revive + Obsidian Infusion",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Jasper Revive (4oz) + Obsidian Infusion (2oz)",
         subtitle: "Coffee Infused Tallow",
         price: 0,
         oldPrice: 0,
@@ -108,8 +108,8 @@ export const PRODUCTS = [
         id: 4,
         slug: "malachite-fusion",
         name: "Malachite Fusion",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Malachite Fusion + Amethyst Relief",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Malachite Fusion (4oz) + Amethyst Relief (2oz)",
         subtitle: "Moringa + Butterfly Pea Infused Tallow",
         price: 66,
         oldPrice: 89,
@@ -130,8 +130,8 @@ export const PRODUCTS = [
         id: 5,
         slug: "obsidian-infusion",
         name: "Obsidian Infusion",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Obsidian Infusion + Taluma Hair Care",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Obsidian Infusion (4oz) + Taluma Hair Care (2oz)",
         subtitle: "Cacao Infused Tallow",
         price: 0,
         oldPrice: 0,
@@ -150,8 +150,8 @@ export const PRODUCTS = [
         id: 6,
         slug: "olivine-relief",
         name: "Olivine Relief",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Olivine Relief + Malachite Fusion",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Olivine Relief (4oz) + Malachite Fusion (2oz)",
         subtitle: "Zechstein Magnesium + Arnica Tallow Balm",
         price: 0,
         oldPrice: 0,
@@ -171,8 +171,8 @@ export const PRODUCTS = [
         id: 7,
         slug: "taluma-hair-care",
         name: "Taluma Hair Care",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Taluma Hair Care + Amber Glow",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Taluma Hair Care (4oz) + Amber Glow (2oz)",
         subtitle: "Grass-Fed/Grass-Finished Beef Tallow, Raw Honduran Batana Oil",
         price: 0,
         oldPrice: 0,
@@ -192,8 +192,8 @@ export const PRODUCTS = [
         id: 8,
         slug: "bare-whipped-tallow",
         name: "Bare Whipped Tallow",
-        // Name + photo used in the cart, wish list and checkout (big jar + small jar)
-        displayName: "Bare Whipped Tallow + Olivine Relief",
+        // Name + photo used in the cart, wish list, checkout and Quick View: big jar (4oz) + small jar (2oz)
+        displayName: "Bare Whipped Tallow (4oz) + Olivine Relief (2oz)",
         subtitle: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil",
         price: 0,
         oldPrice: 0,

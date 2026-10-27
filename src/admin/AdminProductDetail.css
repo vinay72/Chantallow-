@@ -1,0 +1,477 @@
+/* AdminProductDetail.css — layout: vertical thumbnails | large image | content card */
+
+.pd-page {
+  --pd-ink: #1c261e;
+  --pd-line: #dbe2d8;
+  --pd-muted: #6b756c;
+  --pd-panel: #ffffff;
+  --pd-accent: #1e5c33;
+}
+
+.pd-gallery-section {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr) minmax(0, 1.05fr);
+  gap: 1.5rem;
+  align-items: start;
+  background: var(--pd-panel);
+  border: 1px solid var(--pd-line);
+  padding: 1.75rem;
+}
+
+@media (max-width: 900px) {
+  .pd-gallery-section {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* --- Vertical thumbnail rail --- */
+.pd-thumb-rail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+@media (max-width: 900px) {
+  .pd-thumb-rail {
+    flex-direction: row;
+    overflow-x: auto;
+  }
+}
+
+.pd-thumb {
+  width: 76px;
+  height: 76px;
+  flex-shrink: 0;
+  padding: 0;
+  cursor: pointer;
+  border: 1px solid var(--pd-line);
+  background: #f4f6f2;
+  position: relative;
+  overflow: hidden;
+}
+
+.pd-thumb img,
+.pd-thumb video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pd-thumb.active {
+  border-color: var(--pd-ink);
+  outline: 1px solid var(--pd-ink);
+  outline-offset: -2px;
+}
+
+.pd-thumb .pd-tag {
+  position: absolute;
+  bottom: 2px;
+  left: 2px;
+  background: rgba(28, 38, 30, 0.85);
+  color: #fff;
+  font-size: 0.55rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 1px 4px;
+}
+
+/* --- Large image stage --- */
+.pd-stage {
+  aspect-ratio: 1 / 1;
+  width: 100%;
+  background: #f4f6f2;
+  border: 1px solid var(--pd-line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.pd-stage img,
+.pd-stage video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-stage .pd-empty {
+  color: var(--pd-muted);
+  font-size: 0.85rem;
+}
+
+/* --- Content card (right column) --- */
+.pd-info-card {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Desktop: the row is as tall as the main image. The info card and thumbnail
+   rail take height 0 + min-height 100% so they never grow the row — instead
+   they scroll inside it, keeping the images on the left still. */
+@media (min-width: 901px) {
+  .pd-gallery-section {
+    align-items: stretch;
+  }
+
+  .pd-info-card,
+  .pd-thumb-rail {
+    height: 0;
+    min-height: 100%;
+    overflow-y: auto; /* at either end, scrolling hands off to the page */
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+    scrollbar-color: #c9d6c8 transparent;
+  }
+
+  .pd-info-card {
+    padding-right: 1rem;
+    padding-bottom: 40px; /* lets the last line scroll clear of the fade */
+    /* Soft fade at the bottom hints there is more to scroll. */
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 40px), transparent);
+  }
+
+  .pd-thumb-rail {
+    scrollbar-width: none;
+  }
+
+  .pd-thumb-rail::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pd-info-card::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .pd-info-card::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .pd-info-card::-webkit-scrollbar-thumb {
+    background: #c9d6c8;
+    border-radius: 3px;
+  }
+
+  .pd-info-card::-webkit-scrollbar-thumb:hover {
+    background: var(--pd-accent);
+  }
+}
+
+.pd-category-pill {
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--pd-accent);
+  background: #eaf3ea;
+  border: 1px solid #cfe6d1;
+  padding: 3px 10px;
+  margin-bottom: 0.85rem;
+}
+
+.pd-name {
+  font-size: 1.9rem;
+  margin: 0 0 0.3rem;
+  line-height: 1.15;
+}
+
+.pd-subname {
+  color: var(--pd-muted);
+  font-size: 1rem;
+  margin: 0 0 1rem;
+}
+
+.pd-sku {
+  color: var(--pd-muted);
+  font-size: 0.82rem;
+  margin: 0 0 1.1rem;
+}
+
+.pd-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.pd-price {
+  font-size: 1.7rem;
+  font-weight: 700;
+}
+
+.pd-compare {
+  color: var(--pd-muted);
+  text-decoration: line-through;
+  font-size: 1.05rem;
+}
+
+.pd-badge-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.25rem;
+}
+
+.pd-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--pd-line);
+}
+
+.pd-badge.in {
+  background: #eaf3ea;
+  color: #1e5c33;
+  border-color: #cfe6d1;
+}
+
+.pd-badge.out {
+  background: #fbeceb;
+  color: #b42318;
+  border-color: #f3d3d0;
+}
+
+.pd-badge.neutral {
+  color: var(--pd-ink);
+}
+
+.pd-divider {
+  border: none;
+  border-top: 1px solid var(--pd-line);
+  margin: 1.1rem 0;
+}
+
+.pd-block {
+  margin-bottom: 1.1rem;
+}
+
+.pd-block h3 {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--pd-muted);
+  margin: 0 0 0.4rem;
+  font-weight: 700;
+}
+
+.pd-block p {
+  margin: 0;
+  line-height: 1.65;
+  white-space: pre-wrap;
+}
+
+.pd-specs {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.pd-specs li {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.3rem 0;
+  font-size: 0.92rem;
+}
+
+.pd-specs span:first-child {
+  color: var(--pd-muted);
+  min-width: 90px;
+}
+
+/* --- Detail sections below the gallery/summary (details, pricing, meta cards) --- */
+.pd-section {
+  background: var(--pd-panel);
+  border: 1px solid var(--pd-line);
+  padding: 1.75rem;
+  margin-top: 1.5rem;
+}
+
+.pd-section h2 {
+  margin: 0 0 1rem;
+}
+
+/* --- Actions footer --- */
+.pd-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--pd-line);
+}
+
+.pd-danger {
+  color: #b42318;
+  border-color: #b42318;
+}
+
+.pd-meta-row {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+  font-size: 0.82rem;
+  color: var(--pd-muted);
+}
+
+.pd-meta-row strong {
+  color: var(--pd-ink);
+  font-weight: 600;
+}
+
+/* --- Hover-zoom lens on the main stage --- */
+.pd-stage {
+  position: relative;
+  cursor: zoom-in;
+}
+
+.pd-stage-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pd-stage-img.hidden {
+  opacity: 0;
+}
+
+.pd-zoom-pane {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: 200%;
+}
+
+.pd-zoom-hint {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(28, 38, 30, 0.8);
+  color: #fff;
+  font-size: 0.65rem;
+  letter-spacing: 0.02em;
+  padding: 3px 8px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.pd-stage:hover .pd-zoom-hint {
+  opacity: 1;
+}
+
+/* --- Zoom icon on thumbnails --- */
+.pd-thumb {
+  position: relative;
+}
+
+.pd-thumb-zoom {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  background: rgba(28, 38, 30, 0.75);
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+  cursor: zoom-in;
+}
+
+.pd-thumb:hover .pd-thumb-zoom {
+  opacity: 1;
+}
+
+/* --- Zoomable images inside the lower media grids --- */
+.pd-zoomable {
+  cursor: zoom-in;
+}
+
+/* --- Lightbox --- */
+.pd-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 20, 16, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.pd-lb-stage {
+  width: min(85vw, 900px);
+  height: min(85vh, 900px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Fill the stage so small uploads display at the same size as large ones. */
+.pd-lb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  transition: transform 0.12s ease-out;
+  user-select: none;
+}
+
+.pd-lb-stage video {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.pd-lb-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.5rem;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  width: 36px;
+  height: 36px;
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pd-lb-nav {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  width: 44px;
+  height: 44px;
+  font-size: 1.8rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.pd-lb-prev {
+  left: 1.25rem;
+}
+
+.pd-lb-next {
+  right: 1.25rem;
+}
+
+.pd-lb-counter {
+  position: absolute;
+  bottom: 1.25rem;
+  left: 50%;
+  transform: translateX(-50%);
+  color: #fff;
+  font-size: 0.8rem;
+  letter-spacing: 0.03em;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 3px 10px;
+}
