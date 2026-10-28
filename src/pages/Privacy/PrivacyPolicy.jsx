@@ -21,79 +21,42 @@ const SECONDARY_NAV = [
   { label: "Contact US", href: "contact-us.html" },
 ];
 
+// All of these are joined into one large paragraph on the page (titles are kept here only for reference).
 const POLICY_SECTIONS = [
   {
-    title: "1. Information We Collect :",
-    body: (
-      <p>
-        Name, Email address, Phone number, Shipping and billing address, Payment
-        details (processed securely through third-party payment providers)
-        Website usage data through cookies and analytics tools
-      </p>
-    ),
+    title: "1. Information We Collect",
+    text:
+      "We may collect your name, email address, phone number, shipping and billing address, and payment details (processed securely through third-party payment providers), along with website usage data gathered through cookies and analytics tools.",
   },
   {
-    title: "2. How We Use Your Information Your information may be used to:",
-    body: (
-      <ul className="privacy-point">
-        <li>Communicate order updates and customer support</li>
-        <li>Improve website functionality and customer experience</li>
-        <li>Send promotional offers or newsletters (only if subscribed)</li>
-      </ul>
-    ),
+    title: "2. How We Use Your Information",
+    text:
+      "Your information may be used to communicate order updates and provide customer support, to improve website functionality and the overall customer experience, and to send promotional offers or newsletters (only if you have subscribed).",
   },
   {
     title: "3. Data Protection",
-    body: (
-      <p>
-        We implement reasonable security measures to protect your personal
-        information.
-        <br />
-        Payment information is processed securely and is not stored on our
-        servers.
-      </p>
-    ),
+    text:
+      "We implement reasonable security measures to protect your personal information. Payment information is processed securely and is not stored on our servers.",
   },
   {
     title: "4. Cookies",
-    body: (
-      <p>
-        Our website may use cookies to enhance user experience, analyze traffic,
-        and improve website performance. You may disable cookies through your
-        browser settings.
-      </p>
-    ),
+    text:
+      "Our website may use cookies to enhance user experience, analyze traffic, and improve website performance. You may disable cookies through your browser settings.",
   },
   {
     title: "5. Third-Party Services",
-    body: (
-      <p>
-        We may share necessary information with trusted third-party partners such
-        as payment gateways, courier services, and analytics providers solely for
-        order fulfillment and website operations. We may share necessary
-        information with trusted third-party partners such as payment gateways,
-        courier services, and analytics providers solely for order fulfillment
-        and website operations.
-      </p>
-    ),
+    text:
+      "We may share necessary information with trusted third-party partners such as payment gateways, courier services, and analytics providers solely for order fulfillment and website operations.",
   },
   {
     title: "6. Your Rights",
-    body: (
-      <p>
-        You may request access, correction, or deletion of your personal data by
-        contacting us at [your email].
-      </p>
-    ),
+    text:
+      "You may request access, correction, or deletion of your personal data by contacting us at [your email].",
   },
   {
     title: "7. Updates to Policy",
-    body: (
-      <p>
-        We reserve the right to update this Privacy Policy at any time. Changes
-        will be reflected on this page.
-      </p>
-    ),
+    text:
+      "We reserve the right to update this Privacy Policy at any time. Changes will be reflected on this page.",
   },
 ];
 
@@ -181,11 +144,9 @@ function Banner() {
     <section className="banner">
       <div className="container">
         <h1>Privacy &amp; Policy</h1>
-        <p>
-          At Chantallow, your privacy is important to us.
-          <br />
-          This Privacy Policy explains how we collect, use, and protect your
-          information.
+        <p className="banner-intro">
+          At Chantallow, your privacy is important to us. This Privacy Policy
+          explains how we collect, use, and protect your information.
         </p>
       </div>
     </section>
@@ -196,12 +157,10 @@ function PolicyContent() {
   return (
     <section className="policy">
       <div className="container">
-        {POLICY_SECTIONS.map((s) => (
-          <div className="policy-block" key={s.title}>
-            <h3>{s.title}</h3>
-            {s.body}
-          </div>
-        ))}
+        {/* All sections written as one large paragraph (no numbered headings) */}
+        <div className="policy-block">
+          <p>{POLICY_SECTIONS.map((s) => s.text).join(" ")}</p>
+        </div>
       </div>
     </section>
   );

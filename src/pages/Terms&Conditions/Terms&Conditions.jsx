@@ -192,49 +192,19 @@ function Banner() {
   );
 }
 
-/* ---------- Accordion ---------- */
+/* ---------- Terms sections ----------
+   Every section is shown (no collapsing), and each section's sentences
+   are joined into one flowing paragraph. */
 
-function Accordion() {
-  // First panel open by default, mirroring the original markup
-  const [openId, setOpenId] = useState(TERMS[0].id);
-
-  const toggle = (id) => setOpenId((current) => (current === id ? null : id));
-
+function TermsSections() {
   return (
-    <div className="tc-accordion">
-      {TERMS.map((item) => {
-        const isOpen = openId === item.id;
-        return (
-          <div className={`tc-accordion-item${isOpen ? " open" : ""}`} key={item.id}>
-            <h2 className="tc-accordion-header">
-              <button
-                type="button"
-                className="tc-accordion-button"
-                aria-expanded={isOpen}
-                aria-controls={`panel-${item.id}`}
-                id={`heading-${item.id}`}
-                onClick={() => toggle(item.id)}
-              >
-                <span>{item.title}</span>
-                <ChevronDown className="tc-accordion-icon" size={22} strokeWidth={1.5} />
-              </button>
-            </h2>
-            <div
-              className="tc-accordion-panel"
-              id={`panel-${item.id}`}
-              role="region"
-              aria-labelledby={`heading-${item.id}`}
-              hidden={!isOpen}
-            >
-              <div className="tc-accordion-body">
-                {item.paragraphs.map((text, i) => (
-                  <p key={i}>{text}</p>
-                ))}
-              </div>
-            </div>
-          </div>
-        );
-      })}
+    <div className="tc-sections">
+      {TERMS.map((item) => (
+        <section className="tc-section" key={item.id} id={item.id}>
+          <h2 className="tc-section-title">{item.title}</h2>
+          <p className="tc-section-text">{item.paragraphs.join(" ")}</p>
+        </section>
+      ))}
     </div>
   );
 }
@@ -394,7 +364,7 @@ export default function TermsConditionsPage() {
               agree to the following Terms &amp; Conditions. Please read them carefully
               before using our services.
             </p>
-            <Accordion />
+            <TermsSections />
           </div>
           <div className="tc-col-side">
             <ContactForm />

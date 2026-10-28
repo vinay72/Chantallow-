@@ -2689,6 +2689,7 @@ function FeaturedOffers() {
 /* ------------------------------- Shortlist ------------------------------- */
 
 function ShortlistSection() {
+    const navigate = useNavigate();
     return (
         <section style={{ background: "#F7F4EC", padding: "0", position: "relative" }}>
             <div
@@ -2753,7 +2754,7 @@ function ShortlistSection() {
                             top: window.innerWidth > 900 ? "9%" : 32,
                             left: window.innerWidth > 900 ? "6%" : 24,
                             right: window.innerWidth > 900 ? "auto" : 24,
-                            maxWidth: window.innerWidth > 900 ? "38%" : "none",
+                            maxWidth: window.innerWidth > 900 ? "85%" : "none",
                             textAlign: "left",
                         }}
                     >
@@ -2775,12 +2776,16 @@ function ShortlistSection() {
                             style={{
                                 margin: 0,
                                 fontFamily: "var(--font-family-base, 'DM Sans', sans-serif)", // same font as the header links (full "g")
-                                fontSize: "clamp(14px, 1.15vw, 17px)",
-                                lineHeight: 1.7,
+                                fontSize: "clamp(16px, 1.3vw, 20px)",
+                                lineHeight: 1.6,
                                 color: "#2D2E2F",
+                                // exactly two rows on desktop; wraps normally on phones
+                                whiteSpace: window.innerWidth > 900 ? "nowrap" : "normal",
                             }}
                         >
-                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief, muscle comfort, and skin nourishment.
+                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief,
+                            {window.innerWidth > 900 ? <br /> : " "}
+                            muscle comfort, and skin nourishment.
                         </p>
                     </div>
 
@@ -2893,6 +2898,31 @@ function ShortlistSection() {
                                 <div className="ctw-serif" style={{ fontSize: 16, fontWeight: 500 }}>$00.00</div>
                                 <del className="ctw-serif" style={{ fontSize: 14, color: "#B4B4A8" }}>$00.00</del>
                             </div>
+                        </div>
+
+                        {/* Buy Now — opens the Olivine Relief product page */}
+                        <div style={{ padding: "0 8px", marginTop: 20 }}>
+                            <button
+                                type="button"
+                                onClick={() => navigate("/product/olivine-relief")}
+                                style={{
+                                    display: "inline-block",
+                                    background: "#FFFFFF",
+                                    color: "#2D2E2F",
+                                    border: "1px solid #E4E4DC",
+                                    padding: "14px 34px",
+                                    fontSize: 16,
+                                    fontWeight: 500,
+                                    fontFamily: "'Lufga', sans-serif",
+                                    cursor: "pointer",
+                                    boxShadow: "0 4px 14px rgba(0,0,0,0.06)",
+                                    transition: "background .25s ease, color .25s ease, border-color .25s ease",
+                                }}
+                                onMouseEnter={(e) => { e.currentTarget.style.background = "#0F3D2E"; e.currentTarget.style.color = "#fff"; e.currentTarget.style.borderColor = "#0F3D2E"; }}
+                                onMouseLeave={(e) => { e.currentTarget.style.background = "#FFFFFF"; e.currentTarget.style.color = "#2D2E2F"; e.currentTarget.style.borderColor = "#E4E4DC"; }}
+                            >
+                                Buy Now
+                            </button>
                         </div>
                     </div>
                 </div>

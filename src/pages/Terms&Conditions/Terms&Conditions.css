@@ -217,9 +217,38 @@
   font-family: var(--sans);
   font-size: 16px;
   font-weight: 400;
+  line-height: 1.75;
   color: var(--body);
-  margin: 0 0 44px;
-  max-width: 760px;
+  margin: 0 0 40px;
+  max-width: none;
+  text-align: justify;
+  text-align-last: left;
+}
+
+/* ---------- Terms sections: heading + one paragraph each ---------- */
+.tc-sections { text-align: left; }
+.tc-section {
+  padding: 0 0 28px;
+  margin: 0 0 28px;
+  border-bottom: 1px solid #d7e2d9;
+}
+.tc-section:last-child { margin-bottom: 0; }
+.tc-section-title {
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 500;
+  color: var(--heading);
+  margin: 0 0 12px;
+}
+.tc-section-text {
+  font-family: var(--sans);
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.75;
+  color: var(--body);
+  margin: 0;
+  text-align: justify;
+  text-align-last: left;
 }
 
 /* ---------- Accordion ---------- */
@@ -535,7 +564,7 @@
   .banner h1 { font-size: 34px; }
   .banner p { font-size: 16px; }
   .footer-bottom { justify-content: center; text-align: center; }
-  .tc-accordion-button { font-size: 20px; }
+  .tc-section-title { font-size: 20px; }
   .tc-banner { padding: 60px 0 50px; }
 }
 @media (max-width: 560px) {
