@@ -47,8 +47,8 @@ import bestTaluma from "../../assets/banner/TalumaHairCare.png";  // Taluma Hair
 
 import similarPortrait from "../../assets/about/pic12.jpeg";
 
-import similarImg2 from "../../assets/shop/product/Similar/3.png"; // Malachite Fusion
-import similarImg3 from "../../assets/shop/product/Similar/4.png"; // Obsidian Infusion
+import similarImg2 from "../../assets/shop/product/Similar/3.png"; // Jasper Revive 4oz + 2oz
+import similarImg3 from "../../assets/shop/product/Similar/5.png"; // Obsidian Infusion 4oz + 2oz
 
 // SAVING SECTION IMAGES
 
@@ -149,8 +149,8 @@ const MORE_COLLECTIONS = [
 ];
 
 const SIMILAR_PROFILES = [
-    { id: 1, name: "Jasper Revive", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg2 },
-    { id: 2, name: "Obsidian Infusion", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg3 },
+    { id: 1, name: "Jasper Revive", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg2 },      // Jasper Revive 4oz + 2oz jars
+    { id: 2, name: "Obsidian Infusion", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg3 },  // Obsidian Infusion 4oz + 2oz jars
 ];
 
 const SAVING_LEFT = [
@@ -1021,7 +1021,7 @@ function TallowCollection({ onQuickView }) {
                         fontFamily: "Marcellus, sans-serif",
                     }}
                 >
-                    Experience The Tallow Collection
+                    The Chantallow Duos - Discover Your Perfect Tallow Duo
                 </h2>
 
                 {isDesktop ? (
@@ -1880,15 +1880,27 @@ function SimilarProfilesSection() {
                             marginBottom: 24,
                         }}
                     >
-                        <h2 style={{
-                            fontSize: 65,
-                            color: "#2D2E2F",
-                            fontFamily: "Marcellus, sans-serif",
-                            fontWeight: 500,
-                            margin: 0,
-                        }}>
-                            Ready to Transform Your Skin?
-                        </h2>
+                        <div style={{ textAlign: "left", maxWidth: 760 }}>
+                            <h2 style={{
+                                fontSize: "clamp(32px, 3.4vw, 52px)",
+                                lineHeight: 1.15,
+                                color: "#2D2E2F",
+                                fontFamily: "Marcellus, sans-serif",
+                                fontWeight: 400,
+                                margin: "0 0 14px",
+                            }}>
+                                Nourish Your Skin, Naturally
+                            </h2>
+                            <p style={{
+                                fontSize: 18,
+                                lineHeight: 1.7,
+                                fontFamily: "var(--font-family-base, 'DM Sans', sans-serif)", // same font as the header links (full "g")
+                                color: "#5A5A52",
+                                margin: 0,
+                            }}>
+                                Discover your favorite tallow essentials and botanical blends, thoughtfully crafted to nourish, hydrate, and restore.
+                            </p>
+                        </div>
                         {/* "All Products →" link — commented out
                         <a
                             href="#shop"
@@ -2037,20 +2049,31 @@ function SavingSection() {
             >
                 {/* LEFT: title + product cards */}
                 <div style={{ minWidth: 0 }}>
-                    <h2
-                        style={{
-                            fontSize: "clamp(36px, 4vw, 75px)",
-                            lineHeight: 1.2,
-                            fontFamily: "Marcellus, sans-serif",
-                            fontWeight: 400,
-                            color: "#2D2E2F",
-                            margin: "0 0 40px",
-                            textAlign: "left",
-                            maxWidth: 640,
-                        }}
-                    >
-                        Pure Ingredients, Real Results
-                    </h2>
+                    <div style={{ textAlign: "left", maxWidth: 640, margin: "0 0 40px" }}>
+                        <h2
+                            style={{
+                                fontSize: "clamp(32px, 3.4vw, 52px)",
+                                lineHeight: 1.15,
+                                fontFamily: "Marcellus, sans-serif",
+                                fontWeight: 400,
+                                color: "#2D2E2F",
+                                margin: "0 0 14px",
+                            }}
+                        >
+                            Pure Care for Every Tattoo
+                        </h2>
+                        <p
+                            style={{
+                                fontSize: 18,
+                                lineHeight: 1.7,
+                                fontFamily: "var(--font-family-base, 'DM Sans', sans-serif)", // same font as the header links (full "g")
+                                color: "#5A5A52",
+                                margin: 0,
+                            }}
+                        >
+                            Discover Chantallow’s tallow-based tattoo care crèmes, crafted to deeply moisturize, soothe, and keep your tattooed skin looking vibrant.
+                        </p>
+                    </div>
 
                     <div
                         style={{
@@ -2704,7 +2727,64 @@ function ShortlistSection() {
                         }}
                     />
 
-                    {/* Centered content */}
+                    {/* Soft light fade on the left so the text stays readable over the plant leaves */}
+                    <div
+                        aria-hidden="true"
+                        style={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: "62%", // only behind the text — the jar below stays untouched
+                            zIndex: 1,
+                            pointerEvents: "none",
+                            background:
+                                "linear-gradient(100deg, rgba(247,244,236,0.88) 0%, rgba(247,244,236,0.7) 30%, rgba(247,244,236,0) 52%)",
+                            WebkitMaskImage: "linear-gradient(to bottom, #000 70%, transparent 100%)",
+                            maskImage: "linear-gradient(to bottom, #000 70%, transparent 100%)",
+                        }}
+                    />
+
+                    {/* Title + description — top-left of the photo, above the Olivine Relief jar */}
+                    <div
+                        style={{
+                            position: "absolute",
+                            zIndex: 2,
+                            top: window.innerWidth > 900 ? "9%" : 32,
+                            left: window.innerWidth > 900 ? "6%" : 24,
+                            right: window.innerWidth > 900 ? "auto" : 24,
+                            maxWidth: window.innerWidth > 900 ? "38%" : "none",
+                            textAlign: "left",
+                        }}
+                    >
+                        <h2
+                            style={{
+                                margin: "0 0 16px",
+                                fontFamily: "Marcellus, sans-serif",
+                                fontWeight: 400,
+                                fontSize: "clamp(24px, 2vw, 32px)",
+                                lineHeight: 1.2,
+                                color: "#1C1C1A",
+                                // one line on desktop; wraps normally on phones
+                                whiteSpace: window.innerWidth > 900 ? "nowrap" : "normal",
+                            }}
+                        >
+                            Soothe Sore Muscles, Naturally
+                        </h2>
+                        <p
+                            style={{
+                                margin: 0,
+                                fontFamily: "var(--font-family-base, 'DM Sans', sans-serif)", // same font as the header links (full "g")
+                                fontSize: "clamp(14px, 1.15vw, 17px)",
+                                lineHeight: 1.7,
+                                color: "#2D2E2F",
+                            }}
+                        >
+                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief, muscle comfort, and skin nourishment.
+                        </p>
+                    </div>
+
+                    {/* Old centered content (kept for reference) */}
                     <div
                         style={{
                             position: "relative",

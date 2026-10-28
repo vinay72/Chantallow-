@@ -15,6 +15,8 @@ import {
   formatPrice,
   DEFAULT_DIRECTIONS,
   DEFAULT_DIRECTIONS_NOTE,
+  getProductViews,
+  getProductCover,
 } from "../../data/products";
 
 // Same sizes as the Home page hero cards (value is what's saved in the cart)
@@ -33,7 +35,7 @@ const PAGE_STYLES = `
   .ct-page, .ct-page p, .ct-page li, .ct-page span, .ct-page a,
   .ct-page button, .ct-page input, .ct-page label, .ct-page legend,
   .ct-page h3, .ct-page h4, .ct-page h5, .ct-page h6, .ct-page strong {
-    font-family: 'Lufga', 'DM Sans', sans-serif;
+    font-family: 'Lufga', sans-serif;
   }
   .ct-page .ct-banner h1,
   .ct-page .ct-info__title,
@@ -66,7 +68,7 @@ const PAGE_STYLES = `
   .ct-page .ct-product-card__body h3 { text-align: left; font-size: 20px; }
 
   /* Footer headings */
-  .ct-page footer h5, .ct-page footer h6 { font-family: 'Lufga', 'DM Sans', sans-serif; color: ${BRAND_GREEN}; }
+  .ct-page footer h5, .ct-page footer h6 { font-family: 'Lufga', sans-serif; color: ${BRAND_GREEN}; }
 
   /* ---------- Alignment ----------
      Horizontal: text is justified, so every line runs edge to edge
@@ -102,6 +104,46 @@ const PAGE_STYLES = `
 
   /* sidebar sits on the same top line as the image and text */
   .ct-page .ct-sidebar { margin-top: 0; }
+
+  /* ---------- Gallery: square HD image + 4 thumbnails underneath ----------
+     The product photos are square (2000x2000), so a square frame shows the
+     whole photo at full sharpness — no stretching or cropping. */
+  .ct-page .ct-gallery__main {
+    height: auto; min-height: 0; max-height: none;
+    display: block; background: transparent; box-shadow: none;
+    border-radius: 0; overflow: visible;
+  }
+  .ct-page .ct-stage {
+    position: relative; width: 100%; aspect-ratio: 1 / 1;
+    border-radius: 14px; overflow: hidden; background: #fff;
+    box-shadow: 0 10px 30px rgba(31, 35, 33, 0.08);
+  }
+  .ct-page .ct-stage__media {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+    image-rendering: auto; user-select: none; -webkit-user-drag: none;
+  }
+  .ct-page .ct-stage__hint {
+    position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%);
+    padding: 6px 14px; border-radius: 20px; background: rgba(28, 28, 26, 0.72);
+    color: #fff; font-size: 12px; letter-spacing: 0.04em; white-space: nowrap;
+    pointer-events: none;
+  }
+  .ct-page .ct-gallery__thumbs {
+    position: static; transform: none; left: auto; bottom: auto;
+    display: flex; justify-content: center; gap: 10px; margin-top: 14px;
+  }
+  .ct-page .ct-gallery__thumb {
+    position: relative; width: 74px; height: 74px; padding: 0;
+    border: 2px solid transparent; border-radius: 6px; background-color: #fff;
+    background-size: cover; background-position: center; box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    cursor: pointer;
+  }
+  .ct-page .ct-gallery__thumb.is-active { border-color: ${BRAND_GREEN}; }
+  .ct-page .ct-gallery__thumb-tag {
+    position: absolute; left: 50%; bottom: 4px; transform: translateX(-50%);
+    padding: 1px 6px; border-radius: 8px; background: ${BRAND_GREEN}; color: #fff;
+    font-size: 10px; font-weight: 600; line-height: 1.5;
+  }
 `;
 
 const sb = {
@@ -381,7 +423,11 @@ export default function ProductDetail() {
   const descriptionParas = Array.isArray(product.description) ? product.description : [product.description];
   const directions = product.directions || DEFAULT_DIRECTIONS;
   const directionsNote = product.directions ? product.directionsNote : DEFAULT_DIRECTIONS_NOTE;
-  const gallery = product.gallery.map((src, i) => ({ id: i, src, alt: `${product.name} - image ${i + 1}` }));
+  // front (cover) -> ingredients -> description -> 360°  (combo photos are no longer used here)
+  const views = getProductViews(product);
+  const cover = getProductCover(product);
+  const safeIndex = Math.min(activeImage, views.length - 1);
+  const current = views[safeIndex];
   const related = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
   const lineTotal = product.price * quantity;
   const lineSavings = Math.max(0, product.oldPrice - product.price) * quantity;
@@ -417,20 +463,40 @@ export default function ProductDetail() {
       <main className="ct-container ct-product">
         <section className="ct-gallery" aria-label="Product images" ref={galleryWrapperRef}>
           <div className="ct-gallery__main" ref={galleryInnerRef}>
-            <img className="ct-jar-photo" src={gallery[activeImage].src} alt={gallery[activeImage].alt} />
-            <div className="ct-gallery__thumbs">
-              {gallery.map((thumb, i) => (
-                <button
-                  key={thumb.id}
-                  type="button"
-                  className={`ct-gallery__thumb ${i === activeImage ? "is-active" : ""}`}
-                  onClick={() => setActiveImage(i)}
-                  aria-label={`View image ${i + 1}`}
-                  aria-pressed={i === activeImage}
-                  style={{ backgroundImage: `url(${thumb.src})` }}
+            <div className="ct-stage">
+              {current.role === "spin" ? (
+                <Spin360 view={current} poster={cover} alt={`${product.name} 360° view`} />
+              ) : (
+                <img
+                  className="ct-stage__media"
+                  src={current.src}
+                  alt={`${product.name} — ${current.label}`}
+                  decoding="async"
+                  fetchpriority={safeIndex === 0 ? "high" : "auto"}
                 />
-              ))}
+              )}
             </div>
+
+            {views.length > 1 && (
+              <div className="ct-gallery__thumbs">
+                {views.map((v, i) => (
+                  <button
+                    key={v.role}
+                    type="button"
+                    className={`ct-gallery__thumb ${i === safeIndex ? "is-active" : ""}`}
+                    onClick={() => setActiveImage(i)}
+                    aria-label={`Show ${v.label}`}
+                    aria-pressed={i === safeIndex}
+                    title={v.label}
+                    style={{
+                      backgroundImage: `url(${v.type === "frames" ? v.frames[0] : v.type === "video" || v.type === "turntable" ? cover : v.src})`,
+                    }}
+                  >
+                    {v.role === "spin" && <span className="ct-gallery__thumb-tag">360°</span>}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </section>
 
@@ -603,6 +669,145 @@ export default function ProductDetail() {
   );
 }
 
+/* ---------------- 360° view ----------------
+   Works with: a video (.mp4/.webm) that rotates the jar, a .gif,
+   or a folder of frames (drag left/right to turn the jar). */
+function Spin360({ view, poster, alt }) {
+  if (view.type === "turntable") return <Turntable front={view.front} back={view.back} alt={alt} />;
+  if (view.type === "frames") return <SpinFrames frames={view.frames} alt={alt} />;
+  if (view.type === "video") {
+    return (
+      <>
+        <video className="ct-stage__media" src={view.src} poster={poster} autoPlay muted loop playsInline />
+        <span className="ct-stage__hint">360° view</span>
+      </>
+    );
+  }
+  return (
+    <>
+      <img className="ct-stage__media" src={view.src} alt={alt} decoding="async" />
+      <span className="ct-stage__hint">360° view</span>
+    </>
+  );
+}
+
+/* 360° made from the front photo: the jar turns all the way round, showing the
+   front label and then the back (ingredients) label. Spins by itself; drag to turn it. */
+function Turntable({ front, back, alt }) {
+  const [angle, setAngle] = useState(0);
+  const auto = useRef(true);
+  const drag = useRef(null);
+
+  useEffect(() => {
+    let raf;
+    let last = performance.now();
+    const tick = (now) => {
+      if (auto.current) setAngle((a) => (a + (now - last) * 0.045) % 360); // ~8s per turn
+      last = now;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, []);
+
+  const onDown = (e) => {
+    auto.current = false;
+    drag.current = { x: e.clientX, start: angle };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onMove = (e) => {
+    if (!drag.current) return;
+    setAngle(drag.current.start + (e.clientX - drag.current.x) * 0.6);
+  };
+  const onUp = () => {
+    drag.current = null;
+  };
+
+  const face = {
+    position: "absolute",
+    inset: 0,
+    width: "100%",
+    height: "100%",
+    objectFit: "cover",
+    backfaceVisibility: "hidden",
+    WebkitBackfaceVisibility: "hidden",
+    userSelect: "none",
+  };
+
+  return (
+    <div
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+      onPointerCancel={onUp}
+      style={{ width: "100%", height: "100%", perspective: 1400, cursor: "grab", touchAction: "pan-y" }}
+    >
+      <div
+        style={{
+          position: "relative",
+          width: "100%",
+          height: "100%",
+          transformStyle: "preserve-3d",
+          transform: `rotateY(${angle}deg)`,
+        }}
+      >
+        <img src={front} alt={alt} draggable={false} style={face} />
+        <img src={back} alt="" aria-hidden="true" draggable={false} style={{ ...face, transform: "rotateY(180deg)" }} />
+      </div>
+      <span className="ct-stage__hint">⟲ 360° — drag to turn</span>
+    </div>
+  );
+}
+
+function SpinFrames({ frames, alt }) {
+  const [index, setIndex] = useState(0);
+  const [auto, setAuto] = useState(true);
+  const drag = useRef(null);
+  const n = frames.length;
+
+  // preload every frame so turning is smooth
+  useEffect(() => {
+    frames.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+    });
+  }, [frames]);
+
+  // slow automatic spin until the visitor grabs it
+  useEffect(() => {
+    if (!auto) return undefined;
+    const t = setInterval(() => setIndex((i) => (i + 1) % n), 100);
+    return () => clearInterval(t);
+  }, [auto, n]);
+
+  const onDown = (e) => {
+    setAuto(false);
+    drag.current = { x: e.clientX, start: index };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+  const onMove = (e) => {
+    if (!drag.current) return;
+    const steps = Math.round((e.clientX - drag.current.x) / 8);
+    setIndex((((drag.current.start - steps) % n) + n) % n);
+  };
+  const onUp = () => {
+    drag.current = null;
+  };
+
+  return (
+    <div
+      onPointerDown={onDown}
+      onPointerMove={onMove}
+      onPointerUp={onUp}
+      onPointerCancel={onUp}
+      style={{ width: "100%", height: "100%", cursor: "grab", touchAction: "pan-y" }}
+    >
+      <img className="ct-stage__media" src={frames[index]} alt={alt} draggable={false} />
+      <span className="ct-stage__hint">⟲ Drag to rotate 360°</span>
+    </div>
+  );
+}
+
 function RelatedCard({ product }) {
   const navigate = useNavigate();
   const { addToCart, addToWishlist, isInWishlist } = useShop();
@@ -615,7 +820,7 @@ function RelatedCard({ product }) {
         onClick={() => navigate(`/product/${product.slug}`)}
         style={{ cursor: "pointer" }}
       >
-        <img className="ct-jar-photo ct-jar-photo--compact" src={product.gallery[0]} alt={product.name} />
+        <img className="ct-jar-photo ct-jar-photo--compact" src={getProductCover(product)} alt={product.name} />
         <button
           type="button"
           className="ct-product-card__wish"

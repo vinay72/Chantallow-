@@ -216,3 +216,137 @@ export const PRODUCTS = [
 export const getProductById = (id) => PRODUCTS.find((p) => p.id === Number(id));
 export const getProductBySlug = (slug) => PRODUCTS.find((p) => p.slug === slug);
 export const formatPrice = (value) => `$${Number(value || 0).toFixed(2)}`;
+
+/* =====================================================================
+   PRODUCT DETAIL PAGE PHOTOS  (front · ingredients · description · 360°)
+   ---------------------------------------------------------------------
+   Put each product's photos in its own folder inside src/assets/productdetailimages/:
+
+     src/assets/productdetailimages/
+       Amber Tallow/        Amethyst Relief/     Bare/
+       Jasper Revive/       Malachite Fusion/    Obsidian Infusion/
+       Olivine Relief/      Taluma Hair care/    (Furkind/ is ignored here)
+
+   Inside each folder any file names work. A file is recognised by its name:
+     front / cover / main      -> 1st image (cover)
+     ingredient...             -> 2nd image
+     description / desc        -> 3rd image
+     360 / spin / rotate       -> 4th: the 360° view (.mp4/.webm video, .gif,
+                                  or a sub-folder of numbered frames 01.jpg, 02.jpg…)
+   Files without one of those words fill the empty slots in name order.
+   Any video file is always used as the 360° view.
+   Products with no folder yet just show their single jar photo (no combo images).
+   ===================================================================== */
+
+const MEDIA_FILES = import.meta.glob(
+    "../assets/productdetailimages/**/*.{jpg,JPG,jpeg,JPEG,png,PNG,webp,WEBP,avif,gif,GIF,mp4,MP4,webm,WEBM,mov,MOV}",
+    { eager: true, import: "default" }
+);
+
+const norm = (s) => String(s).toLowerCase().replace(/[^a-z0-9]/g, "");
+
+// folder name (any spacing/case) -> product slug
+const FOLDER_TO_SLUG = {
+    ambertallow: "amber-glow",
+    amberglow: "amber-glow",
+    amethystrelief: "amethyst-relief",
+    jasperrevive: "jasper-revive",
+    malachitefusion: "malachite-fusion",
+    obsidianinfusion: "obsidian-infusion",
+    olivinerelief: "olivine-relief",
+    talumahaircare: "taluma-hair-care",
+    bare: "bare-whipped-tallow",
+    barewhippedtallow: "bare-whipped-tallow",
+    furkind: "furkind-pet-tallow",
+    furkindpettallow: "furkind-pet-tallow",
+};
+
+const isVideo = (name) => /\.(mp4|webm|mov)$/i.test(name);
+const byName = (a, b) => a.file.localeCompare(b.file, undefined, { numeric: true, sensitivity: "base" });
+
+function roleOf(file) {
+    const n = file.toLowerCase();
+    if (isVideo(n) || /360|spin|rotat|turn/.test(n)) return "spin";
+    if (/ingred/.test(n)) return "ingredients";
+    if (/desc/.test(n)) return "description";
+    if (/front|cover|main|hero/.test(n)) return "front";
+    return null;
+}
+
+// Each folder currently holds the two back-label photos. When their file names
+// don't say which is which, the 1st file (in name order) is the DESCRIPTION label
+// and the 2nd is the INGREDIENTS label — that's how your files are ordered.
+const UNNAMED_ORDER = ["description", "ingredients", "front", "spin"];
+
+const MEDIA_BY_SLUG = (() => {
+    const raw = {};
+    for (const [path, url] of Object.entries(MEDIA_FILES)) {
+        const rel = path.split("/assets/productdetailimages/")[1];
+        if (!rel) continue;
+        const parts = rel.split("/");
+        const slug = FOLDER_TO_SLUG[norm(parts[0])];
+        if (!slug) continue;
+        const entry = (raw[slug] = raw[slug] || { files: [], frames: [] });
+        const file = parts[parts.length - 1];
+        // files inside a sub-folder (e.g. "Malachite Fusion/360/01.jpg") are 360° frames
+        if (parts.length > 2) entry.frames.push({ file, url });
+        else entry.files.push({ file, url });
+    }
+
+    const out = {};
+    for (const [slug, { files, frames }] of Object.entries(raw)) {
+        const slots = { front: null, ingredients: null, description: null, spin: null };
+        const unnamed = [];
+        files.sort(byName).forEach((f) => {
+            const role = roleOf(f.file);
+            if (role && !slots[role]) slots[role] = f;
+            else unnamed.push(f);
+        });
+        for (const role of UNNAMED_ORDER) {
+            if (!slots[role] && unnamed.length) slots[role] = unnamed.shift();
+        }
+        out[slug] = {
+            front: slots.front?.url || null,
+            ingredients: slots.ingredients?.url || null,
+            description: slots.description?.url || null,
+            spin: frames.length > 1
+                ? { type: "frames", frames: frames.sort(byName).map((f) => f.url) }
+                : slots.spin
+                ? { type: isVideo(slots.spin.file) ? "video" : "image", src: slots.spin.url }
+                : null,
+        };
+    }
+    return out;
+})();
+
+/**
+ * The photos shown on a product's detail page, in order — for EVERY product:
+ *   1. Front  — the product's front jar photo (cover)
+ *   2. Ingredients label
+ *   3. Description label
+ *   4. 360°   — the front photo turning round to show the back label
+ *              (or your own 360 video / frames if a folder has one)
+ * Combo (two-jar) photos are never used here.
+ */
+export function getProductViews(product) {
+    const media = MEDIA_BY_SLUG[product?.slug] || {};
+    const front = media.front || product?.gallery?.[0];
+    const views = [{ role: "front", label: "Front", type: "image", src: front }];
+    if (media.ingredients) views.push({ role: "ingredients", label: "Ingredients", type: "image", src: media.ingredients });
+    if (media.description) views.push({ role: "description", label: "Description", type: "image", src: media.description });
+    if (media.spin) {
+        views.push({ role: "spin", label: "360°", ...media.spin });
+    } else {
+        views.push({
+            role: "spin",
+            label: "360°",
+            type: "turntable",
+            front,
+            back: media.ingredients || media.description || front,
+        });
+    }
+    return views;
+}
+
+/** Cover photo for a product (its front jar photo). */
+export const getProductCover = (product) => getProductViews(product)[0].src;
