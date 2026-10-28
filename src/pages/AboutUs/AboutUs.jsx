@@ -23,6 +23,12 @@ import pic3 from "../../assets/pic3.jpg";
 import pic4 from "../../assets/pic4.jpg";
 import pic5 from "../../assets/pic5.jpg";
 
+// Footer "Recent Posts" thumbnails — must be imported (not written as text paths)
+// so they still load after `npm run build` / in production.
+import recentPost1 from "../../assets/shop/product/small/1.png";
+import recentPost2 from "../../assets/shop/product/small/2.png";
+import recentPost3 from "../../assets/shop/product/small/3.png";
+
 const Instagram = Icons.Instagram || Icons.Camera;
 const Youtube = Icons.Youtube || Icons.Play;
 const Linkedin = Icons.Linkedin || Icons.Briefcase;
@@ -54,9 +60,9 @@ const CATEGORIES = [
 ];
 
 const RECENT_POSTS = [
-  { title: "Hydrated Supple Skin", date: "July 23, 2023", img: "src/assets/shop/product/small/1.png" },
-  { title: "Glowing Radiant Skin", date: "July 23, 2023", img: "src/assets/shop/product/small/2.png" },
-  { title: "Silky Soft Skin", date: "July 23, 2023", img: "src/assets/shop/product/small/3.png" },
+  { title: "Hydrated Supple Skin", date: "July 23, 2023", img: recentPost1 },
+  { title: "Glowing Radiant Skin", date: "July 23, 2023", img: recentPost2 },
+  { title: "Silky Soft Skin", date: "July 23, 2023", img: recentPost3 },
 ];
 
 const USEFUL_LINKS = ["Home", "About Us", "Returns", "Terms & Conditions", "Privacy Policy", "Contact Us"];
