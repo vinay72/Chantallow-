@@ -96,7 +96,7 @@ export default function FurkindPetTallow() {
       const inner = galleryInnerRef.current;
       if (!wrapper || !inner) return;
 
-      if (window.innerWidth <= 760) {
+      if (window.innerWidth <= 768) {
         reset();
         return;
       }

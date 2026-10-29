@@ -6,6 +6,8 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
 import "./header.css";
+import "./Home.css";
+import "../../components/SiteFooter.css";
 import logo from "../../assets/logo.png";
 import logo2 from "../../assets/logo2.jpg";   // adjust path to where you place it
 
@@ -416,13 +418,12 @@ function Header({ menuOpen, setMenuOpen, setCartOpen, setCartTab, setSearchOpen 
     };
 
     return (
-        <header style={{ position: "sticky", top: 0, zIndex: 40 }}>
+        <header className="ctw-home-header" style={{ position: "sticky", top: 0, zIndex: 40 }}>
             <div className="ctw-header">
                 <a href="#home" className="ctw-header-logo" aria-label="Chantallow home">
                     <img
                         src={logo}
                         alt="Chantallow"
-                        style={{ height: 64, width: "auto", display: "block" }}
                     />
                 </a>
 
@@ -460,7 +461,7 @@ function Header({ menuOpen, setMenuOpen, setCartOpen, setCartTab, setSearchOpen 
                         {cartCount > 0 && <span style={COUNT_BADGE_STYLE}>{cartCount}</span>}
                     </button>
                     <button className="ctw-icon-btn ctw-menu-btn" aria-label="Toggle menu" onClick={() => setMenuOpen((v) => !v)}>
-                        <Menu size={22} />
+                        <Menu size={22} color="#000" />
                     </button>
                 </div>
             </div>
@@ -479,16 +480,17 @@ function Hero({ navigate }) {
     return (
         <section
             id="home"
+            className="ctw-hero"
             style={{
                 position: "relative",
                 background: "#FFFFFF",
                 overflow: "hidden",
-                minHeight: 780,
             }}
         >
             {/* Mint wash bleeding down from the header's right panel */}
             <div
                 aria-hidden="true"
+                className="hide-below-md"
                 style={{
                     position: "absolute",
                     top: 0,
@@ -536,28 +538,19 @@ function Hero({ navigate }) {
                 src={IMAGES.lavender}
                 alt=""
                 aria-hidden="true"
+                className="hide-below-lg"
                 style={{
                     position: "absolute",
                     bottom: 40,
                     left: 24,
                     width: 90,
-                    display: window.innerWidth > 1200 ? "block" : "none",
                     pointerEvents: "none",
                 }}
             />
 
-            <div
-                style={{
-                    position: "relative",
-                    zIndex: 1,
-                    display: "grid",
-                    gridTemplateColumns: window.innerWidth > 960 ? "1fr 0.9fr" : "1fr",
-                    alignItems: "center",
-                    minHeight: 780,
-                }}
-            >
+            <div className="ctw-hero-grid">
                 {/* Left column */}
-                <div className="ctw-fade-in" style={{ padding: "0 40px 0 70px", textAlign: "left", marginLeft: " 80px" }}>
+                <div className="ctw-fade-in ctw-hero-copy">
                     <h1
                         style={{
                             fontSize: "clamp(2.6rem, 4vw, 4.2rem)",
@@ -577,23 +570,19 @@ function Hero({ navigate }) {
                         src={moringaLeaf}
                         alt=""
                         aria-hidden="true"
+                        className="hide-below-md"
                         style={{
                             position: "absolute",
                             // top: 340,
                             left: "72%",
                             width: 130,
                             pointerEvents: "none",
-
-                            display: window.innerWidth > 1000 ? "block" : "none",
                         }}
                     />
                     <p
+                        className="ctw-hero-text"
                         style={{
-                            fontSize: 24,
-                            lineHeight: 1.5,
                             color: "#2D2E2F",
-                            maxWidth: 460,
-                            margin: "0px 0px 35px",
                             fontFamily: "Marcellus, sans-serif",
                         }}
                     >
@@ -602,6 +591,7 @@ function Hero({ navigate }) {
 
 
                     <button
+                        className="ctw-hero-cta"
                         style={{
                             display: "inline-block",
                             background: "#2D2E2F",
@@ -614,7 +604,6 @@ function Hero({ navigate }) {
                             letterSpacing: "0.06em",
                             textTransform: "uppercase",
                             cursor: "pointer",
-                            marginBottom: 90,
                         }}
                         onClick={() => navigate("/shop")}
                     >
@@ -622,7 +611,7 @@ function Hero({ navigate }) {
                     </button>
 
                     {/* Mini product cards — "+" now adds that product to the cart */}
-                    <div style={{ display: "flex", gap: 40, alignItems: "center", flexWrap: "nowrap" }}>
+                    <div className="ctw-hero-minis">
                         {[
                             { id: 1, name: "Amber Glow", img: IMAGES.productPic1 },
                             { id: 2, name: "Amethyst Relief", img: IMAGES.productPic2 },
@@ -734,15 +723,7 @@ function Hero({ navigate }) {
                 </div>
 
                 {/* Right column: arch/door portrait */}
-                <div
-                    style={{
-                        position: "relative",
-                        height: "100%",
-                        display: window.innerWidth > 960 ? "flex" : "none",
-                        alignItems: "center",
-                        justifyContent: "center",
-                    }}
-                >
+                <div className="ctw-hero-media">
                     <div
                         style={{
                             position: "relative",
@@ -767,12 +748,12 @@ function Hero({ navigate }) {
 
             {/* Vertical social rail — right edge */}
             <div
+                className="ctw-hero-rail"
                 style={{
                     position: "absolute",
                     top: 0,
                     right: 0,
                     bottom: 0,               // stretches full height, no bottom gap
-                    width: "20%",            // covers the right portion behind portrait + rail
                     background: "#EDF8F3",
                     zIndex: 0,               // sits behind content but above white base
                     pointerEvents: "none",
@@ -807,6 +788,7 @@ function Hero({ navigate }) {
             {/* Let's Talk vertical tab — bottom right */}
             <a
                 href="#contact"
+                className="hide-below-lg"
                 style={{
                     position: "absolute",
                     bottom: 24,
@@ -823,7 +805,6 @@ function Hero({ navigate }) {
                     textTransform: "uppercase",
                     textDecoration: "none",
                     fontFamily: "'DM Sans', sans-serif",
-                    display: window.innerWidth > 1200 ? "block" : "none",
                     zIndex: 3,
                 }}
             >
@@ -839,21 +820,19 @@ function MissionStrip() {
     const navigate = useNavigate();
 
     return (
-        <section style={{ background: "#EDF8F3", padding: "64px 24px", position: "relative", overflow: "hidden" }}>
+        <section className="ctw-mission" style={{ background: "#EDF8F3", position: "relative", overflow: "hidden" }}>
 
             <div
+                className="ctw-mission-inner"
                 style={{
                     maxWidth: 1200,
                     margin: "0 auto",
                     textAlign: "center",
-                    padding: "80px 24px",
                 }}
-
-
             >
                 <h2
+                    className="ctw-mission-title"
                     style={{
-                        fontSize: 32,
                         fontFamily: "Marcellus, sans-serif",
                         color: "#2D2E2F",
                         fontWeight: 400,
@@ -868,13 +847,7 @@ function MissionStrip() {
                     Our Mission Is To Provide Nutrient-Dense, Chemical-Free Solutions
                 </h2>
 
-                <div
-                    style={{
-                        display: "grid",
-                        gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 4 : 2}, 1fr)`,
-                        gap: 20,
-                    }}
-                >
+                <div className="ctw-mission-grid">
                     {PRODUCTS.map((p) => (
                         <a
                             key={p.id}
@@ -923,8 +896,8 @@ function MissionStrip() {
                                 </button>
                             </div>
                             <h3
+                                className="ctw-mission-name"
                                 style={{
-                                    fontSize: 22,
                                     fontWeight: 500,
                                     color: p.accent,
                                     margin: 0,
@@ -948,16 +921,12 @@ function MissionStrip() {
      bag    -> adds to cart, stays on Home                                    */
 
 function TallowCollection({ onQuickView }) {
-    const width = window.innerWidth;
-    const isDesktop = width > 900;
-    const flatCols = width > 600 ? 2 : 1;
-
     return (
         <section
             id="shop"
+            className="ctw-duos"
             style={{
                 background: "#EDF8F3",
-                padding: "80px 24px",
                 position: "relative",
                 overflow: "hidden",
             }}
@@ -983,6 +952,7 @@ function TallowCollection({ onQuickView }) {
                 src={moringaLeaf}
                 alt=""
                 aria-hidden="true"
+                className="hide-below-md"
                 style={{
                     position: "absolute",
                     top: 40,
@@ -991,13 +961,13 @@ function TallowCollection({ onQuickView }) {
                     pointerEvents: "none",
                     zIndex: 1,
                     animation: "ctwFloat 5s ease-in-out infinite",
-                    display: width > 1000 ? "block" : "none",
                 }}
             />
             <img
                 src={lavenderSprig}
                 alt=""
                 aria-hidden="true"
+                className="hide-below-md"
                 style={{
                     position: "absolute",
                     top: 60,
@@ -1007,14 +977,13 @@ function TallowCollection({ onQuickView }) {
                     zIndex: 1,
                     animation: "ctwFloat 6s ease-in-out infinite",
                     animationDelay: "1s",
-                    display: width > 1000 ? "block" : "none",
                 }}
             />
 
             <div style={{ position: "relative", zIndex: 1, maxWidth: 1000, margin: "0 auto", textAlign: "center" }}>
                 <h2
+                    className="ctw-duos-title"
                     style={{
-                        fontSize: 65,
                         fontWeight: 500,
                         margin: "0 0 48px",
                         color: "#2D2E2F",
@@ -1024,48 +993,22 @@ function TallowCollection({ onQuickView }) {
                     The Chantallow Duos - Discover Your Perfect Tallow Duo
                 </h2>
 
-                {isDesktop ? (
-                    /* Desktop: 3 masonry columns, middle column offset down */
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: "repeat(3, 1fr)",
-                            gap: 24,
-                            alignItems: "start",
-                            textAlign: "left",
-                        }}
-                    >
-                        {[1, 2, 3].map((col) => (
-                            <div
-                                key={col}
-                                style={{
-                                    display: "flex",
-                                    flexDirection: "column",
-                                    gap: 24,
-                                    marginTop: col === 2 ? 48 : 0,
-                                }}
-                            >
-                                {COLLECTION_CARDS.filter((c) => c.col === col).map((c) => (
-                                    <CollectionCard key={c.key || c.id} c={c} onQuickView={() => onQuickView(c)} />
-                                ))}
-                            </div>
-                        ))}
-                    </div>
-                ) : (
-                    /* Tablet / mobile: simple grid in list order */
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: `repeat(${flatCols}, 1fr)`,
-                            gap: 24,
-                            textAlign: "left",
-                        }}
-                    >
-                        {COLLECTION_CARDS.map((c) => (
-                            <CollectionCard key={c.key || c.id} c={c} onQuickView={() => onQuickView(c)} />
-                        ))}
-                    </div>
-                )}
+                {/* Desktop: 3 masonry columns, middle column offset down.
+                    Tablet / phone: Home.css dissolves the columns and the cards
+                    wrap in list order (kept via `order`). */}
+                <div className="ctw-duos-grid">
+                    {[1, 2, 3].map((col) => (
+                        <div key={col} className={col === 2 ? "ctw-duos-col ctw-duos-col--offset" : "ctw-duos-col"}>
+                            {COLLECTION_CARDS.map((c, i) =>
+                                c.col === col ? (
+                                    <div key={c.key || c.id} className="ctw-duos-card" style={{ order: i }}>
+                                        <CollectionCard c={c} onQuickView={() => onQuickView(c)} />
+                                    </div>
+                                ) : null
+                            )}
+                        </div>
+                    ))}
+                </div>
             </div>
         </section>
     );
@@ -1152,42 +1095,15 @@ function CompleteCareBanner() {
                 }}
             />
 
-            <div
-                style={{
-                    position: "relative",
-                    maxWidth: 1360,
-                    margin: "0 auto",
-                    minHeight: window.innerWidth > 900 ? 460 : 380,
-                    display: "grid",
-                    gridTemplateColumns: window.innerWidth > 900 ? "1fr 1fr" : "1fr",
-                    alignItems: "center",
-                    padding: "56px 24px",
-                }}
-            >
-                <div
-                    style={{
-                        position: "relative",
-                        minHeight: 320,
-                        display: window.innerWidth > 900 ? "flex" : "none",
-                        alignItems: "center",
-                        justifyContent: "flex-end",
-                    }}
-                >
+            <div className="ctw-care-grid">
+                <div className="ctw-care-badge-col">
                     <ExploreCollectionBadge onPlay={() => setVideoOpen(true)} />
                 </div>
 
-                <div
-                    style={{
-                        textAlign: window.innerWidth > 900 ? "right" : "center",
-                        color: "#3A2C22",
-                    }}
-                >
-
-
-
+                <div className="ctw-care-copy">
                     <div
+                        className="show-below-md"
                         style={{
-                            display: window.innerWidth > 900 ? "none" : "flex",
                             justifyContent: "center",
                             marginTop: 36,
                         }}
@@ -1209,6 +1125,7 @@ function ExploreCollectionBadge({ size = 150, onPlay }) {
 
     return (
         <div
+            className="ctw-explore-badge"
             style={{
                 position: "relative",
                 width: size,
@@ -1516,24 +1433,12 @@ function RotatingLinkBadge({ label = "ALL PRODUCTS", href = "#shop", size = 190 
 /* ---------------------------- More Collections ---------------------------- */
 
 function MoreCollections() {
-    const width = window.innerWidth;
-    const isDesktop = width > 900;
-    // 4 in one row on desktop, 2 on tablet, 1 on phone
-    const cols = width > 900 ? 4 : width > 560 ? 2 : 1;
-
+    // 4 in one row on desktop, 2 on tablet / phone (see .ctw-best-* in Home.css)
     return (
-        <section style={{ padding: isDesktop ? "50px 0 70px" : "50px 24px", background: "#fff", overflow: "hidden" }}>
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: isDesktop ? "30% 1fr" : "1fr",
-                    gap: isDesktop ? 80 : 32,
-                    alignItems: "center",
-                    paddingRight: isDesktop ? "5%" : 0,
-                }}
-            >
+        <section className="ctw-best" style={{ background: "#fff", overflow: "hidden" }}>
+            <div className="ctw-best-grid">
                 {/* Left: large portrait, flush to the left edge */}
-                <div style={{ display: isDesktop ? "block" : "none" }}>
+                <div className="ctw-best-portrait">
                     <img
                         src={missionPortrait}
                         alt="Woman with glowing skin from Chantallow tallow skincare"
@@ -1542,7 +1447,7 @@ function MoreCollections() {
                 </div>
 
                 {/* Right: heading + 4 products in one row (no slider, no arrows) */}
-                <div style={{ minWidth: 0 }}>
+                <div className="ctw-best-main">
                     <div
                         style={{
                             display: "flex",
@@ -1584,7 +1489,7 @@ function MoreCollections() {
                         */}
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`, gap: 24 }}>
+                    <div className="ctw-best-list">
                         {MORE_COLLECTIONS.map((c) => (
                             <Link
                                 key={c.id}
@@ -1860,18 +1765,9 @@ function CarouselControls({ page, pageCount, onGo }) {
 
 function SimilarProfilesSection() {
     return (
-        <section style={{ padding: "20px 24px 80px", background: "#EDF8F3" }}>
-            <div
-                style={{
-                    maxWidth: 1360,
-                    margin: "0 auto",
-                    display: "grid",
-                    gridTemplateColumns: window.innerWidth > 900 ? "1.3fr 0.9fr" : "1fr",
-                    gap: 40,
-                    alignItems: "center",
-                }}
-            >
-                <div>
+        <section className="ctw-similar" style={{ background: "#EDF8F3" }}>
+            <div className="ctw-similar-grid">
+                <div className="ctw-similar-main">
                     <div
                         style={{
                             display: "flex",
@@ -1911,13 +1807,7 @@ function SimilarProfilesSection() {
                         </a>
                         */}
                     </div>
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: window.innerWidth > 640 ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
-                            gap: 38,
-                        }}
-                    >
+                    <div className="ctw-similar-cards">
                         {SIMILAR_PROFILES.map((p) => (
                             <div key={p.id} style={{ minWidth: 0 }}>
                                 {/* Image box: cream background, full jar visible */}
@@ -1971,8 +1861,8 @@ function SimilarProfilesSection() {
                                             {p.sale}
                                         </span>
                                         <h6
+                                            className="ctw-similar-name"
                                             style={{
-                                                fontSize: 26,
                                                 fontFamily: "Marcellus, sans-serif",
                                                 fontWeight: 400,
                                                 color: "#2D2E2F",
@@ -1984,8 +1874,8 @@ function SimilarProfilesSection() {
                                     </div>
                                     <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                                         <div
+                                            className="ctw-similar-price"
                                             style={{
-                                                fontSize: 26,
                                                 fontFamily: "Marcellus, sans-serif",
                                                 color: "#1C1C1A",
                                             }}
@@ -2010,9 +1900,8 @@ function SimilarProfilesSection() {
                     </div>
                 </div>
 
-                <div>
+                <div className="ctw-similar-portrait">
                     <img
-
                         src={similarPortrait}
                         alt="Man holding a Chantallow tallow skincare jar"
                         style={{
@@ -2033,22 +1922,11 @@ function SimilarProfilesSection() {
 /* -------------------------------- Saving -------------------------------- */
 
 function SavingSection() {
-    const isDesktop = window.innerWidth > 900;
-
     return (
-        <section style={{ padding: "60px 24px 80px", background: "#EDF8F3", overflowX: "clip" }}>
-            <div
-                style={{
-                    maxWidth: 1360,
-                    margin: "0 auto",
-                    display: "grid",
-                    gridTemplateColumns: isDesktop ? "minmax(0, 1fr) minmax(0, 1fr)" : "minmax(0, 1fr)",
-                    gap: 40,
-                    alignItems: "stretch",
-                }}
-            >
+        <section className="ctw-saving" style={{ background: "#EDF8F3", overflowX: "clip" }}>
+            <div className="ctw-saving-grid">
                 {/* LEFT: title + product cards */}
-                <div style={{ minWidth: 0 }}>
+                <div>
                     <div style={{ textAlign: "left", maxWidth: 640, margin: "0 0 40px" }}>
                         <h2
                             style={{
@@ -2075,15 +1953,7 @@ function SavingSection() {
                         </p>
                     </div>
 
-                    <div
-                        style={{
-                            display: "grid",
-                            gridTemplateColumns: window.innerWidth > 560 ? "repeat(2, minmax(0, 1fr))" : "minmax(0, 1fr)",
-                            columnGap: 34,
-                            rowGap: 24,
-                            alignItems: "stretch",
-                        }}
-                    >
+                    <div className="ctw-saving-cards">
                         {SAVING_LEFT.map((p) =>
                             p.seeAll ? (
                                 /* 4th cell: transparent, "See All" button centred vertically */
@@ -2126,19 +1996,7 @@ function SavingSection() {
 
                 {/* RIGHT: banner image — stretches to exactly the height of the left
                     column, so the image bottom lines up with the product cards */}
-                <div
-                    style={{
-                        position: "relative",
-                        minHeight: isDesktop ? 0 : 360,
-                        alignSelf: "stretch",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        overflow: "hidden",
-                        marginRight: -160,
-                        clipPath: "url(#waveLeft)",
-                    }}
-                >
+                <div className="ctw-saving-banner" style={{ clipPath: "url(#waveLeft)" }}>
                     <img
                         src={savingBanner}
                         alt=""
@@ -2186,23 +2044,22 @@ function SavingSection() {
 
 function FurkindPetSection() {
     const navigate = useNavigate();
-    const isDesktop = window.innerWidth > 992;
 
     return (
         <section
             id="furkind"
+            className="ctw-furkind"
             style={{
                 background: "linear-gradient(180deg, #D6F5C9 0%, #D6F5C9 25%, #FFFFFF 75%)",
-                padding: "100px 24px 120px",
                 position: "relative",
                 overflow: "hidden",
             }}
         >
-            <div style={{
+            {/* .ctw-furkind-scene padding-top pushes the whole scene down so the jars aren't cut off */}
+            <div className="ctw-furkind-scene" style={{
                 position: "relative",
                 maxWidth: 1200,
                 margin: "0 auto 40px",
-                paddingTop: isDesktop ? "12%" : "22%",   // pushes the whole scene down so the jars aren't cut off
             }}>
                 {/* Grass map with pets and jars.
                     The grass island sits left of centre inside the map image itself
@@ -2226,11 +2083,11 @@ function FurkindPetSection() {
 
                     {/* area-box1 — dog, left */}
                     <div
+                        className="ctw-furkind-pet"
                         style={{
                             position: "absolute",
                             left: "12%",
                             bottom: "44%",        // was 18% — raised up
-                            width: isDesktop ? "24%" : "32%",
                             zIndex: 2,
                         }}
                     >
@@ -2243,12 +2100,12 @@ function FurkindPetSection() {
 
                     {/* area-box3 — jars, center */}
                     <div
+                        className="ctw-furkind-jars"
                         style={{
                             position: "absolute",
                             left: "44%",
                             bottom: "64%",        // was 20% — raised up
                             transform: "translateX(-50%)",
-                            width: isDesktop ? "30%" : "40%",
                             zIndex: 1,
                         }}
                     >
@@ -2261,11 +2118,11 @@ function FurkindPetSection() {
 
                     {/* area-box2 — cat, right */}
                     <div
+                        className="ctw-furkind-pet"
                         style={{
                             position: "absolute",
                             right: "23%",
                             bottom: "44%",        // was 18% — raised up
-                            width: isDesktop ? "24%" : "32%",
                             zIndex: 2,
                         }}
                     >
@@ -2297,8 +2154,8 @@ function FurkindPetSection() {
                     </a>
 
                     <p
+                        className="ctw-furkind-text"
                         style={{
-                            fontSize: 17,
                             lineHeight: 1.85,
                             fontFamily: "Lufga, sans-serif",
                             color: "#5A5A52",
@@ -2427,12 +2284,9 @@ function SavingItem({ name, sub, price = "$00.00", was = "$00.00", badge, img, p
             {/* Green star "00% Sale" badge, top-right corner */}
             {badge && (
                 <span
+                    className="ctw-sale-star"
                     style={{
                         position: "absolute",
-                        top: -52,
-                        right: -72,
-                        width: 124,
-                        height: 124,
                         background: "#5E9A7F",
                         color: "#fff",
                         clipPath:
@@ -2442,7 +2296,6 @@ function SavingItem({ name, sub, price = "$00.00", was = "$00.00", badge, img, p
                         justifyContent: "center",
                         textAlign: "center",
                         fontFamily: "Lufga, sans-serif",
-                        fontSize: 20,
                         fontWeight: 500,
                         lineHeight: 1.2,
                         zIndex: 2,
@@ -2524,18 +2377,11 @@ function FeaturedOffers() {
     return (
         <section style={{ padding: "20px 0 80px", background: "#EDF8F3" }}>
             <div style={{ maxWidth: 1360, margin: "0 auto", padding: "0 24px" }}>
-                <div
-                    style={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        marginBottom: 28,
-                    }}
-                >
+                <div className="ctw-offers-head">
                     <h2
+                        className="ctw-offers-title"
                         style={{
                             color: "#2D2E2F",
-                            fontSize: 55,
                             fontWeight: 400,
                             lineHeight: 1.2,
                             textTransform: "capitalize",
@@ -2567,8 +2413,8 @@ function FeaturedOffers() {
                         <div
                             key={i}
                             aria-hidden={i >= FEATURED_OFFERS.length}
+                            className="ctw-offer-card"
                             style={{
-                                flex: "0 0 640px",
                                 aspectRatio: "3 / 2",
                                 position: "relative",
                                 overflow: "hidden",
@@ -2578,16 +2424,15 @@ function FeaturedOffers() {
                                 display: "flex",
                                 alignItems: "center",
                                 justifyContent: "flex-end",
-                                padding: "0 56px 0 0",
                             }}
                         >
                             <div style={{ textAlign: "center", position: "relative" }}>
                                 <span
+                                    className="ctw-offer-label"
                                     style={{
                                         display: "inline-block",
                                         background: "#2C7A55",
                                         color: "#fff",
-                                        fontSize: 13,
                                         fontWeight: 600,
                                         letterSpacing: "0.04em",
                                         textTransform: "uppercase",
@@ -2600,9 +2445,8 @@ function FeaturedOffers() {
                                 </span>
 
                                 <h4
-                                    className="ctw-serif"
+                                    className="ctw-serif ctw-offer-name"
                                     style={{
-                                        fontSize: 38,
                                         fontWeight: 400,
                                         letterSpacing: "0.1em",
                                         textTransform: "uppercase",
@@ -2616,9 +2460,8 @@ function FeaturedOffers() {
 
                                 {o.year && (
                                     <div
-                                        className="ctw-serif"
+                                        className="ctw-serif ctw-offer-big"
                                         style={{
-                                            fontSize: 78,
                                             lineHeight: 0.95,
                                             color: o.textColor || "#3A3A38",
                                             marginBottom: 14,
@@ -2631,9 +2474,8 @@ function FeaturedOffers() {
 
                                 {o.bgTitle && (
                                     <div
-                                        className="ctw-serif"
+                                        className="ctw-serif ctw-offer-big ctw-offer-big--sale"
                                         style={{
-                                            fontSize: 84,
                                             lineHeight: 0.95,
                                             letterSpacing: "0.04em",
                                             textTransform: "uppercase",
@@ -2648,14 +2490,12 @@ function FeaturedOffers() {
 
                                 <a
                                     href="#shop"
-                                    className="ctw-serif"
+                                    className="ctw-serif ctw-offer-cta"
                                     style={{
                                         display: "inline-block",
                                         marginTop: 10,
                                         border: `1px solid ${o.textColor === "#fff" ? "#fff" : "#6B6B66"}`,
                                         borderRadius: 40,
-                                        padding: "14px 34px",
-                                        fontSize: 18,
                                         color: o.textColor || "#1C1C1A",
                                         textDecoration: "none",
                                         fontFamily: "Marcellus",
@@ -2692,25 +2532,17 @@ function ShortlistSection() {
     const navigate = useNavigate();
     return (
         <section style={{ background: "#F7F4EC", padding: "0", position: "relative" }}>
-            <div
-                style={{
-                    display: "grid",
-                    gridTemplateColumns: window.innerWidth > 900 ? "1.05fr 0.95fr" : "1fr",
-                    alignItems: "center",
-                }}
-            >
+            <div className="ctw-shortlist-grid">
                 {/* LEFT — banner with man image, wave cut on right edge */}
                 <div
+                    className="ctw-shortlist-banner"
                     style={{
                         position: "relative",
-                        minHeight: 700,
                         display: "flex",
                         flexDirection: "column",
                         alignItems: "center",
                         justifyContent: "center",
                         overflow: "hidden",
-                        marginLeft: -40,
-                        clipPath: "path('M 0 0 L 88% 0 C 98% 18%, 86% 32%, 94% 50%, 102% 68%, 88% 84%, 96% 100% L 0 100% Z')",
                     }}
                 >
                     {/* ⚠ match this var to your man/pain banner import */}
@@ -2748,13 +2580,10 @@ function ShortlistSection() {
 
                     {/* Title + description — top-left of the photo, above the Olivine Relief jar */}
                     <div
+                        className="ctw-shortlist-copy"
                         style={{
                             position: "absolute",
                             zIndex: 2,
-                            top: window.innerWidth > 900 ? "9%" : 32,
-                            left: window.innerWidth > 900 ? "6%" : 24,
-                            right: window.innerWidth > 900 ? "auto" : 24,
-                            maxWidth: window.innerWidth > 900 ? "85%" : "none",
                             textAlign: "left",
                         }}
                     >
@@ -2766,8 +2595,7 @@ function ShortlistSection() {
                                 fontSize: "clamp(24px, 2vw, 32px)",
                                 lineHeight: 1.2,
                                 color: "#1C1C1A",
-                                // one line on desktop; wraps normally on phones
-                                whiteSpace: window.innerWidth > 900 ? "nowrap" : "normal",
+                                // one line on desktop; wraps on smaller screens (Home.css)
                             }}
                         >
                             Soothe Sore Muscles, Naturally
@@ -2779,12 +2607,11 @@ function ShortlistSection() {
                                 fontSize: "clamp(16px, 1.3vw, 20px)",
                                 lineHeight: 1.6,
                                 color: "#2D2E2F",
-                                // exactly two rows on desktop; wraps normally on phones
-                                whiteSpace: window.innerWidth > 900 ? "nowrap" : "normal",
+                                // exactly two rows on desktop; wraps on smaller screens (Home.css)
                             }}
                         >
-                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief,
-                            {window.innerWidth > 900 ? <br /> : " "}
+                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief,{" "}
+                            <br className="ctw-br-desktop" />
                             muscle comfort, and skin nourishment.
                         </p>
                     </div>
@@ -2852,7 +2679,7 @@ function ShortlistSection() {
                 </div>
 
                 {/* RIGHT — single large product */}
-                <div style={{ alignSelf: "center", padding: "0 24px" }}>
+                <div className="ctw-shortlist-product">
                     <div style={{ maxWidth: 480, margin: "0 auto" }}>
                         {/* ⚠ match this var to your pain.png (olive-board) import */}
                         <img
@@ -3048,18 +2875,8 @@ function ShortlistItem({ name, sub, price = "$00.00", was = "$00.00", sale, badg
 
 function Footer() {
     return (
-        <footer style={{ background: "#FFFFFF", color: "#1C1C1A", padding: "72px 24px 24px", borderTop: "1px solid #F0EEE4" }}>
-            <div
-                style={{
-                    maxWidth: 1360,
-                    margin: "0 auto",
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${window.innerWidth > 900 ? 4 : window.innerWidth > 560 ? 2 : 1}, 1fr)`,
-                    gap: 40,
-                    marginBottom: 48,
-                    textAlign: "left",
-                }}
-            >
+        <footer className="ctw-footer" style={{ background: "#FFFFFF", color: "#1C1C1A", borderTop: "1px solid #F0EEE4" }}>
+            <div className="ctw-footer-grid">
                 <div>
                     <div style={{ marginBottom: 24 }}>
                         <img src={logo} alt="Chantallow" style={{ height: 48, width: "auto", display: "block" }} />
@@ -3248,7 +3065,7 @@ function Footer() {
                     © 2026 <span style={{ color: "#41705B", fontWeight: 600 }}>Chantallow</span> Theme. All
                     Rights Reserved.
                 </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="ctw-footer-payments" style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span>We Accept:</span>
                     <img src={footerImg} alt="Accepted payment methods" style={{ height: 24, display: "block" }} />
                 </div>
@@ -3344,6 +3161,7 @@ function SearchOverlay({ open, onClose }) {
                 display: "flex",
                 alignItems: "flex-start",
                 justifyContent: "center",
+                padding: "0 16px",
             }}
             onClick={onClose}
         >
@@ -3746,7 +3564,6 @@ function QuickViewModal({ card, onClose }) {
     if (!product) return null;
 
     const liked = isInWishlist(product.id);
-    const isDesktop = window.innerWidth > 760;
     const summary = Array.isArray(product.description) ? product.description[0] : product.description;
     // Same "big jar (4oz) + small jar (2oz)" name and photo as the card that was clicked
     const displayName = card?.name || product.displayName || product.name;
@@ -3801,13 +3618,11 @@ function QuickViewModal({ card, onClose }) {
                 aria-modal="true"
                 aria-label={`${displayName} quick view`}
                 onClick={(e) => e.stopPropagation()}
+                className="ctw-qv"
                 style={{
                     width: "100%",
                     maxWidth: 1240,
                     maxHeight: "90vh",
-                    overflowY: isDesktop ? "hidden" : "auto",
-                    display: "grid",
-                    gridTemplateColumns: isDesktop ? "1fr 1fr" : "1fr",
                     position: "relative",
                     background: "#EDF8F3",
                     fontFamily: "Lufga, 'DM Sans', sans-serif",
@@ -3836,10 +3651,9 @@ function QuickViewModal({ card, onClose }) {
                 {/* LEFT — product image on a cream card */}
                 <div
                     onClick={openDetails}
+                    className="ctw-qv-media"
                     style={{
                         background: "#FFFDF0",
-                        height: isDesktop ? "auto" : 280,
-                        padding: isDesktop ? "40px 30px" : 20,
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
@@ -3853,7 +3667,6 @@ function QuickViewModal({ card, onClose }) {
                         style={{
                             width: "100%",
                             maxWidth: 460,
-                            maxHeight: isDesktop ? "62vh" : 240,
                             objectFit: "contain",
                             display: "block",
                         }}
@@ -3861,7 +3674,7 @@ function QuickViewModal({ card, onClose }) {
                 </div>
 
                 {/* RIGHT — details */}
-                <div style={{ padding: isDesktop ? "44px 44px 32px" : "32px 22px 26px" }}>
+                <div className="ctw-qv-body">
                     {product.badge && (
                         <span
                             style={{
@@ -3880,11 +3693,11 @@ function QuickViewModal({ card, onClose }) {
 
                     <h4
                         onClick={openDetails}
+                        // long two-jar names wrap onto 2 lines, so `is-long` uses a slightly smaller size
+                        className={displayName.length > 28 ? "ctw-qv-title is-long" : "ctw-qv-title"}
                         style={{
                             fontFamily: "Marcellus, serif",
-                            // long two-jar names wrap onto 2 lines, so use a slightly smaller
-                            // size and an explicit line height (another stylesheet was squeezing it)
-                            fontSize: displayName.length > 28 ? (isDesktop ? 32 : 24) : (isDesktop ? 38 : 28),
+                            // explicit line height (another stylesheet was squeezing it)
                             lineHeight: 1.25,
                             letterSpacing: "0.01em",
                             fontWeight: 400,

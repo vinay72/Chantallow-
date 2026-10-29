@@ -124,7 +124,7 @@
   display: none;
 }
 
-@media (max-width: 960px) {
+@media (max-width: 1024px) {
   .ctw-nav {
     display: none;
     flex-direction: column;
@@ -146,15 +146,17 @@
 /* ---------------------------- Sign In Section ---------------------------- */
 
 .ctw-signin-section {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   background: #FFFFFF;
 }
+.ctw-signin-section > * { flex: 0 0 calc((100% - 1 * 0px) / 2); width: auto; min-width: 0; }
 
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .ctw-signin-section {
-    grid-template-columns: 1fr;
+    flex-direction: column; align-items: stretch;
   }
+  .ctw-signin-section > * { flex: 0 0 auto; width: 100%; }
 }
 
 /* Left panel */
@@ -371,7 +373,7 @@
   transition: background-image .5s ease;
 }
 
-@media (min-width: 992px) {
+@media (min-width: 1025px) {
   .ctw-signin-right {
     min-height: auto;
   }
@@ -448,31 +450,11 @@
 .ctw-footer {
   background: #FFFFFF;
   color: #1C1C1A;
-  padding: 72px 24px 24px;
   border-top: 1px solid #F0EEE4;
 }
 
-.ctw-footer-grid {
-  max-width: 1360px;
-  margin: 0 auto;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 40px;
-  margin-bottom: 48px;
-  text-align: left;
-}
-
-@media (max-width: 900px) {
-  .ctw-footer-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (max-width: 560px) {
-  .ctw-footer-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* .ctw-footer padding and the .ctw-footer-grid flex layout live in
+   src/components/SiteFooter.css (shared by every page footer). */
 
 .ctw-footer-logo {
   margin-bottom: 24px;
@@ -645,4 +627,17 @@
   margin: 0 0 16px;
   font-family: 'Lufga', sans-serif;
   font-size: 14px;
+}
+
+/* Header on phones: icons only, logo + icons on one row */
+@media (max-width: 640px) {
+  .ctw-header-inner { padding: 16px; }
+  .ctw-login-link { display: none; }
+  .ctw-header-actions { gap: 14px; }
+}
+
+@media (max-width: 480px) {
+  .ctw-header-inner { padding: 14px 12px; }
+  .ctw-header-logo img { height: 32px; }
+  .ctw-header-actions { gap: 10px; }
 }

@@ -3,6 +3,7 @@ import { Search, Heart, ShoppingCart, Menu, Eye, EyeOff, ArrowRight, ArrowLeft }
 import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { homeForRole, useAuth } from "../../context/AuthContext";
 import "./Login.css";
+import "../../components/SiteFooter.css";
 
 import logo from "../../assets/logo.png";
 
@@ -94,7 +95,7 @@ function Header() {
                         onClick={() => setMenuOpen((v) => !v)}
                         className="ctw-icon-btn ctw-menu-btn"
                     >
-                        <Menu size={22} />
+                        <Menu size={22} color="#1C1C1A" />
                     </button>
                 </div>
             </div>

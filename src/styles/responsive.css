@@ -1,0 +1,125 @@
+/* ==========================================================================
+   Responsive foundation — loaded once in main.jsx, applies site-wide.
+
+   Breakpoint tiers (desktop-first, every stylesheet uses these exact values):
+     2XL  Ultra-wide / 4K ........ @media (min-width: 1536px)
+     XL   Desktop ................ 1280px – 1536px  (base styles)
+     LG   Laptop / small desktop . @media (max-width: 1280px)
+     MD   Tablet ................. @media (max-width: 1024px)
+          Tablet portrait ........ @media (max-width: 768px)
+     SM   Large phone / small tab  @media (max-width: 640px)
+     XS   Phone .................. @media (max-width: 480px)
+   ========================================================================== */
+
+:root {
+  --gutter: 40px;          /* side padding for page sections */
+  --section-y: 80px;       /* vertical padding for page sections */
+  --container: 1360px;     /* widest content column */
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* Stop any stray wide element from causing sideways scroll on phones.
+   `clip` (not `hidden`) keeps position: sticky headers working. */
+body {
+  overflow-x: clip;
+}
+
+img,
+video,
+iframe,
+canvas {
+  max-width: 100%;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+  max-width: 100%;
+}
+
+/* ----------------------------- Flex utilities ----------------------------- */
+
+.flex       { display: flex; }
+.flex-col   { display: flex; flex-direction: column; }
+.flex-wrap  { flex-wrap: wrap; }
+.flex-1     { flex: 1 1 0; min-width: 0; }
+.items-center   { align-items: center; }
+.justify-between { justify-content: space-between; }
+
+/* Row of columns that stacks into one column on tablets and below */
+.stack-md { display: flex; gap: var(--gutter); }
+.stack-md > * { flex: 1 1 0; min-width: 0; }
+
+/* Row that stacks only on phones */
+.stack-sm { display: flex; gap: 24px; }
+.stack-sm > * { flex: 1 1 0; min-width: 0; }
+
+/* -------------------------- Visibility helpers --------------------------- */
+
+.show-below-md { display: none !important; }
+
+/* ================================ 2XL ================================ */
+@media (min-width: 1536px) {
+  :root {
+    --gutter: 56px;
+    --section-y: 100px;
+    --container: 1480px;
+  }
+}
+
+/* ================================= LG ================================= */
+@media (max-width: 1280px) {
+  :root {
+    --gutter: 32px;
+  }
+
+  .hide-below-lg { display: none !important; }
+}
+
+/* ================================= MD ================================= */
+@media (max-width: 1024px) {
+  :root {
+    --gutter: 24px;
+    --section-y: 64px;
+  }
+
+  .stack-md { flex-direction: column; }
+  .hide-below-md { display: none !important; }
+  .show-below-md { display: flex !important; }
+}
+
+/* =========================== Tablet portrait =========================== */
+@media (max-width: 768px) {
+  .hide-below-tablet { display: none !important; }
+}
+
+/* ================================= SM ================================= */
+@media (max-width: 640px) {
+  :root {
+    --gutter: 20px;
+    --section-y: 52px;
+  }
+
+  .stack-sm { flex-direction: column; }
+  .hide-below-sm { display: none !important; }
+}
+
+/* ================================= XS ================================= */
+@media (max-width: 480px) {
+  :root {
+    --gutter: 16px;
+    --section-y: 44px;
+  }
+}

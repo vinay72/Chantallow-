@@ -9,6 +9,7 @@ import recentPost1 from "../assets/shop/product/small/1.png";
 import recentPost2 from "../assets/shop/product/small/2.png";
 import recentPost3 from "../assets/shop/product/small/3.png";
 import footerImg from "../assets/footer/footer.png";
+import "./SiteFooter.css";
 
 const USEFUL_LINKS = [
     { label: "Home", path: "/" },
@@ -29,21 +30,9 @@ const p = { fontSize: 13.5, fontFamily: "Lufga", lineHeight: 2, color: "#5A5A52"
 const h5 = { fontSize: 20, fontWeight: 700, color: "#1C1C1A", margin: "0 0 22px" };
 
 export default function SiteFooter() {
-    const cols = window.innerWidth > 900 ? 4 : window.innerWidth > 560 ? 2 : 1;
-
     return (
-        <footer style={{ background: "#FFFFFF", color: "#1C1C1A", padding: "72px 24px 24px", borderTop: "1px solid #F0EEE4" }}>
-            <div
-                style={{
-                    maxWidth: 1360,
-                    margin: "0 auto",
-                    display: "grid",
-                    gridTemplateColumns: `repeat(${cols}, 1fr)`,
-                    gap: 40,
-                    marginBottom: 48,
-                    textAlign: "left",
-                }}
-            >
+        <footer className="ctw-footer" style={{ background: "#FFFFFF", color: "#1C1C1A", borderTop: "1px solid #F0EEE4" }}>
+            <div className="ctw-footer-grid">
                 <div>
                     <div style={{ marginBottom: 24 }}>
                         <img src={logo} alt="Chantallow" style={{ height: 40, width: "auto", display: "block" }} />
@@ -129,7 +118,7 @@ export default function SiteFooter() {
                 <p style={{ fontFamily: "Lufga", margin: 0 }}>
                     © 2026 <span style={{ color: "#41705B", fontWeight: 600 }}>Chantallow</span> Theme. All Rights Reserved.
                 </p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="ctw-footer-payments" style={{ display: "flex", alignItems: "center", gap: 10 }}>
                     <span>We Accept:</span>
                     <img src={footerImg} alt="Accepted payment methods" style={{ height: 24, display: "block" }} />
                 </div>

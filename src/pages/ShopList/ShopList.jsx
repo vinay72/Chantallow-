@@ -4,6 +4,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "./ShopList.css";
+import "../../components/SiteFooter.css";
 
 import logo from "../../assets/logo.png";
 
@@ -210,7 +211,7 @@ function Header() {
                         onClick={() => setMenuOpen((v) => !v)}
                         className="ctw-icon-btn ctw-menu-btn"
                     >
-                        <Menu size={22} />
+                        <Menu size={22} color="#1C1C1A" />
                     </button>
                 </div>
             </div>

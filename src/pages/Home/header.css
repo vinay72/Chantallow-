@@ -1,4 +1,7 @@
-.ctw-header {
+/* Home page header. Scoped under .ctw-home-header so the same-named header
+   rules in other page stylesheets (ShopList.css, Login.css...) can't leak in. */
+
+.ctw-home-header .ctw-header {
   display: flex;
   align-items: stretch;
   justify-content: space-between;
@@ -6,20 +9,20 @@
   background: #FFFFFF;
 }
 
-.ctw-header-logo {
+.ctw-home-header .ctw-header-logo {
   display: flex;
   align-items: center;
   padding: 0 32px;
   flex-shrink: 0;
 }
 
-.ctw-header-logo img {
-  height: 44px;
+.ctw-home-header .ctw-header-logo img {
+  height: 64px;
   width: auto;
   display: block;
 }
 
-.ctw-nav {
+.ctw-home-header .ctw-nav {
   display: flex;
   flex: 1;
   flex-wrap: wrap;
@@ -31,7 +34,7 @@
   padding-right: 40px;  
 }
 
-.ctw-nav-link {
+.ctw-home-header .ctw-nav-link {
   display: inline-block;
   
   color: var(--white);
@@ -47,11 +50,11 @@
   transition: color .25s ease;
 }
 
-.ctw-nav-link:hover {
+.ctw-home-header .ctw-nav-link:hover {
   color: #41705B;
 }
 
-.ctw-nav-link .ctw-star {
+.ctw-home-header .ctw-nav-link .ctw-star {
   font-size: 11px;
   color: #8A8A80;
 }
@@ -60,7 +63,7 @@
   --right-panel-width: 395px;  /* set this to the width of the mint panel below */
 }
 
-.ctw-header-actions {
+.ctw-home-header .ctw-header-actions {
   display: flex;
   align-items: center;
   justify-content: flex-end;   /* keeps content hugging the right */
@@ -72,7 +75,7 @@
   box-sizing: border-box;            /* so padding doesn't add extra width */
 }
 
-.ctw-login {
+.ctw-home-header .ctw-login {
   font-family: 'Marcellus', serif;
   font-size: 16px;
   /* margin-right: 30px; */
@@ -83,7 +86,7 @@
   white-space: nowrap;
 }
 
-.ctw-icon-btn {
+.ctw-home-header .ctw-icon-btn {
   background: none;
   border: none;
   cursor: pointer;
@@ -91,32 +94,79 @@
   display: flex;
 }
 
-.ctw-menu-btn {
+.ctw-home-header .ctw-menu-btn {
   display: none;
 }
 
-@media (max-width: 991px) {
-  .ctw-nav {
+/* LG — tighten spacing so links stay on one row */
+@media (max-width: 1280px) {
+  :root { --right-panel-width: 320px; }
+  .ctw-home-header .ctw-header-logo { padding: 0 24px; }
+  .ctw-home-header .ctw-nav { padding-right: 16px; }
+  .ctw-home-header .ctw-nav-link { padding: 28px 14px; }
+  .ctw-home-header .ctw-header-actions { padding: 0 24px; gap: 14px; }
+}
+
+/* MD — collapse links into the hamburger dropdown */
+@media (max-width: 1024px) {
+  .ctw-home-header .ctw-header {
+    position: relative;
+    min-height: 76px;
+  }
+
+  .ctw-home-header .ctw-header-logo img { height: 52px; }
+
+  .ctw-home-header .ctw-nav {
     display: none;
     position: absolute;
-    top: 90px;
+    top: 100%;
     left: 0;
     right: 0;
     flex-direction: column;
+    align-items: stretch;
     background: #fff;
-    padding: 24px;
+    padding: 12px 24px 20px;
+    row-gap: 0;
     border-bottom: 1px solid #ECEAE0;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
   }
 
-  .ctw-nav.is-open {
+  .ctw-home-header .ctw-nav.is-open {
     display: flex;
   }
 
-  .ctw-login {
+  .ctw-home-header .ctw-nav-link {
+    padding: 14px 0;
+    border-bottom: 1px solid #F0EEE4;
+    text-align: left;
+  }
+
+  .ctw-home-header .ctw-login {
     display: none;
   }
 
-  .ctw-menu-btn {
+  .ctw-home-header .ctw-menu-btn {
     display: flex;
   }
+
+  .ctw-home-header .ctw-header-actions {
+    width: auto;
+    margin-left: auto;
+    gap: 12px;
+  }
+}
+
+/* SM / XS — phones */
+@media (max-width: 640px) {
+  .ctw-home-header .ctw-header { min-height: 64px; }
+  .ctw-home-header .ctw-header-logo { padding: 0 16px; }
+  .ctw-home-header .ctw-header-logo img { height: 42px; }
+  .ctw-home-header .ctw-header-actions { padding: 0 16px; gap: 6px; }
+}
+
+@media (max-width: 480px) {
+  .ctw-home-header .ctw-header-logo { padding: 0 10px; }
+  .ctw-home-header .ctw-header-logo img { height: 30px; }
+  .ctw-home-header .ctw-header-actions { padding: 0 10px; gap: 0; }
+  .ctw-home-header .ctw-icon-btn { padding: 3px; }
 }

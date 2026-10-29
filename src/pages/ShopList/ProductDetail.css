@@ -169,10 +169,9 @@ img {
 /* ---------------- Product layout ---------------- */
 
 .ct-product {
-  display: grid;
+  display: flex;
   /* Bootstrap ratio from the reference template:
      col-4 (image) : col-7-of-8 (info) : col-5-of-8 (sidebar) */
-  grid-template-columns: 1fr 1.17fr 0.83fr;
   gap: 40px;
   padding-top: 48px;
   padding-bottom: 72px;
@@ -180,24 +179,28 @@ img {
   max-width: none;
   padding-left: 24px;
   padding-right: 40px; /* extra breathing room on the right edge */
-  /* NOTE: no `align-items: start` — the gallery wrapper must stretch to the
+  /* NOTE: no `align-items: flex-start` — the gallery wrapper must stretch to the
      full row height so the image has room to scroll away when released. */
 }
+.ct-product > :nth-child(1) { flex: 1 1 0; width: auto; min-width: 0; }
+.ct-product > :nth-child(2) { flex: 1.17 1 0; width: auto; min-width: 0; }
+.ct-product > :nth-child(3) { flex: 0.83 1 0; width: auto; min-width: 0; }
 
-@media (max-width: 1100px) {
+@media (max-width: 1280px) {
   .ct-product {
-    grid-template-columns: 1fr 1fr;
+    flex-direction: row; flex-wrap: wrap;
   }
+  .ct-product > *, .ct-product > :nth-child(1), .ct-product > :nth-child(2), .ct-product > :nth-child(3) { flex: 0 0 calc((100% - 1 * 40px) / 2); width: auto; min-width: 0; }
   .ct-sidebar {
-    grid-column: 1 / -1;
     max-width: 420px;
   }
 }
 
-@media (max-width: 760px) {
+@media (max-width: 768px) {
   .ct-product {
-    grid-template-columns: 1fr;
+    flex-direction: column; align-items: stretch;
   }
+  .ct-product > *, .ct-product > :nth-child(1), .ct-product > :nth-child(2), .ct-product > :nth-child(3) { flex: 0 0 auto; width: 100%; }
   .ct-gallery__main {
     position: relative !important; /* JS also disables pin below 760px; belt-and-braces */
     top: auto !important;
@@ -706,21 +709,24 @@ img {
 }
 
 .ct-related__grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 24px;
 }
+.ct-related__grid > * { flex: 0 0 calc((100% - 3 * 24px) / 4); width: auto; min-width: 0; }
 
-@media (max-width: 900px) {
+@media (max-width: 1024px) {
   .ct-related__grid {
-    grid-template-columns: repeat(2, 1fr);
+    flex-direction: row; flex-wrap: wrap;
   }
+  .ct-related__grid > * { flex: 0 0 calc((100% - 1 * 24px) / 2); width: auto; min-width: 0; }
 }
 
-@media (max-width: 520px) {
+@media (max-width: 640px) {
   .ct-related__grid {
-    grid-template-columns: 1fr;
+    flex-direction: column; align-items: stretch;
   }
+  .ct-related__grid > * { flex: 0 0 auto; width: 100%; }
 }
 
 .ct-product-card {

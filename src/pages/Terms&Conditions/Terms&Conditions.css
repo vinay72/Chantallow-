@@ -206,11 +206,12 @@
   padding-bottom: 120px;
 }
 .tc-grid {
-  display: grid;
-  grid-template-columns: 7fr 5fr;
+  display: flex;
   gap: 60px;
-  align-items: start;
+  align-items: flex-start;
 }
+.tc-grid > :nth-child(1) { flex: 7 1 0; width: auto; min-width: 0; }
+.tc-grid > :nth-child(2) { flex: 5 1 0; width: auto; min-width: 0; }
 
 /* ---------- Intro ---------- */
 .tc-intro {
@@ -398,11 +399,12 @@
 .footer-top {
   max-width: 1360px;
   margin: 0 auto 48px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: 40px;
   text-align: left;
 }
+.footer-top > * { flex: 0 0 calc((100% - 3 * 40px) / 4); width: auto; min-width: 0; }
 
 /* About column */
 .footer-logo { margin-bottom: 24px; }
@@ -549,24 +551,40 @@
 .footer-pay img { height: 24px; display: block; }
 
 /* ---------- Responsive ---------- */
-@media (max-width: 992px) {
+@media (max-width: 1024px) {
   .ct-nav-main,
   .ct-header-actions .login { display: none; }
   .ct-burger { display: inline-flex; }
   .banner h1 { font-size: 44px; }
-  .tc-grid { grid-template-columns: 1fr; gap: 56px; }
+  .tc-grid { flex-direction: column; align-items: stretch; gap: 56px; }
+  .tc-grid > *, .tc-grid > :nth-child(1), .tc-grid > :nth-child(2) { flex: 0 0 auto; width: 100%; }
   .tc-contact-title { font-size: 28px; }
 }
-@media (max-width: 900px) {
-  .footer-top { grid-template-columns: repeat(2, 1fr); }
+@media (max-width: 1024px) {
+  .footer-top { flex-direction: row; flex-wrap: wrap; }
+  .footer-top > * { flex: 0 0 calc((100% - 1 * 40px) / 2); width: auto; min-width: 0; }
 }
-@media (max-width: 576px) {
+@media (max-width: 640px) {
   .banner h1 { font-size: 34px; }
   .banner p { font-size: 16px; }
   .footer-bottom { justify-content: center; text-align: center; }
   .tc-section-title { font-size: 20px; }
   .tc-banner { padding: 60px 0 50px; }
 }
-@media (max-width: 560px) {
-  .footer-top { grid-template-columns: 1fr; }
+@media (max-width: 640px) {
+  .footer-top { flex-direction: column; align-items: stretch; }
+  .footer-top > * { flex: 0 0 auto; width: 100%; }
+}
+/* SM / XS — keep the header on one row on phones */
+@media (max-width: 640px) {
+  .ct-header-row1 { padding: 16px; gap: 12px; align-items: center; }
+  .ct-header-right { gap: 12px; align-items: center; }
+  .ct-header-actions { gap: 10px; }
+  .ct-logo img { height: 38px; }
+}
+@media (max-width: 480px) {
+  .ct-header-row1 { padding: 14px 12px; }
+  .ct-header-actions { gap: 4px; }
+  .ct-icon-btn, .ct-burger { padding: 2px; }
+  .ct-logo img { height: 32px; }
 }

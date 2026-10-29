@@ -1,0 +1,51 @@
+/* Footer layout — shared by SiteFooter.jsx and the Home page footer.
+   Breakpoint tiers are documented in src/styles/responsive.css. */
+
+.ctw-footer { padding: 72px 24px 24px; }
+
+/* 4 columns on desktop, 2 on tablet, 1 on phones */
+.ctw-footer-grid {
+  max-width: 1360px;
+  margin: 0 auto 48px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 40px;
+  text-align: left;
+}
+.ctw-footer-grid > * { flex: 1 1 calc((100% - 120px) / 4); min-width: 0; }
+
+@media (min-width: 1536px) {
+  .ctw-footer-grid { max-width: 1480px; }
+}
+
+@media (max-width: 1024px) {
+  .ctw-footer-grid > * { flex-basis: calc((100% - 40px) / 2); }
+}
+
+@media (max-width: 640px) {
+  .ctw-footer { padding: 56px 16px 24px; }
+}
+
+@media (max-width: 480px) {
+  .ctw-footer-grid { gap: 32px; }
+  .ctw-footer-grid > * { flex-basis: 100%; }
+}
+
+/* "We Accept" payment strip — the same markup appears in every page footer
+   under a few class names; on phones let the image drop to its own line. */
+@media (max-width: 480px) {
+  .ctw-footer-payments,
+  .fpt-pay,
+  .footer-pay,
+  .accept {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .ctw-footer-payments img,
+  .fpt-pay img,
+  .footer-pay img {
+    max-width: 100%;
+    height: auto !important;
+  }
+}
