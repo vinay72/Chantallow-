@@ -11,6 +11,7 @@ import recentPost1 from "../../assets/shop/product/small/1.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
+import Header from "../../components/Header";
 
 const GALLERY_IMAGES = [productMain, productMain, productMain];
 const THUMBNAILS = [thumb1, thumb2, thumb3];
@@ -136,44 +137,7 @@ export default function FurkindPetTallow() {
 
   return (
     <div className="fpt">
-      {/* ===== Header ===== */}
-      <header className="fpt-header">
-        <div className="fpt-header-inner">
-          <a className="fpt-logo" href="#">
-            <span className="fpt-logo-mark">
-              <svg viewBox="0 0 48 48" width="30" height="30" aria-hidden="true">
-                <ellipse cx="24" cy="26" rx="9" ry="11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" />
-                <path d="M9 15c-2 5 2 10 6 11M39 15c2 5-2 10-6 11" fill="none" stroke="#7d8a6a" strokeWidth="1.3" strokeLinecap="round" />
-                <path d="M24 14v-6" stroke="#7d8a6a" strokeWidth="1.3" />
-                <circle cx="20.5" cy="24" r="1.1" fill="#7d8a6a" />
-                <circle cx="27.5" cy="24" r="1.1" fill="#7d8a6a" />
-              </svg>
-            </span>
-            <span className="fpt-logo-text">CHANTALLOW</span>
-          </a>
-
-          <nav className="fpt-nav" aria-label="Primary">
-            <a href="#">Home +</a>
-            <a href="#">About Us +</a>
-            <a href="#">Shop +</a>
-            <a href="#">Blog +</a>
-            <a href="#">Contact US +</a>
-          </nav>
-
-          <div className="fpt-header-right">
-            <a className="fpt-login" href="#">Login /<br />Register</a>
-            <button className="icon-btn" aria-label="Search">
-              <svg viewBox="0 0 20 20" width="20" height="20"><circle cx="9.2" cy="9.2" r="6.7" fill="none" stroke="currentColor" strokeWidth="1.5" /><line x1="17.5" y1="17.5" x2="13.9" y2="13.9" stroke="currentColor" strokeWidth="1.5" /></svg>
-            </button>
-            <button className="icon-btn" aria-label="Wishlist">
-              <svg viewBox="0 0 20 20" width="20" height="20"><path d="M17.4 3.8a5.6 5.6 0 0 0-7.4.9 5.6 5.6 0 0 0-7.4-.9 5.9 5.9 0 0 0-.6 8.5L10 18l7.4-5.6a5.9 5.9 0 0 0 0-8.5z" fill="none" stroke="currentColor" strokeWidth="1.5" /></svg>
-            </button>
-            <button className="icon-btn" aria-label="Cart">
-              <svg viewBox="0 0 20 20" width="20" height="20"><path d="M.8.8h3.4l2.2 11.2c.2.7.9 1.2 1.6 1.2h8.1c.7 0 1.3-.5 1.5-1.2l1.3-7H5" fill="none" stroke="currentColor" strokeWidth="1.5" /><circle cx="7.5" cy="18.3" r="1.1" fill="currentColor" /><circle cx="16.7" cy="18.3" r="1.1" fill="currentColor" /></svg>
-            </button>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* ===== Banner ===== */}
       <div className="fpt-banner">

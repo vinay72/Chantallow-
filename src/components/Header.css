@@ -1,0 +1,505 @@
+/* Shared site header (components/Header.jsx).
+   Every class is prefixed "sh-" so the old per-page header rules
+   (.ctw-header, .ct-header, .site-header...) can't leak in. */
+
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap");
+
+.sh-header {
+  --sh-ink: #1c1c1a;
+  --sh-green: #41705b;
+  --sh-mint: #edf8f3;
+  --sh-line: #f0eee4;
+  --sh-muted: #8a8a80;
+  --sh-panel: 395px; /* width of the mint panel on the right */
+
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  font-family: "DM Sans", sans-serif;
+  color: var(--sh-ink);
+  background: #fff;
+}
+
+.sh-header *,
+.sh-search *,
+.sh-drawer * {
+  box-sizing: border-box;
+}
+
+.sh-bar {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  min-height: 90px;
+  background: #fff;
+}
+
+/* ---------- logo ---------- */
+.sh-logo {
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  flex-shrink: 0;
+}
+
+.sh-logo img {
+  display: block;
+  height: 64px;
+  width: auto;
+}
+
+/* ---------- links ---------- */
+.sh-nav {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  align-content: center;
+  padding: 12px 40px 12px 0;
+}
+
+.sh-nav-link {
+  position: relative;
+  display: inline-block;
+  padding: 28px 23px;
+  font-family: "DM Sans", sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  color: var(--sh-ink);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.25s ease;
+}
+
+.sh-nav-link:hover,
+.sh-nav-link.is-active {
+  color: var(--sh-green);
+}
+
+.sh-star {
+  margin-left: 4px;
+  font-size: 11px;
+  color: var(--sh-muted);
+}
+
+/* account link inside the nav is only for the mobile dropdown */
+.sh-nav .sh-nav-account {
+  display: none;
+}
+
+/* ---------- right panel ---------- */
+.sh-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 18px;
+  flex-shrink: 0;
+  width: var(--sh-panel);
+  padding: 0 34px;
+  background: var(--sh-mint);
+}
+
+.sh-login {
+  font-family: "Marcellus", serif;
+  font-size: 16px;
+  line-height: 1.25;
+  color: var(--sh-ink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  white-space: nowrap;
+}
+
+.sh-login:hover {
+  color: var(--sh-green);
+}
+
+.sh-icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: #000;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sh-icon-btn:hover {
+  color: var(--sh-green);
+}
+
+.sh-icon-btn:focus-visible,
+.sh-nav-link:focus-visible,
+.sh-login:focus-visible {
+  outline: 2px solid var(--sh-green);
+  outline-offset: 2px;
+}
+
+.sh-badge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  background: var(--sh-green);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  pointer-events: none;
+}
+
+.sh-menu-btn {
+  display: none;
+}
+
+/* ---------- search overlay ---------- */
+.sh-search {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 0 16px;
+  background: rgba(0, 0, 0, 0.4);
+  font-family: "DM Sans", sans-serif;
+}
+
+.sh-search-box {
+  position: relative;
+  width: 100%;
+  max-width: 720px;
+  margin-top: 60px;
+  padding: 28px;
+  border-radius: 16px;
+  background: #f7f4ec;
+}
+
+.sh-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sh-search-field {
+  display: flex;
+  margin: 16px 0 20px;
+  overflow: hidden;
+  border: 1px solid #d8d4c4;
+  border-radius: 30px;
+  background: #fff;
+}
+
+.sh-search-field input {
+  flex: 1;
+  min-width: 0;
+  padding: 14px 20px;
+  font-size: 14px;
+  border: none;
+  outline: none;
+}
+
+.sh-search-field button {
+  padding: 0 22px;
+  color: #fff;
+  background: var(--sh-ink);
+  border: none;
+  cursor: pointer;
+}
+
+.sh-quick {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  font-size: 12.5px;
+}
+
+.sh-quick span {
+  margin-right: 4px;
+  color: var(--sh-muted);
+}
+
+.sh-quick button {
+  padding: 0;
+  font: inherit;
+  color: var(--sh-ink);
+  background: none;
+  border: none;
+  border-bottom: 1px solid transparent;
+  cursor: pointer;
+}
+
+.sh-quick button:hover {
+  border-bottom-color: var(--sh-ink);
+}
+
+/* ---------- cart / wishlist drawer ---------- */
+.sh-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  font-family: "DM Sans", sans-serif;
+  color: var(--sh-ink, #1c1c1a);
+}
+
+.sh-drawer.is-open {
+  pointer-events: auto;
+}
+
+.sh-drawer-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.sh-drawer.is-open .sh-drawer-backdrop {
+  opacity: 1;
+}
+
+.sh-drawer-panel {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: min(400px, 100%);
+  padding: 24px;
+  overflow-y: auto;
+  background: #fff;
+  transform: translateX(100%);
+  transition: transform 0.35s ease;
+}
+
+.sh-drawer.is-open .sh-drawer-panel {
+  transform: translateX(0);
+}
+
+.sh-drawer-close {
+  margin-bottom: 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sh-btn {
+  width: 100%;
+  padding: 14px 0;
+  font-family: "DM Sans", sans-serif;
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #1c1c1a;
+  background: #f0eee4;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.sh-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.sh-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.sh-tabs .sh-btn {
+  flex: 1;
+  padding: 10px 0;
+}
+
+.sh-btn.is-active,
+.sh-btn--dark {
+  color: #fff;
+  background: #1c1c1a;
+}
+
+.sh-btn--outline {
+  margin-bottom: 10px;
+  color: #1c1c1a;
+  background: transparent;
+  border: 1px solid #1c1c1a;
+}
+
+.sh-btn--spaced {
+  margin-top: 10px;
+}
+
+.sh-empty {
+  margin: 32px 0;
+  font-size: 14px;
+  text-align: center;
+  color: #8a8a80;
+}
+
+.sh-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 18px;
+  padding-bottom: 18px;
+  border-bottom: 1px solid #f0eee4;
+}
+
+.sh-row-img {
+  flex-shrink: 0;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  overflow: hidden;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(150deg, #efebdd, #d9cfae);
+  cursor: pointer;
+}
+
+.sh-row-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sh-row-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sh-row-name {
+  display: block;
+  margin-bottom: 4px;
+  padding: 0;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  color: inherit;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sh-row-meta {
+  margin-bottom: 4px;
+  font-size: 12px;
+  color: #8a8a80;
+}
+
+.sh-row-price {
+  font-size: 13px;
+  font-weight: 700;
+  color: #41705b;
+}
+
+.sh-row-remove {
+  color: #b4b4a8;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.sh-subtotal {
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ---------- responsive ---------- */
+
+/* LG — tighten spacing so links stay on one row */
+@media (max-width: 1280px) {
+  .sh-header { --sh-panel: 320px; }
+  .sh-logo { padding: 0 24px; }
+  .sh-nav { padding-right: 16px; }
+  .sh-nav-link { padding: 28px 14px; }
+  .sh-actions { gap: 14px; padding: 0 24px; }
+}
+
+/* MD — links fold into the hamburger dropdown */
+@media (max-width: 1024px) {
+  .sh-bar {
+    position: relative;
+    min-height: 76px;
+  }
+
+  .sh-logo img { height: 52px; }
+
+  .sh-nav {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    display: none;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    align-items: stretch;
+    max-height: calc(100vh - 76px);
+    overflow-y: auto;
+    padding: 8px 24px 20px;
+    background: #fff;
+    border-bottom: 1px solid #eceae0;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+  }
+
+  .sh-nav.is-open { display: flex; }
+
+  .sh-nav-link {
+    padding: 14px 0;
+    text-align: left;
+    border-bottom: 1px solid var(--sh-line);
+  }
+
+  .sh-nav .sh-nav-account {
+    display: block;
+    border-bottom: none;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .sh-login { display: none; }
+  .sh-menu-btn { display: flex; }
+
+  .sh-actions {
+    width: auto;
+    margin-left: auto;
+    gap: 12px;
+  }
+}
+
+/* SM — phones */
+@media (max-width: 640px) {
+  .sh-bar { min-height: 64px; }
+  .sh-logo { padding: 0 16px; }
+  .sh-logo img { height: 42px; }
+  .sh-nav { max-height: calc(100vh - 64px); padding: 4px 16px 16px; }
+  .sh-actions { gap: 6px; padding: 0 16px; }
+  .sh-search-box { margin-top: 24px; padding: 24px 18px 20px; }
+  .sh-drawer-panel { padding: 20px 16px; }
+}
+
+/* XS */
+@media (max-width: 400px) {
+  .sh-logo { padding: 0 10px; }
+  .sh-logo img { height: 34px; }
+  .sh-actions { gap: 2px; padding: 0 10px; }
+  .sh-icon-btn { padding: 4px; }
+}

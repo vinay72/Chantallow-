@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Heart, ShoppingCart, Menu, Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { homeForRole, useAuth } from "../../context/AuthContext";
 import "./SignUp.css";
@@ -16,14 +16,7 @@ import recentPost1 from "../../assets/shop/product/small/1.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
-
-const NAV_LINKS = [
-    { label: "Home", path: "/" },
-    { label: "About Us", path: "/aboutus" },
-    { label: "Shop", path: "/shopcart" },
-    { label: "Blog", path: "/blog" },
-    { label: "Contact Us", path: "/contactus" },
-];
+import Header from "../../components/Header";
 
 const SLIDES = [
     {
@@ -56,52 +49,6 @@ export default function SignUp() {
     );
 }
 
-/* -------------------------------- Header -------------------------------- */
-
-function Header() {
-    const [menuOpen, setMenuOpen] = useState(false);
-
-    return (
-        <header className="ctw-header">
-            <div className="ctw-header-inner">
-                <Link to="/" className="ctw-header-logo">
-                    <img src={logo} alt="Chantallow" />
-                </Link>
-
-                <nav className={menuOpen ? "ctw-nav is-open" : "ctw-nav"}>
-                    {NAV_LINKS.map((link) => (
-                        <Link key={link.label} to={link.path} className="ctw-nav-link">
-                            {link.label} <span className="ctw-nav-plus">+</span>
-                        </Link>
-                    ))}
-                </nav>
-
-                <div className="ctw-header-actions">
-                    <Link to="/login" className="ctw-login-link">
-                        Login /<br />Register
-                    </Link>
-                    <button aria-label="Search" className="ctw-icon-btn">
-                        <Search size={20} strokeWidth={1.5} color="#000" />
-                    </button>
-                    <button aria-label="Wishlist" className="ctw-icon-btn">
-                        <Heart size={20} strokeWidth={1.5} color="#000" />
-                    </button>
-                    <button aria-label="Cart" className="ctw-icon-btn">
-                        <ShoppingCart size={20} strokeWidth={1.5} color="#000" />
-                    </button>
-                    <button
-                        aria-label="Toggle menu"
-                        onClick={() => setMenuOpen((v) => !v)}
-                        className="ctw-icon-btn ctw-menu-btn"
-                    >
-                        <Menu size={22} color="#1C1C1A" />
-                    </button>
-                </div>
-            </div>
-        </header>
-    );
-}
-
 /* ----------------------------- Sign Up Section ----------------------------- */
 
 function SignUpSection() {
@@ -120,7 +67,7 @@ function SignUpSection() {
         setSubmitting(true);
         try {
             await register(form.get("username"), form.get("email"), form.get("password"));
-            navigate("/", { replace: true });
+            navigate(homeForRole("user"), { replace: true });
         } catch (err) {
             setError(err.message);
             setSubmitting(false);

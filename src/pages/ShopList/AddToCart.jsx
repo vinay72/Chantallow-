@@ -2,10 +2,10 @@ import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import "./AddToCart.css";
 import cartBanner from "../../assets/background/bg1.jpg";
-import logo from "../../assets/logo.png";
 import SiteFooter from "../../components/SiteFooter";
 import { useShop } from "../../context/ShopContext";
 import { formatPrice } from "../../data/products";
+import Header from "../../components/Header";
 
 /**
  * Cart + Favourites page (dynamic)
@@ -14,43 +14,10 @@ import { formatPrice } from "../../data/products";
  * Both read from the shared ShopContext.
  */
 
-const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/aboutus" },
-  { label: "Shop", href: "/shop-list" },
-  { label: "Blog", href: "/blog" },
-  { label: "Contact US", href: "/contactus" },
-];
-
 // ---- Icons ----
 const Sparkle = () => (
   <svg className="sc-sparkle" width="11" height="11" viewBox="0 0 12 12" aria-hidden="true">
     <path d="M6 0c.35 3.05 2.95 5.65 6 6-3.05.35-5.65 2.95-6 6-.35-3.05-2.95-5.65-6-6 3.05-.35 5.65-2.95 6-6Z" fill="currentColor" />
-  </svg>
-);
-
-const SearchIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-    <circle cx="10" cy="10" r="7.25" stroke="currentColor" strokeWidth="1.4" />
-    <path d="M19.5 19.5 15.2 15.2" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
-  </svg>
-);
-
-const HeartIcon = ({ filled }) => (
-  <svg width="22" height="22" viewBox="0 0 22 22" fill={filled ? "#7A0000" : "none"}>
-    <path
-      d="M11 18.5S3.2 13.9 3.2 8.6a4.2 4.2 0 0 1 7.8-2.2 4.2 4.2 0 0 1 7.8 2.2c0 5.3-7.8 9.9-7.8 9.9Z"
-      stroke={filled ? "#7A0000" : "currentColor"}
-      strokeWidth="1.4"
-      strokeLinejoin="round"
-    />
-  </svg>
-);
-
-const CartIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-    <path d="M4.2 6.2h13.6l-1.1 11a1.6 1.6 0 0 1-1.6 1.4H6.9a1.6 1.6 0 0 1-1.6-1.4l-1.1-11Z" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round" />
-    <path d="M8.1 8.6V5.9a2.9 2.9 0 0 1 5.8 0v2.7" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
   </svg>
 );
 
@@ -102,8 +69,6 @@ export default function AddToCart() {
   const {
     cartItems,
     wishlistItems,
-    cartCount,
-    wishlistCount,
     subtotal,
     updateQty,
     removeFromCart,
@@ -129,41 +94,7 @@ export default function AddToCart() {
 
   return (
     <div className="sc-page ac-page">
-      {/* Header */}
-      <header className="sc-header">
-        <div className="sc-header__bar">
-          <Link to="/" className="sc-logo">
-            <img src={logo} alt="Chantallow" className="sc-logo__img" />
-          </Link>
-
-          <nav className="sc-nav">
-            {NAV_LINKS.map((link) => (
-              <Link key={link.label} to={link.href}>
-                {link.label}
-                <Sparkle />
-              </Link>
-            ))}
-          </nav>
-
-          <div className="sc-header__actions">
-            <Link to="/registration" className="sc-login-link">
-              Login /<br />
-              Register
-            </Link>
-            <button className="sc-icon-btn" aria-label="Search">
-              <SearchIcon />
-            </button>
-            <Link to="/wishlist" className="sc-icon-btn" aria-label="Favourites" style={{ position: "relative" }}>
-              <HeartIcon filled={tab === "wishlist"} />
-              {wishlistCount > 0 && <span className="sc-badge">{wishlistCount}</span>}
-            </Link>
-            <Link to="/cart" className="sc-icon-btn" aria-label="Cart" style={{ position: "relative" }}>
-              <CartIcon />
-              {cartCount > 0 && <span className="sc-badge">{cartCount}</span>}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* Banner — the breadcrumb doubles as Cart / Wish List tabs */}
       <div className="sc-banner" style={{ "--sc-banner-img": `url(${cartBanner})` }}>

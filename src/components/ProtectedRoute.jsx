@@ -1,10 +1,11 @@
 // src/components/ProtectedRoute.jsx
 // <ProtectedRoute>              -> any signed-in user
-// <ProtectedRoute role="admin"> -> admins only; signed-in users are sent home
+// <ProtectedRoute role="user">  -> customers only; admins are sent to /admin
+// <ProtectedRoute role="admin"> -> admins only; customers are sent to /account
 
 import React from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { homeForRole, useAuth } from "../context/AuthContext";
 
 export default function ProtectedRoute({ role, children }) {
     const { user, loading } = useAuth();
@@ -17,7 +18,7 @@ export default function ProtectedRoute({ role, children }) {
         return <Navigate to="/login" replace state={{ from: location.pathname + location.search }} />;
     }
     if (role && user.role !== role) {
-        return <Navigate to="/" replace />;
+        return <Navigate to={homeForRole(user.role)} replace />;
     }
     return children;
 }

@@ -66,25 +66,30 @@ async function requireAuth(req, res, next) {
   }
 }
 
+// Like requireAuth, but lets anonymous requests through (req.user stays unset).
+// A token that is sent must still be valid.
+const optionalAuth = (req, res, next) =>
+  req.get('authorization') ? requireAuth(req, res, next) : next();
+
 // Use after requireAuth: requireRole('admin')
 const requireRole = (...roles) => (req, res, next) =>
   roles.includes(req.user?.role)
     ? next()
     : res.status(403).json({ success: false, error: 'You do not have permission to do that.' });
 
-// Creates the admin from ADMIN_EMAIL / ADMIN_PASSWORD if it doesn't exist yet,
-// or promotes an existing account with that email to admin.
-async function seedAdmin() {
-  const email = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
-  const password = process.env.ADMIN_PASSWORD || '';
+// Creates the account from <PREFIX>_EMAIL / <PREFIX>_PASSWORD if it doesn't exist yet.
+// For the admin, an existing account with that email is promoted to admin.
+async function seedAccount(prefix, role) {
+  const email = (process.env[`${prefix}_EMAIL`] || '').trim().toLowerCase();
+  const password = process.env[`${prefix}_PASSWORD`] || '';
   if (!email || !password) {
-    console.warn('ADMIN_EMAIL / ADMIN_PASSWORD not set — no admin account seeded.');
+    console.warn(`${prefix}_EMAIL / ${prefix}_PASSWORD not set — no ${role} account seeded.`);
     return;
   }
 
   const { rows } = await pool.query('SELECT id, role FROM users WHERE lower(email) = $1', [email]);
   if (rows.length) {
-    if (rows[0].role !== 'admin') {
+    if (role === 'admin' && rows[0].role !== 'admin') {
       await pool.query(`UPDATE users SET role = 'admin', updated_at = now() WHERE id = $1`, [rows[0].id]);
       console.log(`Promoted ${email} to admin.`);
     }
@@ -92,10 +97,16 @@ async function seedAdmin() {
   }
 
   await pool.query(
-    `INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, 'admin')`,
-    [process.env.ADMIN_NAME || 'Admin', email, await hashPassword(password)]
+    `INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4)`,
+    [process.env[`${prefix}_NAME`] || (role === 'admin' ? 'Admin' : 'Customer'), email, await hashPassword(password), role]
   );
-  console.log(`Seeded admin account ${email}.`);
+  console.log(`Seeded ${role} account ${email}.`);
+}
+
+// Admin from ADMIN_*, plus an optional regular customer login from USER_*.
+async function seedAccounts() {
+  await seedAccount('ADMIN', 'admin');
+  await seedAccount('USER', 'user');
 }
 
 module.exports = {
@@ -105,6 +116,7 @@ module.exports = {
   hashPassword,
   checkPassword,
   requireAuth,
+  optionalAuth,
   requireRole,
-  seedAdmin,
+  seedAccounts,
 };

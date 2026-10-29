@@ -17,7 +17,7 @@ export default function AdminLogin() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
 
-  const destination = location.state?.from?.startsWith('/admin') ? location.state.from : '/admin/products';
+  const destination = location.state?.from?.startsWith('/admin') ? location.state.from : '/admin/dashboard';
 
   if (user?.role === 'admin' && !busy) return <Navigate to={destination} replace />;
 

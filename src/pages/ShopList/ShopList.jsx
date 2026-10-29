@@ -1,6 +1,11 @@
 import React, { useState } from "react";
 import {
-    Search, Heart, ShoppingCart, Menu, ArrowRight, ArrowUp, X, SlidersHorizontal,
+  Search,
+  Heart,
+  ArrowRight,
+  ArrowUp,
+  X,
+  SlidersHorizontal,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import "./ShopList.css";
@@ -22,19 +27,11 @@ import talumaHairCareJar from "../../assets/beauty/taluma-hair-care.jpg";
 import bareWhippedTallowJar from "../../assets/beauty/bare-whipped-tallow.jpg";
 import furkindPetJar from "../../assets/pet/P1.png"; // swap for a single Furkind jar image if you have one
 
-
 import recentPost1 from "../../assets/shop/product/small/1.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
-
-const NAV_LINKS = [
-    { label: "Home", path: "/" },
-    { label: "About Us", path: "/aboutus" },
-    { label: "Shop", path: "/shopcart" },
-    { label: "Blog", path: "/blog" },
-    { label: "Contact Us", path: "/contactus" },
-];
+import Header from "../../components/Header";
 
 const SIZES = ["4 OZ", "1.7 OZ", "all"];
 
@@ -170,52 +167,6 @@ export default function ShopList() {
             <Footer />
             <ScrollTop />
         </div>
-    );
-}
-
-/* -------------------------------- Header -------------------------------- */
-
-function Header() {
-    const [menuOpen, setMenuOpen] = useState(false);
-
-    return (
-        <header className="ctw-header">
-            <div className="ctw-header-inner">
-                <Link to="/" className="ctw-header-logo">
-                    <img src={logo} alt="Chantallow" />
-                </Link>
-
-                <nav className={menuOpen ? "ctw-nav is-open" : "ctw-nav"}>
-                    {NAV_LINKS.map((link) => (
-                        <Link key={link.label} to={link.path} className="ctw-nav-link">
-                            {link.label} <span className="ctw-nav-plus">+</span>
-                        </Link>
-                    ))}
-                </nav>
-
-                <div className="ctw-header-actions">
-                    <Link to="/registration" className="ctw-login-link">
-                        Login /<br />Register
-                    </Link>
-                    <button aria-label="Search" className="ctw-icon-btn">
-                        <Search size={20} strokeWidth={1.5} color="#000" />
-                    </button>
-                    <button aria-label="Wishlist" className="ctw-icon-btn">
-                        <Heart size={20} strokeWidth={1.5} color="#000" />
-                    </button>
-                    <button aria-label="Cart" className="ctw-icon-btn">
-                        <ShoppingCart size={20} strokeWidth={1.5} color="#000" />
-                    </button>
-                    <button
-                        aria-label="Toggle menu"
-                        onClick={() => setMenuOpen((v) => !v)}
-                        className="ctw-icon-btn ctw-menu-btn"
-                    >
-                        <Menu size={22} color="#1C1C1A" />
-                    </button>
-                </div>
-            </div>
-        </header>
     );
 }
 

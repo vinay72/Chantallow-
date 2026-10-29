@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect } from "react";
 import "./BlogCategory.css";
 import footerImg from "../../assets/footer/footer.png";
 import logo from "../../assets/logo.png";
+import Header from "../../components/Header";
 
 /* ------------------------------- SVG icons -------------------------------- */
 
@@ -9,20 +10,6 @@ const SearchIcon = ({ size = 20, stroke = "currentColor" }) => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" fill="none">
     <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
     <path d="M17.5 17.5L13.875 13.875" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const HeartIcon = ({ size = 20 }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" fill="none">
-    <path d="M17.3666 3.84172C16.941 3.41589 16.4356 3.0781 15.8794 2.84763C15.3232 2.61716 14.727 2.49854 14.1249 2.49854C13.5229 2.49854 12.9267 2.61716 12.3705 2.84763C11.8143 3.0781 11.3089 3.41589 10.8833 3.84172L9.99994 4.72506L9.1166 3.84172C8.25686 2.98198 7.0908 2.49898 5.87494 2.49898C4.65907 2.49898 3.49301 2.98198 2.63327 3.84172C1.77353 4.70147 1.29053 5.86753 1.29053 7.08339C1.29053 8.29925 1.77353 9.46531 2.63327 10.3251L3.5166 11.2084L9.99994 17.6917L16.4833 11.2084L17.3666 10.3251C17.7924 9.89943 18.1302 9.39407 18.3607 8.83785C18.5912 8.28164 18.7098 7.68546 18.7098 7.08339C18.7098 6.48132 18.5912 5.88514 18.3607 5.32893C18.1302 4.77271 17.7924 4.26735 17.3666 3.84172Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-
-const CartIcon = ({ size = 20 }) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" fill="none">
-    <path d="M7.49984 18.3334C7.96007 18.3334 8.33317 17.9603 8.33317 17.5001C8.33317 17.0398 7.96007 16.6667 7.49984 16.6667C7.0396 16.6667 6.6665 17.0398 6.6665 17.5001C6.6665 17.9603 7.0396 18.3334 7.49984 18.3334Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M16.6668 18.3334C17.1271 18.3334 17.5002 17.9603 17.5002 17.5001C17.5002 17.0398 17.1271 16.6667 16.6668 16.6667C16.2066 16.6667 15.8335 17.0398 15.8335 17.5001C15.8335 17.9603 16.2066 18.3334 16.6668 18.3334Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M0.833496 0.833252H4.16683L6.40016 11.9916C6.47637 12.3752 6.68509 12.7199 6.98978 12.9652C7.29448 13.2104 7.67575 13.3407 8.06683 13.3333H16.1668C16.5579 13.3407 16.9392 13.2104 17.2439 12.9652C17.5486 12.7199 17.7573 12.3752 17.8335 11.9916L19.1668 4.99992H5.00016" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
 
@@ -53,8 +40,6 @@ const ArrowUp = () => (
 
 /* --------------------------------- Data ----------------------------------- */
 
-const NAV = ["Home", "About Us", "Shop", "Blog", "Contact US"];
-
 /* Blog post images now point to the public/assets/blogpost-4 folder,
    using the 6 real Chantallow product photos (pic1.jpg – pic6.jpg). */
 const POSTS = [
@@ -81,203 +66,11 @@ const LATEST = [
 
 const TAGS = ["Mascara", "Cosmetic", "Serum", "Primer", "Makeup", "Contour", "Blush", "Highlighter"];
 
-const YOU_MAY_LIKE = [
-  { name: "Jewel Tone Nail Polish", price: 40, img: "/images/cosmetic/1.png" },
-  { name: "Balancing Body Cream", price: 30, img: "/images/cosmetic/2.png" },
-  { name: "Smoothing Body Butter", price: 35, img: "/images/cosmetic/3.png" },
-  { name: "Repairing Body Gel", price: 20, img: "/images/cosmetic/4.png" },
-  { name: "Skin Product", price: 70, img: "/images/cosmetic/5.png" },
-  { name: "Skin Product", price: 45, img: "/images/cosmetic/6.png" },
-  { name: "Skin Product", price: 40, img: "/images/cosmetic/7.png" },
-  { name: "Calming Body Lotion", price: 60, img: "/images/cosmetic/1.png" },
-];
-
-const CART_ITEMS = [
-  { id: 1, name: "Soothing Body Cream", img: "/images/shop/shop-cart/pic1.jpg", price: 50, qty: 1 },
-  { id: 2, name: "Body Toner", img: "/images/shop/shop-cart/pic2.jpg", price: 40, qty: 1 },
-  { id: 3, name: "Brightening Serum", img: "/images/shop/shop-cart/pic3.jpg", price: 65, qty: 1 },
-  { id: 4, name: "Soothing Body Cream", img: "/images/shop/shop-cart/pic1.jpg", price: 50, qty: 1 },
-];
-
-const WISHLIST = [
-  { id: 1, name: "Soothing Body Cream", img: "/images/shop/shop-cart/pic1.jpg", price: 50 },
-  { id: 2, name: "Body Toner", img: "/images/shop/shop-cart/pic2.jpg", price: 40 },
-  { id: 3, name: "Brightening Body Serum", img: "/images/shop/shop-cart/pic3.jpg", price: 65 },
-];
-
 const RECENT_POSTS = [
   { title: "Hydrated Supple Skin", date: "July 23, 2023", img: "/assets/shop/product/small/1.png" },
   { title: "Glowing Radiant Skin", date: "July 23, 2023", img: "/assets/shop/product/small/2.png" },
   { title: "Silky Soft Skin", date: "July 23, 2023", img: "/assets/shop/product/small/3.png" },
 ];
-
-/* --------------------------------- Header --------------------------------- */
-
-function Header({ onSearch, onCart }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  return (
-    <header className="site-header">
-      <div className="main-bar container-fluid">
-        <a className="logo" href="#index">
-
-          <img src={logo} alt="Chantallow" className="logo-img" />
-        </a>
-
-        <button
-          className={`navbar-toggler${menuOpen ? " open" : ""}`}
-          aria-label="Toggle navigation"
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen((o) => !o)}
-        >
-          <span /><span /><span />
-        </button>
-
-        <nav className={`header-nav${menuOpen ? " show" : ""}`}>
-          <ul className="nav">
-            {NAV.map((item) => (
-              <li key={item}>
-                <a href={`#${item.toLowerCase().replace(/\s+/g, "-")}`}>
-                  {item} <span className="nav-plus">+</span>
-                </a>
-              </li>
-            ))}
-          </ul>
-        </nav>
-
-        <div className="header-right">
-          <a className="login-link" href="#register">Login /<br />Register</a>
-          <button className="icon-btn" aria-label="Search" onClick={onSearch}><SearchIcon /></button>
-          <button className="icon-btn" aria-label="Wishlist" onClick={() => onCart("wishlist")}><HeartIcon /></button>
-          <button className="icon-btn" aria-label="Cart" onClick={() => onCart("cart")}><CartIcon /></button>
-        </div>
-      </div>
-    </header>
-  );
-}
-
-/* ----------------------------- Search offcanvas --------------------------- */
-
-function SearchPanel({ open, onClose }) {
-  return (
-    <div className={`offcanvas offcanvas-top${open ? " show" : ""}`} role="dialog" aria-hidden={!open}>
-      <button className="btn-close" aria-label="Close" onClick={onClose}>&times;</button>
-      <div className="container">
-        <form className="header-item-search" onSubmit={(e) => e.preventDefault()}>
-          <div className="search-input">
-            <select className="default-select" aria-label="Category">
-              {["Malachite Fusion", "Jasper Revive", "Amber Glow", "Amethyst Relief", "Obsidian Infusion", "Olivine Relief"].map((o) => (
-                <option key={o}>{o}</option>
-              ))}
-            </select>
-            <input type="search" placeholder="Search Product" aria-label="Search product" />
-            <button className="search-go" type="button" aria-label="Search"><SearchIcon /></button>
-          </div>
-          <ul className="recent-tag">
-            <li className="label">Quick Search :</li>
-            {["Skin Product", "Body Products", "Daily Products", "Cream Products"].map((t) => (
-              <li key={t}><a href="#shop">{t}</a></li>
-            ))}
-          </ul>
-        </form>
-
-        <h5 className="header-title">You May Also Like</h5>
-        <div className="you-may-like">
-          {YOU_MAY_LIKE.map((p, i) => (
-            <div className="shop-card" key={i}>
-              <div className="dz-media"><img src={p.img} alt={p.name} /></div>
-              <div className="dz-content">
-                <h6 className="title"><a href="#shop">{p.name}</a></h6>
-                <h6 className="price">${p.price.toFixed(2)}</h6>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* --------------------------- Cart / Wishlist drawer ----------------------- */
-
-function CartDrawer({ open, tab, setTab, onClose, cart, setCart, wishlist, setWishlist }) {
-  const subtotal = useMemo(() => cart.reduce((s, i) => s + i.price * i.qty, 0), [cart]);
-  const progress = Math.min(100, Math.round((subtotal / 400) * 100)) || 75;
-
-  const setQty = (id, qty) => setCart((c) => c.map((i) => (i.id === id ? { ...i, qty } : i)));
-  const removeCart = (id) => setCart((c) => c.filter((i) => i.id !== id));
-  const removeWish = (id) => setWishlist((w) => w.filter((i) => i.id !== id));
-
-  const Item = ({ item, showQty, onRemove }) => (
-    <li>
-      <div className="cart-widget">
-        <div className="dz-media"><img src={item.img} alt={item.name} /></div>
-        <div className="cart-content">
-          <h6 className="title"><a href="#product">{item.name}</a></h6>
-          <div className="cart-row">
-            {showQty && (
-              <div className="btn-quantity quantity-sm">
-                <button type="button" aria-label="Decrease" onClick={() => setQty(item.id, Math.max(1, item.qty - 1))}>&minus;</button>
-                <input value={item.qty} readOnly aria-label="Quantity" />
-                <button type="button" aria-label="Increase" onClick={() => setQty(item.id, item.qty + 1)}>+</button>
-              </div>
-            )}
-            <h6 className="dz-price">${item.price.toFixed(2)}</h6>
-          </div>
-        </div>
-        <button className="dz-close" aria-label="Remove" onClick={() => onRemove(item.id)}>&times;</button>
-      </div>
-    </li>
-  );
-
-  return (
-    <div className={`offcanvas offcanvas-end${open ? " show" : ""}`} role="dialog" aria-hidden={!open}>
-      <button className="btn-close" aria-label="Close" onClick={onClose}>&times;</button>
-      <div className="offcanvas-body">
-        <ul className="dz-tabs">
-          <li>
-            <button className={tab === "cart" ? "active" : ""} onClick={() => setTab("cart")}>
-              Shopping Cart <span className="badge">{cart.length}</span>
-            </button>
-          </li>
-          <li>
-            <button className={tab === "wishlist" ? "active" : ""} onClick={() => setTab("wishlist")}>
-              Wishlist <span className="badge">{wishlist.length}</span>
-            </button>
-          </li>
-        </ul>
-
-        {tab === "cart" ? (
-          <div className="shop-sidebar-cart">
-            <ul className="sidebar-cart-list">
-              {cart.map((item) => <Item key={item.id} item={item} showQty onRemove={removeCart} />)}
-              {cart.length === 0 && <li className="empty">Your cart is empty.</li>}
-            </ul>
-            <div className="cart-total-row">
-              <h5>Subtotal:</h5>
-              <h5>{subtotal.toFixed(2)}$</h5>
-            </div>
-            <div className="shipping-time">
-              <div className="shipping-content">
-                <h6>Congratulations, you've got free shipping!</h6>
-                <div className="progress"><div className="progress-bar" style={{ width: `${progress}%` }} /></div>
-              </div>
-            </div>
-            <a href="#checkout" className="btn btn-outline btn-block">Checkout</a>
-            <a href="#cart" className="btn btn-solid btn-block">View Cart</a>
-          </div>
-        ) : (
-          <div className="shop-sidebar-cart">
-            <ul className="sidebar-cart-list">
-              {wishlist.map((item) => <Item key={item.id} item={item} showQty={false} onRemove={removeWish} />)}
-              {wishlist.length === 0 && <li className="empty">Your wishlist is empty.</li>}
-            </ul>
-            <a href="#wishlist" className="btn btn-solid btn-block">Check Your Favourite</a>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-}
 
 /* -------------------------------- Sidebar --------------------------------- */
 
@@ -433,16 +226,8 @@ function Footer() {
 /* ------------------------------ Main component ---------------------------- */
 
 export default function BlogCategory() {
-  const [cart, setCart] = useState(CART_ITEMS);
-  const [wishlist, setWishlist] = useState(WISHLIST);
-
-  const [searchOpen, setSearchOpen] = useState(false);
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [drawerTab, setDrawerTab] = useState("cart");
   const [scrolled, setScrolled] = useState(false);
   const [visibleCount, setVisibleCount] = useState(6);
-
-  const anyOpen = searchOpen || drawerOpen;
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 400);
@@ -450,33 +235,12 @@ export default function BlogCategory() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  useEffect(() => {
-    document.body.style.overflow = anyOpen ? "hidden" : "";
-    return () => { document.body.style.overflow = ""; };
-  }, [anyOpen]);
-
-  const openDrawer = (tab) => { setDrawerTab(tab); setDrawerOpen(true); };
-  const closeAll = () => { setSearchOpen(false); setDrawerOpen(false); };
-
   const visiblePosts = POSTS.slice(0, visibleCount);
   const hasMore = visibleCount < POSTS.length;
 
   return (
     <div className="page-wrapper">
-      <Header onSearch={() => setSearchOpen(true)} onCart={openDrawer} />
-
-      <SearchPanel open={searchOpen} onClose={() => setSearchOpen(false)} />
-      <CartDrawer
-        open={drawerOpen}
-        tab={drawerTab}
-        setTab={setDrawerTab}
-        onClose={() => setDrawerOpen(false)}
-        cart={cart}
-        setCart={setCart}
-        wishlist={wishlist}
-        setWishlist={setWishlist}
-      />
-      {anyOpen && <div className="offcanvas-backdrop" onClick={closeAll} />}
+      <Header />
 
       <main className="page-content">
         {/* Banner */}

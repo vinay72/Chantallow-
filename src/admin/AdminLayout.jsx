@@ -1,9 +1,9 @@
 // src/admin/AdminLayout.jsx
 // Shell for every /admin page: top bar + page outlet. Admins only — anyone
-// else is sent to /admin/login (signed out) or the storefront (not an admin).
+// else is sent to /admin/login (signed out) or their account panel (role "user").
 
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { homeForRole, useAuth } from '../context/AuthContext';
 import './admin.css';
 
 function TopBar() {
@@ -17,11 +17,12 @@ function TopBar() {
 
   return (
     <header className="admin-bar">
-      <Link className="wordmark" to="/admin/products">
+      <Link className="wordmark" to="/admin/dashboard">
         <i />
         Chantallow
       </Link>
       <nav>
+        <NavLink to="/admin/dashboard">Dashboard</NavLink>
         <NavLink to="/admin/products">Products</NavLink>
         <NavLink to="/admin/users">Users</NavLink>
         <Link to="/">View website</Link>
@@ -50,7 +51,7 @@ export default function AdminLayout() {
     return <Navigate to="/admin/login" replace state={{ from: location.pathname + location.search }} />;
   }
   if (user.role !== 'admin') {
-    return <Navigate to="/" replace />;
+    return <Navigate to={homeForRole(user.role)} replace />;
   }
 
   return (

@@ -12,8 +12,9 @@ const {
   hashPassword,
   checkPassword,
   requireAuth,
+  optionalAuth,
   requireRole,
-  seedAdmin,
+  seedAccounts,
 } = require('./auth');
 
 const app = express();
@@ -189,6 +190,49 @@ async function findProducts(query = {}) {
 
 const isValidId = (id) => /^\d+$/.test(String(id));
 
+// ---------- order helpers ----------
+
+const ORDER_STATUSES = ['in-progress', 'delayed', 'delivered', 'canceled'];
+const CANCELLABLE_STATUSES = ['in-progress', 'delayed'];
+const isOrderId = (id) => /^[A-Z0-9]{6,20}$/.test(String(id));
+const isReturnId = (id) => /^RR-[A-Z0-9]{4,20}$/.test(String(id));
+const money = (n) => Math.round(Number(n) * 100) / 100;
+const isMoney = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
+
+// Checks the order sent by checkout and works out its totals.
+function validateOrderBody(body) {
+  const errors = [];
+  const id = String(body?.id || '');
+  if (!isOrderId(id)) errors.push('Invalid order number.');
+
+  const rawItems = Array.isArray(body?.items) ? body.items : [];
+  if (!rawItems.length) errors.push('An order needs at least one item.');
+  const items = rawItems.map((l) => ({
+    productId: String(l?.productId ?? ''),
+    size: String(l?.size ?? ''),
+    qty: Number(l?.qty),
+    price: Number(l?.price),
+  }));
+  if (items.some((l) => !l.productId || !Number.isInteger(l.qty) || l.qty < 1 || !isMoney(l.price))) {
+    errors.push('Every item needs a product, a whole quantity of 1 or more, and a price.');
+  }
+
+  const discount = Number(body?.discount ?? 0);
+  const shippingCost = Number(body?.shippingCost ?? 0);
+  if (!isMoney(discount) || !isMoney(shippingCost)) errors.push('Discount and shipping must be 0 or more.');
+
+  const subtotal = money(items.reduce((sum, l) => sum + l.qty * l.price, 0));
+  const total = money(Math.max(0, subtotal - discount + shippingCost));
+  return {
+    errors,
+    values: {
+      id, items, subtotal, discount: money(discount), shippingCost: money(shippingCost), total,
+      email: String(body?.email || '').trim().toLowerCase() || null,
+      payment: String(body?.payment || '').trim() || null,
+    },
+  };
+}
+
 // ======================================================================
 //  API  —  every route returns JSON
 // ======================================================================
@@ -277,6 +321,103 @@ api.get('/products/:id', async (req, res, next) => {
 // --- GET /api/auth/me ---
 api.get('/auth/me', requireAuth, (req, res) => {
   res.json({ success: true, user: req.user });
+});
+
+// --- POST /api/orders --- (checkout; guests allowed, signed-in orders are linked to the account)
+api.post('/orders', optionalAuth, async (req, res, next) => {
+  try {
+    const { errors, values: v } = validateOrderBody(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+
+    const { rows } = await pool.query(
+      `INSERT INTO orders (id, user_id, email, items, subtotal, discount, shipping_cost, total, payment)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [v.id, req.user?.id || null, v.email, JSON.stringify(v.items), v.subtotal, v.discount, v.shippingCost, v.total, v.payment]
+    );
+    res.status(201).json({ success: true, order: rows[0] });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ success: false, error: 'An order with that number already exists.' });
+    }
+    next(err);
+  }
+});
+
+// --- POST /api/orders/:orderId/cancel --- (the customer's own order, while not yet delivered)
+api.post('/orders/:orderId/cancel', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `UPDATE orders SET status = 'canceled', updated_at = now()
+       WHERE id = $1 AND user_id = $2 AND status = ANY($3)
+       RETURNING *`,
+      [req.params.orderId, req.user.id, CANCELLABLE_STATUSES]
+    );
+    if (!rows.length) {
+      return res.status(404).json({ success: false, error: 'No order of yours that can still be canceled.' });
+    }
+    res.json({ success: true, order: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/returns --- body: { id, orderId, productId, size, qty, reason, comment }
+// The refund amount comes from the price stored on the order, not from the client.
+api.post('/returns', requireAuth, async (req, res, next) => {
+  try {
+    const id = String(req.body?.id || '');
+    const orderId = String(req.body?.orderId || '');
+    const productId = String(req.body?.productId ?? '');
+    const size = String(req.body?.size ?? '');
+    const qty = Number(req.body?.qty);
+    if (!isReturnId(id) || !isOrderId(orderId)) {
+      return res.status(400).json({ success: false, error: 'Invalid return or order number.' });
+    }
+
+    const { rows: orders } = await pool.query('SELECT * FROM orders WHERE id = $1 AND user_id = $2', [
+      orderId,
+      req.user.id,
+    ]);
+    if (!orders.length) return res.status(404).json({ success: false, error: 'Order not found.' });
+    if (orders[0].status !== 'delivered') {
+      return res.status(400).json({ success: false, error: 'Only delivered orders can be returned.' });
+    }
+
+    const line = orders[0].items.find((l) => String(l.productId) === productId && String(l.size) === size);
+    if (!line) return res.status(400).json({ success: false, error: 'That item is not on this order.' });
+    if (!Number.isInteger(qty) || qty < 1 || qty > line.qty) {
+      return res.status(400).json({ success: false, error: `Quantity must be between 1 and ${line.qty}.` });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO order_returns (id, order_id, user_id, product_id, size, qty, amount, reason, comment)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+       RETURNING *`,
+      [id, orderId, req.user.id, productId, size, qty, money(qty * line.price),
+       String(req.body?.reason || '').trim() || null, String(req.body?.comment || '').trim() || null]
+    );
+    res.status(201).json({ success: true, return: rows[0] });
+  } catch (err) {
+    if (err.code === '23505') {
+      return res.status(409).json({ success: false, error: 'That return request already exists.' });
+    }
+    next(err);
+  }
+});
+
+// --- DELETE /api/returns/:returnId --- (withdraw your own pending request)
+api.delete('/returns/:returnId', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `DELETE FROM order_returns WHERE id = $1 AND user_id = $2 AND status = 'Pending' RETURNING id`,
+      [req.params.returnId, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Return request not found.' });
+    res.json({ success: true, deleted: rows[0].id });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ----------------------------- admin only -----------------------------
@@ -440,6 +581,87 @@ api.patch('/admin/users/:id', adminOnly, async (req, res, next) => {
   }
 });
 
+// --- GET /api/admin/stats?year=2026 --- (dashboard numbers + chart data)
+// Order value excludes canceled orders; refunds are the sum of return requests.
+api.get('/admin/stats', adminOnly, async (req, res, next) => {
+  try {
+    const thisYear = new Date().getFullYear();
+    const year = /^\d{4}$/.test(String(req.query.year || '')) ? Number(req.query.year) : thisYear;
+
+    const [users, totals, returns, monthly, statuses, years, recent] = await Promise.all([
+      pool.query(`SELECT count(*)::int AS n FROM users WHERE role = 'user'`),
+      pool.query(`
+        SELECT count(*)::int AS orders,
+               coalesce(sum(total) FILTER (WHERE status <> 'canceled'), 0)::float AS value,
+               count(*) FILTER (WHERE status = 'delivered')::int AS delivered,
+               count(*) FILTER (WHERE status = 'canceled')::int AS canceled
+        FROM orders`),
+      pool.query(`
+        SELECT count(DISTINCT order_id)::int AS orders, coalesce(sum(amount), 0)::float AS value
+        FROM order_returns`),
+      pool.query(`
+        SELECT extract(month FROM placed_at)::int AS month,
+               count(*)::int AS orders,
+               coalesce(sum(total) FILTER (WHERE status <> 'canceled'), 0)::float AS value,
+               count(*) FILTER (WHERE status = 'canceled')::int AS canceled
+        FROM orders WHERE extract(year FROM placed_at) = $1
+        GROUP BY 1`, [year]),
+      pool.query(`SELECT status, count(*)::int AS n FROM orders GROUP BY status`),
+      pool.query(`SELECT DISTINCT extract(year FROM placed_at)::int AS y FROM orders`),
+      pool.query(`
+        SELECT o.id, o.email, o.status, o.total::float AS total, o.placed_at, u.name AS customer
+        FROM orders o LEFT JOIN users u ON u.id = o.user_id
+        ORDER BY o.placed_at DESC LIMIT 8`),
+    ]);
+
+    // One entry per month, zeros included, so the chart always shows Jan-Dec.
+    const byMonth = new Map(monthly.rows.map((r) => [r.month, r]));
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const r = byMonth.get(i + 1);
+      return { month: i + 1, orders: r?.orders || 0, value: money(r?.value || 0), canceled: r?.canceled || 0 };
+    });
+    const t = totals.rows[0];
+
+    res.json({
+      success: true,
+      year,
+      years: [...new Set([thisYear, ...years.rows.map((r) => r.y)])].sort((a, b) => b - a),
+      totals: {
+        users: users.rows[0].n,
+        orders: t.orders,
+        order_value: money(t.value),
+        delivered: t.delivered,
+        canceled: t.canceled,
+        returned: returns.rows[0].orders,
+        refund_value: money(returns.rows[0].value),
+      },
+      months,
+      statuses: ORDER_STATUSES.map((st) => ({ status: st, count: statuses.rows.find((r) => r.status === st)?.n || 0 })),
+      recent_orders: recent.rows,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PATCH /api/admin/orders/:orderId --- body: { status }
+api.patch('/admin/orders/:orderId', adminOnly, async (req, res, next) => {
+  try {
+    const status = String(req.body?.status || '');
+    if (!ORDER_STATUSES.includes(status)) {
+      return res.status(400).json({ success: false, error: `Status must be one of: ${ORDER_STATUSES.join(', ')}.` });
+    }
+    const { rows } = await pool.query(
+      'UPDATE orders SET status = $1, updated_at = now() WHERE id = $2 RETURNING *',
+      [status, req.params.orderId]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Order not found' });
+    res.json({ success: true, order: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
 app.use('/api', api);
 
 // ---------- fallbacks (JSON, always) ----------
@@ -452,6 +674,10 @@ app.get('/', (req, res) => {
       'POST   /api/auth/register',
       'POST   /api/auth/login',
       'GET    /api/auth/me              (signed in)',
+      'POST   /api/orders               (guest or signed in)',
+      'POST   /api/orders/:orderId/cancel (signed in, own order)',
+      'POST   /api/returns              (signed in, own delivered order)',
+      'DELETE /api/returns/:returnId    (signed in, own pending request)',
       'GET    /api/meta',
       'GET    /api/products',
       'GET    /api/products/:id',
@@ -460,6 +686,8 @@ app.get('/', (req, res) => {
       'DELETE /api/products/:id         (admin)',
       'GET    /api/admin/users          (admin)',
       'PATCH  /api/admin/users/:id      (admin)',
+      'GET    /api/admin/stats?year=    (admin)',
+      'PATCH  /api/admin/orders/:orderId (admin)',
     ],
   });
 });
@@ -491,7 +719,7 @@ testConnection()
     console.log(`Connected to PostgreSQL database "${info.db}"`);
     try {
       await ensureSchema();
-      await seedAdmin();
+      await seedAccounts();
       console.log('Database tables ready.');
     } catch (e) {
       console.error('Failed to set up database tables:', e.message);

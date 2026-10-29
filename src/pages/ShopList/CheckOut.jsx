@@ -1,11 +1,12 @@
 import React, { useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./CheckOut.css";
-import logo from "../../assets/logo.png";
 import paymentCards from "../../assets/footer/footer.png";
 import SiteFooter from "../../components/SiteFooter";
 import { useShop } from "../../context/ShopContext";
 import { formatPrice } from "../../data/products";
+import { placeOrder } from "../../data/account";
+import Header from "../../components/Header";
 
 /**
  * Chantallow — Check Out page
@@ -13,14 +14,6 @@ import { formatPrice } from "../../data/products";
  * Reads the real cart from ShopContext; on a valid order it clears the cart
  * and shows a thank-you message.
  */
-
-const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/aboutus" },
-  { label: "Shop", href: "/shop-list" },
-  { label: "Blog", href: "/blog" },
-  { label: "Contact US", href: "/contactus" },
-];
 
 const FLAT_RATE = 25.75;
 
@@ -57,29 +50,6 @@ const EMPTY_ADDRESS = {
   zip: "",
 };
 
-/* ---------------- Icons ---------------- */
-const Sparkle = () => (
-  <svg className="co-sparkle" width="10" height="10" viewBox="0 0 12 12" aria-hidden="true">
-    <path d="M6 0c.35 3.05 2.95 5.65 6 6-3.05.35-5.65 2.95-6 6-.35-3.05-2.95-5.65-6-6 3.05-.35 5.65-2.95 6-6Z" fill="currentColor" />
-  </svg>
-);
-const SearchIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-    <circle cx="10" cy="10" r="7.25" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M19.5 19.5 15.2 15.2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-  </svg>
-);
-const HeartIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 22 22" fill="none" aria-hidden="true">
-    <path d="M11 18.5S3.2 13.9 3.2 8.6a4.2 4.2 0 0 1 7.8-2.2 4.2 4.2 0 0 1 7.8 2.2c0 5.3-7.8 9.9-7.8 9.9Z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-  </svg>
-);
-const CartIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-    <path d="M7.5 18.3a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6ZM16.7 18.3a.8.8 0 1 0 0-1.6.8.8 0 0 0 0 1.6Z" stroke="currentColor" strokeWidth="1.5" />
-    <path d="M.8.8h3.4l2.2 11.2a1.7 1.7 0 0 0 1.7 1.3h8.1a1.7 1.7 0 0 0 1.6-1.3L19.2 5H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
 const Chevron = ({ open, size = 14, weight = 2 }) => (
   <svg
     width={size}
@@ -223,7 +193,7 @@ function AddressFields({ data, set, errors, prefix }) {
 /* ---------------- Page ---------------- */
 export default function CheckOut() {
   const navigate = useNavigate();
-  const { cartItems, cartCount, wishlistCount, subtotal, clearCart, showToast } = useShop();
+  const { cartItems, subtotal, clearCart, showToast } = useShop();
 
   // collapsible bars
   const [loginOpen, setLoginOpen] = useState(false);
@@ -300,8 +270,23 @@ export default function CheckOut() {
       return;
     }
 
-    const orderNo = `CT-${Date.now().toString().slice(-6)}`;
-    setPlacedOrder({ orderNo, total, email: email.trim(), payment });
+    // Save the order to My Account → Orders (src/data/account.js)
+    const saved = placeOrder({
+      items: cartItems.map((line) => ({
+        productId: line.product.id,
+        size: line.size,
+        qty: line.qty,
+        price: line.product.price,
+      })),
+      address: shipDifferent ? shipping : billing,
+      email: email.trim(),
+      phone: phone.trim(),
+      payment,
+      shippingCost,
+      notes,
+    });
+    const orderNo = `#${saved.id}`;
+    setPlacedOrder({ id: saved.id, orderNo, total, email: email.trim(), payment });
     clearCart();
     showToast && showToast("Order placed — thank you!");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -319,41 +304,7 @@ export default function CheckOut() {
 
   return (
     <div className="co-page">
-      {/* ---------------- Header ---------------- */}
-      <header className="co-header">
-        <div className="co-header__bar">
-          <Link to="/" className="co-logo">
-            <img src={logo} alt="Chantallow" />
-          </Link>
-
-          <nav className="co-nav" aria-label="Primary">
-            {NAV_LINKS.map((l) => (
-              <Link key={l.label} to={l.href}>
-                {l.label}
-                <Sparkle />
-              </Link>
-            ))}
-          </nav>
-
-          <div className="co-header__actions">
-            <Link to="/login" className="co-login-link">
-              Login /<br />
-              Register
-            </Link>
-            <button type="button" className="co-icon-btn" aria-label="Search">
-              <SearchIcon />
-            </button>
-            <Link to="/wishlist" className="co-icon-btn" aria-label="Wish list">
-              <HeartIcon />
-              {wishlistCount > 0 && <span className="co-badge">{wishlistCount}</span>}
-            </Link>
-            <Link to="/cart" className="co-icon-btn" aria-label="Cart">
-              <CartIcon />
-              {cartCount > 0 && <span className="co-badge">{cartCount}</span>}
-            </Link>
-          </div>
-        </div>
-      </header>
+      <Header />
 
       {/* ---------------- Banner ---------------- */}
       <div className="co-banner">
@@ -383,7 +334,10 @@ export default function CheckOut() {
               </p>
             )}
             <div className="co-thanks__actions">
-              <button type="button" className="co-btn co-btn--primary" onClick={() => navigate("/shop-list")}>
+              <button type="button" className="co-btn co-btn--primary" onClick={() => navigate(`/account/orders/${placedOrder.id}`)}>
+                View My Order
+              </button>
+              <button type="button" className="co-btn co-btn--outline" onClick={() => navigate("/shop-list")}>
                 Continue Shopping
               </button>
               <button type="button" className="co-btn co-btn--outline" onClick={() => navigate("/")}>

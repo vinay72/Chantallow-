@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, Heart, ShoppingCart, Menu, X, ArrowRight } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import "./ContactUs.css";
 
 import logo from "../../assets/logo.png";
@@ -7,19 +7,7 @@ import recentPost1 from "../../assets/shop/product/small/1.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
-
-
-
-const NAV_LINKS = [
-  { label: "Home", href: "/" },
-  { label: "About Us", href: "/aboutus" },
-  { label: "Shop", href: "/shop" },
-];
-
-const SECONDARY_NAV = [
-  { label: "Blog", href: "/blog" },
-  { label: "Contact US", href: "/contactus" },
-];
+import Header from "../../components/Header";
 
 const MAP_SRC =
   "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d227748.3825624477!2d75.65046970649679!3d26.88544791796718!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x396c4adf4c57e281%3A0xce1c63a0cf22e09!2sJaipur%2C+Rajasthan!5e0!3m2!1sen!2sin!4v1500819483219";
@@ -40,74 +28,6 @@ const USEFUL_LINKS = [
 ];
 
 const SOCIAL_LINKS = ["Instagram", "Facebook", "YouTube", "Linkedin", "X.Com"];
-
-/* ---------- Logo ---------- */
-
-function Logo({ className = "" }) {
-  return (
-    <a href="/" className={`ct-logo ${className}`}>
-      <img src={logo} alt="Chantallow" />
-    </a>
-  );
-}
-
-/* ---------- Header ---------- */
-
-function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <header className="ct-header">
-      <div className="ct-header-row1">
-        <Logo />
-        <div className="ct-header-right">
-          <ul className="ct-nav-main">
-            {NAV_LINKS.map((link) => (
-              <li key={link.label}>
-                <a href={link.href}>
-                  {link.label} <span className="ct-nav-plus">+</span>
-                </a>
-              </li>
-            ))}
-            <ul className="ct-nav-secondary-under">
-              {SECONDARY_NAV.map((link) => (
-                <li key={link.label}>
-                  <a href={link.href}>
-                    {link.label} <span className="ct-nav-plus">+</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </ul>
-          <div className="ct-header-actions">
-            <a className="login" href="/">
-              Login /<br />Register
-            </a>
-            <button className="ct-icon-btn" aria-label="Search">
-              <Search size={19} />
-            </button>
-            <button className="ct-icon-btn" aria-label="Wishlist">
-              <Heart size={19} />
-            </button>
-            <button className="ct-icon-btn" aria-label="Cart">
-              <ShoppingCart size={19} />
-            </button>
-            <button className="ct-burger" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className={`ct-mobile-menu${menuOpen ? " open" : ""}`}>
-        {[...NAV_LINKS, ...SECONDARY_NAV].map((link) => (
-          <a key={link.label} href={link.href}>
-            {link.label}
-          </a>
-        ))}
-      </div>
-    </header>
-  );
-}
 
 /* ---------- Contact info (left column) ---------- */
 

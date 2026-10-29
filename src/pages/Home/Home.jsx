@@ -1,11 +1,21 @@
 import React, { useState } from "react";
+import Header from "../../components/Header";
 import {
-    Search, Heart, ShoppingBag, ShoppingCart, X, Plus, ChevronRight, ChevronLeft,
-    ArrowLeft, ArrowRight, ArrowUpRight, Menu, Star, ArrowUp, Minus
+  Heart,
+  ShoppingBag,
+  X,
+  Plus,
+  ChevronRight,
+  ChevronLeft,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUpRight,
+  Star,
+  ArrowUp,
+  Minus,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
-import "./header.css";
 import "./Home.css";
 import "../../components/SiteFooter.css";
 import logo from "../../assets/logo.png";
@@ -20,17 +30,13 @@ import CollectionCard from "../../components/CollectionCard";
 import { useShop } from "../../context/ShopContext";
 import { formatPrice, getProductById } from "../../data/products";
 
-
-
 import petMap from "../../assets/map/map2.png";
 import petDog from "../../assets/pet/dog.png";
 import petCat from "../../assets/pet/cat.png";
 import petJars from "../../assets/pet/P1.png";
 
-
 import completeCareBg from "../../assets/about/bg1.png";
 import lineSvg from "../../assets/line.svg";   // adjust path to where you place it
-
 
 import moringaLeaf from "../../assets/collection/2.png";   // moringa
 import lavenderSprig from "../../assets/collection/3.png"; // lavender
@@ -66,7 +72,6 @@ import cosmetic6 from "../../assets/cosmetic/6.png";
 import cosmetic7 from "../../assets/cosmetic/7.png";
 import cosmetic8 from "../../assets/cosmetic/8.png";
 
-
 import painImg from "../../assets/recent/pain.png";
 // SHORTLIST SECTION IMAGES
 import shortlistBanner from "../../assets/about/pic111112.png";
@@ -101,8 +106,6 @@ import collectionImg5 from "../../assets/product/new/5.jpg";
 import collectionImg6 from "../../assets/product/new/6.jpg";
 import collectionImg7 from "../../assets/product/new/7.jpg"; // Bare Whipped Tallow
 import collectionImg8 from "../../assets/product/new/8.jpg"; // Taluma Hair Care
-
-
 
 const IMAGES = {
     heroPortrait: bannerMedia1,
@@ -179,14 +182,6 @@ const FEATURED_OFFERS = [
     { id: 6, label: "10% Off", title: "Unbeatable", bgTitle: "Sale", textColor: "#fff", img: cosmetic7 },
 ];
 
-const NAV_LINKS = [
-    { label: "Home", path: "/" },
-    { label: "About Us", path: "/aboutus" },
-    { label: "Shop", path: "/shop-list" },
-    { label: "Blog", path: "/blog" },
-    { label: "Contact Us", path: "/contactus" },
-];
-
 const NEW_ARRIVALS = [
     { id: 1, name: "Bare Whipped Tallow", img: collectionImg6 },
     { id: 2, name: "Furkind Pet Tallow", img: collectionImg6 },
@@ -202,31 +197,9 @@ const HERO_SIZES = [
 ];
 const HERO_SIZE_LABEL = { "2oz": "2 oz", "4oz": "4 oz" };
 
-// Small count bubble shown on the header heart / cart icons
-const COUNT_BADGE_STYLE = {
-    position: "absolute",
-    top: -4,
-    right: -6,
-    minWidth: 18,
-    height: 18,
-    padding: "0 5px",
-    borderRadius: 9,
-    background: "#41705B",
-    color: "#fff",
-    fontSize: 11,
-    lineHeight: "18px",
-    textAlign: "center",
-    fontFamily: "'DM Sans', sans-serif",
-    pointerEvents: "none",
-};
-
 export default function Home() {
     const navigate = useNavigate();
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [cartOpen, setCartOpen] = useState(false);
-    const [searchOpen, setSearchOpen] = useState(false);
     const [quickView, setQuickView] = useState(null); // card shown in Quick View (null = closed)
-    const [cartTab, setCartTab] = useState("cart");
 
     return (
         <div
@@ -239,21 +212,7 @@ export default function Home() {
         >
             <GlobalStyle />
 
-            <Header
-                menuOpen={menuOpen}
-                setMenuOpen={setMenuOpen}
-                setCartOpen={setCartOpen}
-                setCartTab={setCartTab}
-                setSearchOpen={setSearchOpen}
-            />
-
-            <SearchOverlay open={searchOpen} onClose={() => setSearchOpen(false)} />
-            <CartDrawer
-                open={cartOpen}
-                onClose={() => setCartOpen(false)}
-                tab={cartTab}
-                setTab={setCartTab}
-            />
+            <Header />
             <QuickViewModal card={quickView} onClose={() => setQuickView(null)} />
 
             <main>
@@ -337,8 +296,6 @@ function GlobalStyle() {
   .ctw-animation-text text { animation: "stroke 5s infinite alternate"; stroke-dashoffset: 0; }
 }
 
-
-
       .ctw-underline-link:hover::after { width: 100%; }
       .ctw-scroll-x::-webkit-scrollbar { height: 6px; }
       .ctw-scroll-x::-webkit-scrollbar-thumb { background: #C9D2BE; border-radius: 8px; }
@@ -406,69 +363,6 @@ function GlobalStyle() {
     );
 }
 
-/* -------------------------------- Header -------------------------------- */
-
-function Header({ menuOpen, setMenuOpen, setCartOpen, setCartTab, setSearchOpen }) {
-    const { cartCount, wishlistCount } = useShop();
-
-    // Same drawer as before, but each icon now opens its own tab
-    const openDrawer = (tab) => {
-        setCartTab(tab);
-        setCartOpen(true);
-    };
-
-    return (
-        <header className="ctw-home-header" style={{ position: "sticky", top: 0, zIndex: 40 }}>
-            <div className="ctw-header">
-                <a href="#home" className="ctw-header-logo" aria-label="Chantallow home">
-                    <img
-                        src={logo}
-                        alt="Chantallow"
-                    />
-                </a>
-
-                <nav className={menuOpen ? "ctw-nav is-open" : "ctw-nav"}>
-                    {NAV_LINKS.map((link) => (
-                        <Link key={link.label} to={link.path} className="ctw-nav-link">
-                            {link.label}
-                            <span className="ctw-star" aria-hidden="true">✦</span>
-                        </Link>
-                    ))}
-                </nav>
-
-                <div className="ctw-header-actions">
-                    <a href="#login" className="ctw-login">Login / Register</a>
-
-                    <button className="ctw-icon-btn" aria-label="Search" onClick={() => setSearchOpen(true)}>
-                        <Search size={21} strokeWidth={1.5} color="#000" />
-                    </button>
-                    <button
-                        className="ctw-icon-btn"
-                        aria-label={`Wishlist (${wishlistCount})`}
-                        onClick={() => openDrawer("wishlist")}
-                        style={{ position: "relative" }}
-                    >
-                        <Heart size={21} strokeWidth={1.5} color="#000" />
-                        {wishlistCount > 0 && <span style={COUNT_BADGE_STYLE}>{wishlistCount}</span>}
-                    </button>
-                    <button
-                        className="ctw-icon-btn"
-                        aria-label={`Cart (${cartCount})`}
-                        onClick={() => openDrawer("cart")}
-                        style={{ position: "relative" }}
-                    >
-                        <ShoppingCart size={21} strokeWidth={1.5} color="#000" />
-                        {cartCount > 0 && <span style={COUNT_BADGE_STYLE}>{cartCount}</span>}
-                    </button>
-                    <button className="ctw-icon-btn ctw-menu-btn" aria-label="Toggle menu" onClick={() => setMenuOpen((v) => !v)}>
-                        <Menu size={22} color="#000" />
-                    </button>
-                </div>
-            </div>
-        </header>
-    );
-}
-
 /* --------------------------------- Hero --------------------------------- */
 
 function Hero({ navigate }) {
@@ -516,8 +410,6 @@ function Hero({ navigate }) {
                     pointerEvents: "none",
                 }}
             />
-
-
 
             {/* <img
                 src={logo2}
@@ -588,7 +480,6 @@ function Hero({ navigate }) {
                     >
                         Handcrafted wellness using Moringa, Butterfly Pea, and Zechstein Magnesium.
                     </p>
-
 
                     <button
                         className="ctw-hero-cta"
@@ -1131,7 +1022,6 @@ function ExploreCollectionBadge({ size = 150, onPlay }) {
                 width: size,
                 height: size,
                 left: "20%",
-
 
             }}
         >
@@ -2039,7 +1929,6 @@ function SavingSection() {
     );
 }
 
-
 /* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
 function FurkindPetSection() {
@@ -2937,7 +2826,6 @@ function Footer() {
                             fontSize: 20, fontWeight: 700, color: "#1C1C1A",
                             margin: "0 0 22px",
 
-
                         }}
                     >
                         Recent Posts
@@ -3148,333 +3036,6 @@ function ScrollTop() {
 }
 
 /* -------------------------------- Overlays -------------------------------- */
-
-function SearchOverlay({ open, onClose }) {
-    if (!open) return null;
-    return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                background: "rgba(0,0,0,0.4)",
-                zIndex: 100,
-                display: "flex",
-                alignItems: "flex-start",
-                justifyContent: "center",
-                padding: "0 16px",
-            }}
-            onClick={onClose}
-        >
-            <div
-                onClick={(e) => e.stopPropagation()}
-                style={{
-                    background: "#F7F4EC",
-                    width: "100%",
-                    maxWidth: 720,
-                    marginTop: 60,
-                    borderRadius: 16,
-                    padding: 28,
-                    position: "relative",
-                }}
-            >
-                <button
-                    onClick={onClose}
-                    aria-label="Close search"
-                    style={{
-                        position: "absolute",
-                        top: 16,
-                        right: 16,
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                    }}
-                >
-                    <X size={20} />
-                </button>
-                <div
-                    style={{
-                        display: "flex",
-                        border: "1px solid #D8D4C4",
-                        borderRadius: 30,
-                        overflow: "hidden",
-                        background: "#fff",
-                        marginBottom: 20,
-                    }}
-                >
-                    <input
-                        type="search"
-                        placeholder="Search Product"
-                        style={{
-                            flex: 1,
-                            border: "none",
-                            outline: "none",
-                            padding: "14px 20px",
-                            fontSize: 14,
-                        }}
-                    />
-                    <button
-                        style={{
-                            border: "none",
-                            background: "#1C1C1A",
-                            color: "#fff",
-                            padding: "0 22px",
-                            cursor: "pointer",
-                        }}
-                    >
-                        <Search size={16} />
-                    </button>
-                </div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
-                    <span style={{ fontSize: 12.5, color: "#8A8A80", marginRight: 4 }}>Quick Search:</span>
-                    {["Skin Product", "Body Products", "Daily Products", "Cream Products"].map((t) => (
-                        <a
-                            key={t}
-                            href="#shop"
-                            className="ctw-underline-link"
-                            style={{ fontSize: 12.5, color: "#1C1C1A", textDecoration: "none" }}
-                        >
-                            {t}
-                        </a>
-                    ))}
-                </div>
-            </div>
-        </div>
-    );
-}
-
-/* Side drawer — same look as before, now filled with the real cart / wishlist */
-function CartDrawer({ open, onClose, tab, setTab }) {
-    const navigate = useNavigate();
-    const {
-        cartItems,
-        wishlistItems,
-        cartCount,
-        wishlistCount,
-        subtotal,
-        removeFromCart,
-        removeFromWishlist,
-    } = useShop();
-
-    const goTo = (path) => {
-        onClose();
-        navigate(path);
-    };
-
-    // Normalise both lists into the same row shape the drawer renders
-    const rows =
-        tab === "cart"
-            ? cartItems.map((line) => ({
-                key: line.key,
-                product: line.product,
-                meta: `${line.size} × ${line.qty}`,
-                price: formatPrice(line.product.price * line.qty),
-                onRemove: () => removeFromCart(line.key),
-            }))
-            : wishlistItems.map((product) => ({
-                key: product.id,
-                product,
-                meta: product.subtitle,
-                price: formatPrice(product.price),
-                onRemove: () => removeFromWishlist(product.id),
-            }));
-
-    return (
-        <div
-            style={{
-                position: "fixed",
-                inset: 0,
-                zIndex: 100,
-                pointerEvents: open ? "auto" : "none",
-            }}
-        >
-            <div
-                onClick={onClose}
-                style={{
-                    position: "absolute",
-                    inset: 0,
-                    background: "rgba(0,0,0,0.4)",
-                    opacity: open ? 1 : 0,
-                    transition: "opacity .3s ease",
-                }}
-            />
-            <div
-                style={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    bottom: 0,
-                    width: "min(400px, 100%)",
-                    background: "#fff",
-                    transform: open ? "translateX(0)" : "translateX(100%)",
-                    transition: "transform .35s ease",
-                    padding: 24,
-                    overflowY: "auto",
-                }}
-            >
-                <button
-                    onClick={onClose}
-                    aria-label="Close cart"
-                    style={{
-                        background: "none",
-                        border: "none",
-                        cursor: "pointer",
-                        marginBottom: 20,
-                    }}
-                >
-                    <X size={20} />
-                </button>
-
-                <div style={{ display: "flex", gap: 8, marginBottom: 24 }}>
-                    <button
-                        onClick={() => setTab("cart")}
-                        className="ctw-btn"
-                        style={{
-                            flex: 1,
-                            padding: "10px 0",
-                            borderRadius: 30,
-                            background: tab === "cart" ? "#1C1C1A" : "#F0EEE4",
-                            color: tab === "cart" ? "#fff" : "#1C1C1A",
-                        }}
-                    >
-                        Cart ({cartCount})
-                    </button>
-                    <button
-                        onClick={() => setTab("wishlist")}
-                        className="ctw-btn"
-                        style={{
-                            flex: 1,
-                            padding: "10px 0",
-                            borderRadius: 30,
-                            background: tab === "wishlist" ? "#1C1C1A" : "#F0EEE4",
-                            color: tab === "wishlist" ? "#fff" : "#1C1C1A",
-                        }}
-                    >
-                        Wishlist ({wishlistCount})
-                    </button>
-                </div>
-
-                {rows.length === 0 && (
-                    <p style={{ fontSize: 14, color: "#8A8A80", textAlign: "center", margin: "32px 0" }}>
-                        {tab === "cart" ? "Your cart is empty." : "Your wishlist is empty."}
-                    </p>
-                )}
-
-                {rows.map((row) => (
-                    <div
-                        key={row.key}
-                        style={{
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 14,
-                            marginBottom: 18,
-                            paddingBottom: 18,
-                            borderBottom: "1px solid #F0EEE4",
-                        }}
-                    >
-                        <div
-                            onClick={() => goTo(`/product/${row.product.slug}`)}
-                            style={{
-                                width: 60,
-                                height: 60,
-                                borderRadius: 10,
-                                background: "linear-gradient(150deg,#EFEBDD,#D9CFAE)",
-                                flexShrink: 0,
-                                overflow: "hidden",
-                                cursor: "pointer",
-                            }}
-                        >
-                            <img
-                                src={row.product.cardImage || row.product.gallery[0]}
-                                alt={row.product.displayName || row.product.name}
-                                style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
-                            />
-                        </div>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                            <div
-                                onClick={() => goTo(`/product/${row.product.slug}`)}
-                                style={{ fontSize: 13.5, fontWeight: 600, marginBottom: 4, cursor: "pointer" }}
-                            >
-                                {row.product.displayName || row.product.name}
-                            </div>
-                            <div style={{ fontSize: 12, color: "#8A8A80", marginBottom: 4 }}>{row.meta}</div>
-                            <div style={{ fontSize: 13, color: "#41705B", fontWeight: 700 }}>{row.price}</div>
-                        </div>
-                        <button
-                            aria-label={`Remove ${row.product.displayName || row.product.name}`}
-                            onClick={row.onRemove}
-                            style={{ background: "none", border: "none", cursor: "pointer" }}
-                        >
-                            <X size={16} color="#B4B4A8" />
-                        </button>
-                    </div>
-                ))}
-
-                {tab === "cart" && (
-                    <>
-                        <div
-                            style={{
-                                display: "flex",
-                                justifyContent: "space-between",
-                                fontSize: 16,
-                                fontWeight: 700,
-                                margin: "20px 0",
-                            }}
-                        >
-                            <span>Subtotal:</span>
-                            <span>{formatPrice(subtotal)}</span>
-                        </div>
-                        <button
-                            className="ctw-btn"
-                            onClick={() => goTo("/cart")}
-                            disabled={cartItems.length === 0}
-                            style={{
-                                width: "100%",
-                                background: "transparent",
-                                border: "1px solid #1C1C1A",
-                                color: "#1C1C1A",
-                                padding: "14px 0",
-                                borderRadius: 30,
-                                marginBottom: 10,
-                                opacity: cartItems.length === 0 ? 0.5 : 1,
-                            }}
-                        >
-                            Checkout
-                        </button>
-                        <button
-                            className="ctw-btn"
-                            onClick={() => goTo("/cart")}
-                            style={{
-                                width: "100%",
-                                background: "#1C1C1A",
-                                color: "#fff",
-                                padding: "14px 0",
-                                borderRadius: 30,
-                            }}
-                        >
-                            View Cart
-                        </button>
-                    </>
-                )}
-                {tab === "wishlist" && (
-                    <button
-                        className="ctw-btn"
-                        onClick={() => goTo("/wishlist")}
-                        style={{
-                            width: "100%",
-                            background: "#1C1C1A",
-                            color: "#fff",
-                            padding: "14px 0",
-                            borderRadius: 30,
-                            marginTop: 10,
-                        }}
-                    >
-                        Check Your Favourite
-                    </button>
-                )}
-            </div>
-        </div>
-    );
-}
 
 /* ----------------------------- Quick View ----------------------------- */
 /* Opens from a card's "Quick View" button and shows THAT product:

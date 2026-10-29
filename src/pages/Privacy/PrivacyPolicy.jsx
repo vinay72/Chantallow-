@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { Search, Heart, ShoppingCart, Menu, X, ArrowRight } from "lucide-react";
+
+import { ArrowRight } from "lucide-react";
 import "./PrivacyPolicy.css";
 
 // Footer assets — adjust these paths to match your project's image folder
@@ -9,17 +9,7 @@ import logo from "../../assets/logo.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
-
-const NAV_LINKS = [
-  { label: "Home", href: "index.html", active: false },
-  { label: "About Us", href: "about-us.html" },
-  { label: "Shop", href: "shop-list.html" },
-];
-
-const SECONDARY_NAV = [
-  { label: "Blog", href: "blog-category.html" },
-  { label: "Contact US", href: "contact-us.html" },
-];
+import Header from "../../components/Header";
 
 // All of these are joined into one large paragraph on the page (titles are kept here only for reference).
 const POLICY_SECTIONS = [
@@ -76,66 +66,6 @@ const USEFUL_LINKS = [
 ];
 
 const SOCIAL_LINKS = ["Instagram", "Facebook", "YouTube", "Linkedin", "X.Com"];
-
-/* ---------- Logo ---------- */
-
-function Logo({ className = "" }) {
-  return (
-    <a href="index.html" className={`ct-logo ${className}`}>
-      <img src={logo} alt="Chantallow" />
-    </a>
-  );
-}
-
-/* ---------- Header (provided structure) ---------- */
-
-function Header() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
-  return (
-    <header className="ct-header">
-      <div className="ct-header-row1">
-        <Logo />
-        <div className="ct-header-right">
-          <ul className="ct-nav-main">
-            {NAV_LINKS.map((l) => (
-              <li key={l.label} className={l.active ? "active" : ""}>
-                <a href={l.href}>
-                  {l.label} <span className="ct-nav-plus">+</span>
-                </a>
-              </li>
-            ))}
-            <ul className="ct-nav-secondary-under">
-              {SECONDARY_NAV.map((l) => (
-                <li key={l.label}>
-                  <a href={l.href}>
-                    {l.label} <span className="ct-nav-plus">+</span>
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </ul>
-          <div className="ct-header-actions">
-            <a className="login" href="registration.html">
-              Login /<br />Register
-            </a>
-            <button className="ct-icon-btn" aria-label="Search"><Search size={19} /></button>
-            <button className="ct-icon-btn" aria-label="Wishlist"><Heart size={19} /></button>
-            <button className="ct-icon-btn" aria-label="Cart"><ShoppingCart size={19} /></button>
-            <button className="ct-burger" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>
-              {menuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
-          </div>
-        </div>
-      </div>
-      <div className={`ct-mobile-menu${menuOpen ? " open" : ""}`}>
-        {[...NAV_LINKS, ...SECONDARY_NAV].map((l) => (
-          <a key={l.label} href={l.href}>{l.label}</a>
-        ))}
-      </div>
-    </header>
-  );
-}
 
 /* ---------- Sections ---------- */
 

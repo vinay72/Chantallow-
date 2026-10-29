@@ -27,4 +27,9 @@ export const api = {
   listUsers: () => request('/admin/users'),
 
   setUserRole: (id, role) => request(`/admin/users/${id}`, { method: 'PATCH', body: { role } }),
+
+  stats: (year) => request('/admin/stats' + (year ? `?year=${year}` : '')),
+
+  setOrderStatus: (orderId, status) =>
+    request(`/admin/orders/${encodeURIComponent(orderId)}`, { method: 'PATCH', body: { status } }),
 };

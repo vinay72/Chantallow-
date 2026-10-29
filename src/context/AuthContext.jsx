@@ -63,5 +63,10 @@ export function useAuth() {
     return ctx;
 }
 
-// Where to send someone right after they sign in.
-export const homeForRole = (role) => (role === "admin" ? "/admin" : "/");
+// Where to send someone right after they sign in (and where a wrong-role visit is bounced to).
+// Admins get the dashboard; customers get their account panel.
+export const homeForRole = (role) => (role === "admin" ? "/admin/dashboard" : "/account/orders");
+
+// The role a protected path belongs to, or null for public pages.
+export const roleForPath = (path = "") =>
+    path.startsWith("/admin") ? "admin" : path.startsWith("/account") ? "user" : null;

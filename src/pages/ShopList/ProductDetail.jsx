@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { Ship, PackageCheck } from "lucide-react";
 import "./ProductDetail.css";
-import logo from "../../assets/logo.png";
 import sealRecycle from "../../assets/a.png";
 import sealNatural from "../../assets/b.png";
 import sealMadeWithLove from "../../assets/c.png";
@@ -18,6 +17,7 @@ import {
   getProductViews,
   getProductCover,
 } from "../../data/products";
+import Header from "../../components/Header";
 
 // Same sizes as the Home page hero cards (value is what's saved in the cart)
 const SIZES = [
@@ -206,21 +206,6 @@ const sb = {
  * The product is looked up from src/data/products.js by its slug.
  */
 
-const countBadge = {
-  position: "absolute",
-  top: -4,
-  right: -6,
-  minWidth: 18,
-  height: 18,
-  padding: "0 5px",
-  borderRadius: 9,
-  background: "#41705B",
-  color: "#fff",
-  fontSize: 11,
-  lineHeight: "18px",
-  textAlign: "center",
-};
-
 /* Star rating that supports decimals: 4.7 -> 4 full stars + a 70%-filled 5th star */
 function StarRating({ rating = 4.7, outOf = 5 }) {
   const uid = React.useId().replace(/:/g, "");
@@ -275,44 +260,6 @@ function ScrollTopButton() {
         <path d="M5 12L12 5L19 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     </button>
-  );
-}
-
-function PageHeader() {
-  const { cartCount, wishlistCount } = useShop();
-  return (
-    <header className="ct-header">
-      <div className="ct-header__inner">
-        <Link to="/" className="ct-logo">
-          <img src={logo} alt="Chantallow" style={{ height: 56, width: "auto", display: "block" }} />
-        </Link>
-
-        <nav className="ct-nav" aria-label="Primary">
-          <Link to="/">Home +</Link>
-          <Link to="/aboutus">About Us +</Link>
-          <Link to="/shop-list">Shop +</Link>
-          <Link to="/blog">Blog +</Link>
-          <Link to="/contactus">Contact US +</Link>
-        </nav>
-
-        <div className="ct-header__actions">
-          <Link to="/registration" className="ct-login-link">
-            Login /<br />Register
-          </Link>
-          <button type="button" className="ct-icon-btn" aria-label="Search">
-            <SearchIcon />
-          </button>
-          <Link to="/wishlist" className="ct-icon-btn" aria-label="Favourites" style={{ position: "relative" }}>
-            <HeartIcon />
-            {wishlistCount > 0 && <span style={countBadge}>{wishlistCount}</span>}
-          </Link>
-          <Link to="/cart" className="ct-icon-btn" aria-label="Cart" style={{ position: "relative" }}>
-            <CartIcon />
-            {cartCount > 0 && <span style={countBadge}>{cartCount}</span>}
-          </Link>
-        </div>
-      </div>
-    </header>
   );
 }
 
@@ -408,7 +355,7 @@ export default function ProductDetail() {
   if (!product) {
     return (
       <div className="ct-page">
-        <PageHeader />
+        <Header />
         <main className="ct-container" style={{ padding: "120px 24px", textAlign: "center" }}>
           <h2>Product not found</h2>
           <p>We couldn't find that product.</p>
@@ -445,7 +392,7 @@ export default function ProductDetail() {
   return (
     <div className="ct-page">
       <style>{PAGE_STYLES}</style>
-      <PageHeader />
+      <Header />
 
       {/* ---------------- Banner ---------------- */}
       <div className="ct-banner">
@@ -858,17 +805,6 @@ function RelatedCard({ product }) {
         </div>
       </div>
     </div>
-  );
-}
-
-/* ---------------- Inline icon components ---------------- */
-
-function SearchIcon() {
-  return (
-    <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M9.16667 15.8333C12.8486 15.8333 15.8333 12.8486 15.8333 9.16667C15.8333 5.48477 12.8486 2.5 9.16667 2.5C5.48477 2.5 2.5 5.48477 2.5 9.16667C2.5 12.8486 5.48477 15.8333 9.16667 15.8333Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M17.5 17.5L13.875 13.875" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }
 

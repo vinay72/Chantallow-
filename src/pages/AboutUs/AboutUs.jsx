@@ -1,11 +1,5 @@
-import { useState } from "react";
 import * as Icons from "lucide-react";
 import {
-  Search,
-  Heart,
-  ShoppingCart,
-  Menu,
-  X,
   MapPin,
   Mail,
   ArrowRight,
@@ -28,25 +22,13 @@ import pic5 from "../../assets/pic5.jpg";
 import recentPost1 from "../../assets/shop/product/small/1.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
+import Header from "../../components/Header";
 
 const Instagram = Icons.Instagram || Icons.Camera;
 const Youtube = Icons.Youtube || Icons.Play;
 const Linkedin = Icons.Linkedin || Icons.Briefcase;
 const Facebook = Icons.Facebook || Icons.Globe;
 const Twitter = Icons.Twitter || Icons.Share2;
-
-
-
-const NAV_LINKS = [
-  { label: "Home", href: "#" },
-  { label: "About Us", href: "#", active: true },
-  { label: "Blog", href: "#" },
-  { label: "Shop", href: "#" },
-];
-
-const SECONDARY_NAV = [
-  { label: "Contact US", href: "#" },
-];
 
 const CATEGORIES = [
   { name: "Malachite Fusion", desc: "Moringa & Butterfly Pea For Deep Botanical Support." },
@@ -75,63 +57,12 @@ const SOCIALS = [
   { label: "X.Com", icon: Twitter },
 ];
 
-function Logo() {
-  return (
-    <a href="#" className="ct-logo" aria-label="Chantallow home">
-      <img
-        src={logoImg}
-        alt="Chantallow"
-        style={{
-          height: "40px",
-          width: "auto",
-          objectFit: "contain"
-        }}
-      />
-    </a>
-  );
-}
-
 export default function AboutUs() {
-  const [menuOpen, setMenuOpen] = useState(false);
-
   return (
     <div className="ct-page">
 
-
       {/* ============ HEADER ============ */}
-      <header className="ct-header">
-        <div className="ct-header-row1">
-          <Logo />
-          <div className="ct-header-right">
-            <ul className="ct-nav-main">
-              {NAV_LINKS.map((l) => (
-                <li key={l.label} className={l.active ? "active" : ""}>
-                  <a href={l.href}>{l.label} <span className="ct-nav-plus">+</span></a>
-                </li>
-              ))}
-              <ul className="ct-nav-secondary-under">
-                {SECONDARY_NAV.map((l) => (
-                  <li key={l.label}><a href={l.href}>{l.label} <span className="ct-nav-plus">+</span></a></li>
-                ))}
-              </ul>
-            </ul>
-            <div className="ct-header-actions">
-              <a className="login" href="#">Login /<br />Register</a>
-              <button className="ct-icon-btn" aria-label="Search"><Search size={19} /></button>
-              <button className="ct-icon-btn" aria-label="Wishlist"><Heart size={19} /></button>
-              <button className="ct-icon-btn" aria-label="Cart"><ShoppingCart size={19} /></button>
-              <button className="ct-burger" aria-label="Menu" onClick={() => setMenuOpen((v) => !v)}>
-                {menuOpen ? <X size={24} /> : <Menu size={24} />}
-              </button>
-            </div>
-          </div>
-        </div>
-        <div className={`ct-mobile-menu${menuOpen ? " open" : ""}`}>
-          {[...NAV_LINKS, ...SECONDARY_NAV].map((l) => (
-            <a key={l.label} href={l.href}>{l.label}</a>
-          ))}
-        </div>
-      </header>
+      <Header />
 
       {/* ============ HERO ============ */}
       <section className="ct-hero">

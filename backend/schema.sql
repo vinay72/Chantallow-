@@ -34,3 +34,41 @@ CREATE TABLE IF NOT EXISTS users (
 
 -- Emails are compared case-insensitively.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users (lower(email));
+
+-- Orders placed on the website. The id is the order number the shopper sees
+-- (e.g. "57R04V93X36"); user_id is null for guest checkouts.
+CREATE TABLE IF NOT EXISTS orders (
+  id TEXT PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  email TEXT,
+  status TEXT NOT NULL DEFAULT 'in-progress'
+    CHECK (status IN ('in-progress', 'delayed', 'delivered', 'canceled')),
+  items JSONB NOT NULL DEFAULT '[]', -- array of {productId, size, qty, price}
+  subtotal NUMERIC(10,2) NOT NULL DEFAULT 0,
+  discount NUMERIC(10,2) NOT NULL DEFAULT 0,
+  shipping_cost NUMERIC(10,2) NOT NULL DEFAULT 0,
+  total NUMERIC(10,2) NOT NULL DEFAULT 0,
+  payment TEXT,
+  placed_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_orders_placed_at ON orders (placed_at);
+CREATE INDEX IF NOT EXISTS idx_orders_user ON orders (user_id);
+
+-- Return requests against an order line; amount is what would be refunded.
+CREATE TABLE IF NOT EXISTS order_returns (
+  id TEXT PRIMARY KEY,
+  order_id TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  product_id TEXT,
+  size TEXT,
+  qty INTEGER NOT NULL CHECK (qty > 0),
+  amount NUMERIC(10,2) NOT NULL DEFAULT 0,
+  reason TEXT,
+  comment TEXT,
+  status TEXT NOT NULL DEFAULT 'Pending',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_order_returns_order ON order_returns (order_id);
