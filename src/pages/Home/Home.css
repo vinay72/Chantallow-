@@ -80,6 +80,22 @@
 }
 .ctw-duos-col--offset { margin-top: 48px; }
 
+/* Holds a card's space while the combos load (same shape as a card). */
+.ctw-duos-placeholder {
+  aspect-ratio: 4 / 5.4;
+  border: 1px solid #E2E9DA;
+  border-radius: 16px;
+  background: linear-gradient(100deg, #f4f8f5 30%, #ffffff 50%, #f4f8f5 70%) 0 0 / 300% 100%;
+  animation: ctwPlaceholder 1.4s ease-in-out infinite;
+}
+@keyframes ctwPlaceholder {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ctw-duos-placeholder { animation: none; }
+}
+
 /* --------------------------- Complete care banner --------------------------- */
 
 .ctw-care-grid {

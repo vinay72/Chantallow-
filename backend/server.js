@@ -191,6 +191,26 @@ async function findProducts(query = {}) {
 
 const isValidId = (id) => /^\d+$/.test(String(id));
 
+// ---------- storefront reads ----------
+
+// The last good answer for each public storefront read. Reads always go to the
+// database; only when it can't be reached is this copy served instead, so a
+// slow database doesn't make the home page fall back to old content.
+const lastGood = new Map();
+async function withLastGood(key, load) {
+  try {
+    const value = await load();
+    lastGood.set(key, value);
+    return value;
+  } catch (err) {
+    if (isConnectError(err) && lastGood.has(key)) {
+      console.warn(`Database unreachable; serving the last copy of ${key}.`);
+      return lastGood.get(key);
+    }
+    throw err;
+  }
+}
+
 // ---------- home page settings ----------
 
 const MAX_NEW_LAUNCHES = 4;
@@ -445,7 +465,7 @@ api.get('/meta', (req, res) => {
 // --- GET /api/home --- (what the home page shows: new launch products)
 api.get('/home', async (req, res, next) => {
   try {
-    res.json({ success: true, new_launches: await getNewLaunches() });
+    res.json({ success: true, new_launches: await withLastGood('home', getNewLaunches) });
   } catch (err) {
     next(err);
   }
@@ -454,8 +474,10 @@ api.get('/home', async (req, res, next) => {
 // --- GET /api/combos --- (active combos, in display order)
 api.get('/combos', async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM combos WHERE is_active ORDER BY position, id');
-    res.json({ success: true, count: rows.length, combos: rows.map(publicCombo) });
+    const combos = await withLastGood('combos', async () =>
+      (await pool.query('SELECT * FROM combos WHERE is_active ORDER BY position, id')).rows.map(publicCombo)
+    );
+    res.json({ success: true, count: combos.length, combos });
   } catch (err) {
     next(err);
   }
@@ -464,9 +486,12 @@ api.get('/combos', async (req, res, next) => {
 // --- GET /api/combos/:id --- (an active combo; hidden ones 404 on the storefront)
 api.get('/combos/:id', async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM combos WHERE id = $1 AND is_active', [req.params.id]);
-    if (!rows.length) return res.status(404).json({ success: false, error: 'Combo not found' });
-    res.json({ success: true, combo: publicCombo(rows[0]) });
+    const combo = await withLastGood(`combo:${req.params.id}`, async () => {
+      const { rows } = await pool.query('SELECT * FROM combos WHERE id = $1 AND is_active', [req.params.id]);
+      return rows.length ? publicCombo(rows[0]) : null;
+    });
+    if (!combo) return res.status(404).json({ success: false, error: 'Combo not found' });
+    res.json({ success: true, combo });
   } catch (err) {
     next(err);
   }
@@ -475,8 +500,10 @@ api.get('/combos/:id', async (req, res, next) => {
 // --- GET /api/faqs --- (published FAQs, in display order)
 api.get('/faqs', async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT id, question, answer, category FROM faqs WHERE is_published ORDER BY position, id');
-    res.json({ success: true, count: rows.length, faqs: rows });
+    const faqs = await withLastGood('faqs', async () =>
+      (await pool.query('SELECT id, question, answer, category FROM faqs WHERE is_published ORDER BY position, id')).rows
+    );
+    res.json({ success: true, count: faqs.length, faqs });
   } catch (err) {
     next(err);
   }

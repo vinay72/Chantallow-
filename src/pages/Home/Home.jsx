@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Header from "../../components/Header";
 import {
   Heart,
@@ -29,7 +29,7 @@ import lavender from "../../assets/lavender.png";
 import CollectionCard from "../../components/CollectionCard";
 import { useShop } from "../../context/ShopContext";
 import { formatPrice, fromServerCombo, fromServerProduct, getProductById } from "../../data/products";
-import { api } from "../../api/client";
+import { useCachedApi } from "../../api/useCachedApi";
 
 import petMap from "../../assets/map/map2.png";
 import petDog from "../../assets/pet/dog.png";
@@ -378,21 +378,16 @@ function GlobalStyle() {
 function Hero({ navigate }) {
     const { addToCart, showToast } = useShop();
 
-    // New launch products picked in Admin → Home (null while loading).
-    const [launches, setLaunches] = useState(null);
-    useEffect(() => {
-        let cancelled = false;
-        api("/home")
-            .then((data) => !cancelled && setLaunches(data.new_launches.map(fromServerProduct)))
-            .catch(() => !cancelled && setLaunches([])); // backend down: fall back to the defaults
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    // New launch products picked in Admin → Home → New Launches.
+    const home = useCachedApi("/home");
+    const launches = home.data ? home.data.new_launches.map(fromServerProduct) : null;
 
+    // Nothing until loaded (or the defaults if the server can't be reached).
     const heroProducts =
         launches === null
-            ? []
+            ? home.status === "error"
+                ? DEFAULT_HERO_PRODUCTS
+                : []
             : launches.length
             ? launches.map((p) => ({
                   id: p.id,
@@ -854,19 +849,14 @@ function MissionStrip() {
      bag    -> adds to cart, stays on Home                                    */
 
 function TallowCollection({ onQuickView }) {
-    // Combos managed in the admin panel; null until loaded.
-    const [combos, setCombos] = useState(null);
-    useEffect(() => {
-        let cancelled = false;
-        api("/combos")
-            .then((data) => !cancelled && setCombos(data.combos.map(fromServerCombo)))
-            .catch(() => !cancelled && setCombos([]));
-        return () => {
-            cancelled = true;
-        };
-    }, []);
+    // Combos managed in Admin → Home → Combo Products. The last copy saved in
+    // this browser shows at once while the latest loads.
+    const { data, status } = useCachedApi("/combos");
+    const combos = data ? data.combos.map(fromServerCombo) : null;
 
     // Server combos fill the 3 columns left to right, like the built-in layout.
+    // While the first load is running, placeholder cards hold the space; the
+    // built-in cards are only used if there's nothing from the server at all.
     const cards = combos?.length
         ? combos.map((combo, i) => ({
               key: combo.id,
@@ -878,6 +868,8 @@ function TallowCollection({ onQuickView }) {
               col: (i % 3) + 1,
               combo,
           }))
+        : status === "loading"
+        ? Array.from({ length: 6 }, (_, i) => ({ key: `placeholder-${i}`, col: (i % 3) + 1, placeholder: true }))
         : COLLECTION_CARDS;
 
     return (
@@ -961,7 +953,11 @@ function TallowCollection({ onQuickView }) {
                             {cards.map((c, i) =>
                                 c.col === col ? (
                                     <div key={c.key || c.id} className="ctw-duos-card" style={{ order: i }}>
-                                        <CollectionCard c={c} onQuickView={() => onQuickView(c)} />
+                                        {c.placeholder ? (
+                                            <div className="ctw-duos-placeholder" aria-hidden="true" />
+                                        ) : (
+                                            <CollectionCard c={c} onQuickView={() => onQuickView(c)} />
+                                        )}
                                     </div>
                                 ) : null
                             )}
