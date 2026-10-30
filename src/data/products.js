@@ -20,7 +20,7 @@ import bareWhippedTallowCard from "../assets/product/new/7.jpg";
 import talumaHairCareCard from "../assets/product/new/8.jpg";
 
 import amberGlowJar from "../assets/beauty/amber-glow.jpg";
-import amethystReliefJar from "../assets/beauty/amethyst-relief.jpg";
+import amethystReliefJar from "../assets/productdetailimages/Amethyst Relief/front 4oz.png";
 import jasperReviveJar from "../assets/beauty/jasper-revive.jpg";
 import malachiteFusionJar from "../assets/beauty/malachite-fusion.jpg";
 import olivineReliefJar from "../assets/beauty/olivine-relief.jpg";
@@ -287,7 +287,8 @@ export function fromServerProduct(row) {
        Olivine Relief/      Taluma Hair care/    (Furkind/ is ignored here)
 
    Inside each folder any file names work. A file is recognised by its name:
-     front / cover / main      -> 1st image (cover)
+     front 2oz                 -> cover when 2 oz is selected
+     front 4oz / front / cover / main -> cover (4 oz, the default size)
      ingredient...             -> 2nd image
      description / desc        -> 3rd image
      360 / spin / rotate       -> 4th: the 360° view (.mp4/.webm video, .gif,
@@ -326,6 +327,8 @@ const byName = (a, b) => a.file.localeCompare(b.file, undefined, { numeric: true
 function roleOf(file) {
     const n = file.toLowerCase();
     if (isVideo(n) || /360|spin|rotat|turn/.test(n)) return "spin";
+    if (/(^|[^0-9])2\s*-?\s*oz/.test(n)) return "front2oz"; // checked before "front"
+    if (/(^|[^0-9])4\s*-?\s*oz/.test(n)) return "front";
     if (/ingred/.test(n)) return "ingredients";
     if (/desc/.test(n)) return "description";
     if (/front|cover|main|hero/.test(n)) return "front";
@@ -354,7 +357,7 @@ const MEDIA_BY_SLUG = (() => {
 
     const out = {};
     for (const [slug, { files, frames }] of Object.entries(raw)) {
-        const slots = { front: null, ingredients: null, description: null, spin: null };
+        const slots = { front: null, front2oz: null, ingredients: null, description: null, spin: null };
         const unnamed = [];
         files.sort(byName).forEach((f) => {
             const role = roleOf(f.file);
@@ -366,6 +369,7 @@ const MEDIA_BY_SLUG = (() => {
         }
         out[slug] = {
             front: slots.front?.url || null,
+            front2oz: slots.front2oz?.url || null,
             ingredients: slots.ingredients?.url || null,
             description: slots.description?.url || null,
             spin: frames.length > 1
@@ -380,16 +384,17 @@ const MEDIA_BY_SLUG = (() => {
 
 /**
  * The photos shown on a product's detail page, in order — for EVERY product:
- *   1. Front  — the product's front jar photo (cover)
+ *   1. Front  — the front jar photo for the selected size ("2oz" uses the
+ *              folder's "front 2oz" photo; 4 oz uses "front 4oz" / "front")
  *   2. Ingredients label
  *   3. Description label
  *   4. 360°   — the front photo turning round to show the back label
  *              (or your own 360 video / frames if a folder has one)
  * Combo (two-jar) photos are never used here.
  */
-export function getProductViews(product) {
+export function getProductViews(product, size = "4oz") {
     const media = MEDIA_BY_SLUG[product?.slug] || {};
-    const front = media.front || product?.gallery?.[0];
+    const front = (size === "2oz" && media.front2oz) || media.front || product?.gallery?.[0];
     const views = [{ role: "front", label: "Front", type: "image", src: front }];
     if (media.ingredients) views.push({ role: "ingredients", label: "Ingredients", type: "image", src: media.ingredients });
     if (media.description) views.push({ role: "description", label: "Description", type: "image", src: media.description });
@@ -407,5 +412,5 @@ export function getProductViews(product) {
     return views;
 }
 
-/** Cover photo for a product (its front jar photo). */
-export const getProductCover = (product) => getProductViews(product)[0].src;
+/** Cover photo for a product (its front jar photo for the given size). */
+export const getProductCover = (product, size = "4oz") => getProductViews(product, size)[0].src;

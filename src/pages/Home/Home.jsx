@@ -13,6 +13,7 @@ import {
   Star,
   ArrowUp,
   Minus,
+  Leaf,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -65,7 +66,7 @@ import similarImg3 from "../../assets/shop/product/Similar/5.png"; // Obsidian I
 import savingImg1 from "../../assets/shop/product/savings/4.png"; // Malachite Fusion
 import savingImg2 from "../../assets/shop/product/savings/2.png"; // Amethyst Relief
 import savingImg3 from "../../assets/shop/product/savings/1.png"; // Obsidian Infusion
-import savingBanner from "../../assets/about/pic1 111.png";
+import savingBanner from "../../assets/about/pic1 111.png"; // applying tallow crème to tattooed skin (full-resolution original)
 
 // FEATURED OFFERS IMAGES
 
@@ -91,7 +92,7 @@ import footerImg from "../../assets/footer/footer.png";
 
 // Real product jar photography used in the "Mission Strip" circular grid
 import amberGlowJar from "../../assets/beauty/amber-glow.jpg";
-import amethystReliefJar from "../../assets/beauty/amethyst-relief.jpg";
+import amethystReliefJar from "../../assets/productdetailimages/Amethyst Relief/front 4oz.png";
 import jasperReviveJar from "../../assets/beauty/jasper-revive.jpg";
 import malachiteFusionJar from "../../assets/beauty/malachite-fusion.jpg";
 import olivineReliefJar from "../../assets/beauty/olivine-relief.jpg";
@@ -961,7 +962,7 @@ function TallowCollection({ onQuickView }) {
                         fontFamily: "Marcellus, sans-serif",
                     }}
                 >
-                    The Chantallow Duos - Discover Your Perfect Tallow Duo
+                    The Chantallow Combos - Discover Your Perfect Tallow Duo
                 </h2>
 
                 {/* Desktop: 3 masonry columns, middle column offset down.
@@ -2066,39 +2067,52 @@ function SavingSection({ home }) {
                 <div className="ctw-saving-banner" style={{ clipPath: "url(#waveLeft)" }}>
                     <img
                         src={savingBanner}
-                        alt=""
-                        aria-hidden="true"
+                        alt="Applying Chantallow tallow crème to tattooed skin"
                         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />
 
-                    <div style={{ position: "relative", zIndex: 1, textAlign: "center", color: "#fff", padding: "48px 32px", width: "100%" }}>
-                        {/* <h2
-                            className="ctw-serif"
-                            style={{ fontSize: 40, fontWeight: 500, lineHeight: 1.25, fontFamily: "Marcellus", margin: "0 auto 12px", maxWidth: 380, color: "#FFFFFF" }}
-                        >
-                            Great Saving On Everyday Essentials
-                        </h2>
-                        <p className="ctw-serif" style={{ fontSize: 16, fontFamily: "Lufga", margin: "0 0 24px", color: "#FFFFFF", opacity: 0.95 }}>
-                            Up To 60% Off + Up To $107 Cashback
-                        </p>
-                        <a
-                            href="#shop"
-                            className="ctw-serif"
-                            style={{ display: "inline-block", background: "rgba(255,255,255,0.9)", color: "#1C1C1A", padding: "12px 32px", borderRadius: 4, fontSize: 17, textDecoration: "none" }}
-                        >
-                            See All
-                        </a> */}
+                    {/* Soft dark fade at the bottom so the white caption stays readable over the photo */}
+                    <div
+                        aria-hidden="true"
+                        style={{
+                            position: "absolute",
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: "55%",
+                            zIndex: 1,
+                            pointerEvents: "none",
+                            background: "linear-gradient(0deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.28) 45%, rgba(0,0,0,0) 100%)",
+                        }}
+                    />
 
-                        {/* <svg
-                            className="ctw-animation-text"
-                            viewBox="0 0 1320 300"
-                            aria-hidden="true"
-                            style={{ position: "absolute", bottom: -180, left: 80, fontSize: 40, width: "60%", height: "auto", userSelect: "none" }}
+                    {/* Caption — bottom-left, over the tattooed skin in the photo */}
+                    <div style={{ position: "absolute", left: 0, right: "14%", bottom: 0, zIndex: 2, textAlign: "left", padding: "0 40px 40px" }}>
+                        <Leaf size={22} color="#FFFFFF" strokeWidth={1.75} style={{ marginBottom: 10 }} />
+                        <h3
+                            style={{
+                                margin: "0 0 8px",
+                                fontFamily: "'Lufga', sans-serif",
+                                fontWeight: 700,
+                                fontSize: "clamp(18px, 1.7vw, 24px)",
+                                lineHeight: 1.25,
+                                color: "#FFFFFF",
+                            }}
                         >
-                            <text x="0" y="290" textLength="1320" lengthAdjust="spacingAndGlyphs">
-                                GREAT SAVING
-                            </text>
-                        </svg> */}
+                            Moringa + Butterfly Pea Flowers
+                        </h3>
+                        <p
+                            style={{
+                                margin: 0,
+                                maxWidth: 320,
+                                fontFamily: "var(--font-family-base, 'DM Sans', sans-serif)",
+                                fontSize: "clamp(13px, 1vw, 15px)",
+                                lineHeight: 1.55,
+                                color: "rgba(255,255,255,0.92)",
+                            }}
+                        >
+                            Protect against environmental stress while promoting soft, healthy-looking, and revitalized skin.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -2646,25 +2660,7 @@ function ShortlistSection() {
                         }}
                     />
 
-                    {/* Soft light fade on the left so the text stays readable over the plant leaves */}
-                    <div
-                        aria-hidden="true"
-                        style={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: "62%", // only behind the text — the jar below stays untouched
-                            zIndex: 1,
-                            pointerEvents: "none",
-                            background:
-                                "linear-gradient(100deg, rgba(247,244,236,0.88) 0%, rgba(247,244,236,0.7) 30%, rgba(247,244,236,0) 52%)",
-                            WebkitMaskImage: "linear-gradient(to bottom, #000 70%, transparent 100%)",
-                            maskImage: "linear-gradient(to bottom, #000 70%, transparent 100%)",
-                        }}
-                    />
-
-                    {/* Title + description — top-left of the photo, above the Olivine Relief jar */}
+                    {/* Title, description and See All — centred in the photo (left of the wave) */}
                     <div
                         className="ctw-shortlist-copy"
                         style={{
@@ -2675,31 +2671,50 @@ function ShortlistSection() {
                     >
                         <h2
                             style={{
-                                margin: "0 0 16px",
+                                margin: "0 0 18px",
                                 fontFamily: "Marcellus, sans-serif",
                                 fontWeight: 400,
-                                fontSize: "clamp(24px, 2vw, 32px)",
-                                lineHeight: 1.2,
+                                fontSize: "clamp(30px, 3.2vw, 52px)",
+                                lineHeight: 1.15,
                                 color: "#1C1C1A",
-                                // one line on desktop; wraps on smaller screens (Home.css)
                             }}
                         >
-                            Soothe Sore Muscles, Naturally
+                            Soothe Sore Muscles,
+                            <br />
+                            Naturally
                         </h2>
                         <p
                             style={{
-                                margin: 0,
-                                fontFamily: "var(--font-family-base, 'DM Sans', sans-serif)", // same font as the header links (full "g")
-                                fontSize: "clamp(16px, 1.3vw, 20px)",
+                                maxWidth: 440,
+                                margin: "0 auto",
+                                fontFamily: "'Lufga', 'DM Sans', sans-serif",
+                                fontSize: "clamp(14px, 1.05vw, 17px)",
                                 lineHeight: 1.6,
-                                color: "#2D2E2F",
-                                // exactly two rows on desktop; wraps on smaller screens (Home.css)
+                                color: "#FFFFFF",
+                                // keeps the white text readable over the lighter parts of the photo
+                                textShadow: "0 1px 8px rgba(0, 0, 0, 0.45)",
                             }}
                         >
-                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief,{" "}
-                            <br className="ctw-br-desktop" />
-                            muscle comfort, and skin nourishment.
+                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief, muscle comfort, and skin
+                            nourishment.
                         </p>
+                        <Link
+                            to="/shop-list"
+                            style={{
+                                display: "inline-block",
+                                marginTop: 24,
+                                padding: "9px 20px",
+                                background: "#FFFFFF",
+                                color: "#1C1C1A",
+                                fontFamily: "'Lufga', sans-serif",
+                                fontSize: 15,
+                                fontWeight: 500,
+                                textDecoration: "none",
+                                boxShadow: "0 4px 14px rgba(0, 0, 0, 0.12)",
+                            }}
+                        >
+                            See All
+                        </Link>
                     </div>
 
                     {/* Old centered content (kept for reference) */}
@@ -2743,25 +2758,6 @@ function ShortlistSection() {
                             See All
                         </a> */}
                     </div>
-
-                    {/* <svg
-                        className="ctw-animation-text"
-                        viewBox="0 0 1320 300"
-                        aria-hidden="true"
-                        style={{
-                            position: "absolute",
-                            bottom: -28,
-                            // right: 4,
-                            left: "auto",          // was 0 — release left so right positioning works
-                            width: "60%",          // smaller than full width
-                            height: "auto",
-                            // zIndex: 1,
-                            // userSelect: "none",
-                            // textAlign: "right",
-                        }}
-                    >
-                        <text x="100%" y="200" textAnchor="end">SHORTLIST</text>
-                    </svg> */}
                 </div>
 
                 {/* RIGHT — single large product */}
@@ -2808,8 +2804,8 @@ function ShortlistSection() {
                                 </span>
                             </div>
                             <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                                <div className="ctw-serif" style={{ fontSize: 16, fontWeight: 500 }}>$00.00</div>
-                                <del className="ctw-serif" style={{ fontSize: 14, color: "#B4B4A8" }}>$00.00</del>
+                                <div className="ctw-serif" style={{ fontSize: 22, fontWeight: 700 }}>$00.00</div>
+                                <del className="ctw-serif" style={{ fontSize: 22, color: "#B4B4A8" }}>$00.00</del>
                             </div>
                         </div>
 

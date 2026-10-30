@@ -119,7 +119,8 @@ const PAGE_STYLES = `
     box-shadow: 0 10px 30px rgba(31, 35, 33, 0.08);
   }
   .ct-page .ct-stage__media {
-    width: 100%; height: 100%; object-fit: cover; display: block;
+    /* contain: the whole jar always shows (the 4 oz photos are a little taller than wide) */
+    width: 100%; height: 100%; object-fit: contain; display: block;
     image-rendering: auto; user-select: none; -webkit-user-drag: none;
   }
   .ct-page .ct-stage__hint {
@@ -371,8 +372,9 @@ export default function ProductDetail() {
   const directions = product.directions || DEFAULT_DIRECTIONS;
   const directionsNote = product.directions ? product.directionsNote : DEFAULT_DIRECTIONS_NOTE;
   // front (cover) -> ingredients -> description -> 360°  (combo photos are no longer used here)
-  const views = getProductViews(product);
-  const cover = getProductCover(product);
+  // the cover follows the size picker: 2 oz / 4 oz jar photo
+  const views = getProductViews(product, selectedSize);
+  const cover = getProductCover(product, selectedSize);
   const safeIndex = Math.min(activeImage, views.length - 1);
   const current = views[safeIndex];
   const related = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);

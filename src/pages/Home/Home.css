@@ -314,16 +314,17 @@ a:focus-visible .ctw-best-jar {
 .ctw-shortlist-product {
   flex: 0.95 1 0;
   min-width: 0;
-  align-self: center;
-  padding: 0 24px;
+  align-self: flex-start;
+  padding: 48px 24px 0;
 }
+/* centred in the visible part of the photo (the wave trims the right ~12%),
+   nudged left of true-center and up toward the top so it clears the man's arm */
 .ctw-shortlist-copy {
-  top: 9%;
+  top: 4%;
   left: 6%;
-  max-width: 85%;
+  right: 34%;
+  text-align: center !important;
 }
-.ctw-shortlist-copy h2,
-.ctw-shortlist-copy p { white-space: nowrap; }
 
 /* ------------------------------- Quick view ------------------------------- */
 
@@ -349,8 +350,6 @@ a:focus-visible .ctw-best-jar {
   .ctw-hero-copy { padding: 0 32px 0 72px; }
   .ctw-best-grid { gap: 48px; }
   .ctw-offer-card { flex-basis: 560px; }
-  .ctw-shortlist-copy h2,
-  .ctw-shortlist-copy p { white-space: normal; }
 }
 
 /* ================================= MD ================================= */
@@ -411,7 +410,7 @@ a:focus-visible .ctw-best-jar {
     clip-path: none;
   }
   .ctw-shortlist-product { padding: 48px 24px 64px; }
-  .ctw-shortlist-copy { top: 32px; left: 24px; right: 24px; max-width: none; }
+  .ctw-shortlist-copy { top: 48px; left: 24px; right: 24px; }
   .ctw-br-desktop { display: none; }
 
 }

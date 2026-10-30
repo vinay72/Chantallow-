@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Search,
   Heart,
@@ -7,7 +7,7 @@ import {
   X,
   SlidersHorizontal,
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import "./ShopList.css";
 import "../../components/SiteFooter.css";
 
@@ -16,16 +16,29 @@ import logo from "../../assets/logo.png";
 // Page banner background — commented out for now, uncomment once the asset is in place.
 // import bannerBg from "../../assets/background/bg2.jpg";
 
-// New-label jar photography (white background)
-import amberGlowJar from "../../assets/beauty/amber-glow.jpg";
-import amethystReliefJar from "../../assets/beauty/amethyst-relief.jpg";
-import jasperReviveJar from "../../assets/beauty/jasper-revive.jpg";
-import malachiteFusionJar from "../../assets/beauty/malachite-fusion.jpg";
-import olivineReliefJar from "../../assets/beauty/olivine-relief.jpg";
-import obsidianInfusionJar from "../../assets/beauty/obsidian-infusion.jpg";
-import talumaHairCareJar from "../../assets/beauty/taluma-hair-care.jpg";
-import bareWhippedTallowJar from "../../assets/beauty/bare-whipped-tallow.jpg";
-import furkindPetJar from "../../assets/pet/P1.png"; // swap for a single Furkind jar image if you have one
+// 4 oz jar photography (white background, 480 x 518) — the same front photos
+// the product detail pages use
+import amberGlowJar from "../../assets/productdetailimages/Amber Tallow/front 4oz.png";
+import amethystReliefJar from "../../assets/productdetailimages/Amethyst Relief/front 4oz.png";
+import jasperReviveJar from "../../assets/productdetailimages/Jasper Revive/front 4oz.png";
+import malachiteFusionJar from "../../assets/productdetailimages/Malachite Fusion/front 4oz.png";
+import olivineReliefJar from "../../assets/productdetailimages/Olivine Relief/front 4oz.png";
+import obsidianInfusionJar from "../../assets/productdetailimages/Obsidian Infusion/front 4oz.png";
+import talumaHairCareJar from "../../assets/productdetailimages/Taluma Hair care/front 4oz.png";
+import bareWhippedTallowJar from "../../assets/productdetailimages/Bare/front 4oz.png";
+import furkindPetJar from "../../assets/productdetailimages/Furkind/front 4oz.png";
+// 2 oz jar photography, shown when the 2 oz size is picked
+import amberGlow2oz from "../../assets/shop/2oz/amber-glow.jpg";
+import amethystRelief2oz from "../../assets/shop/2oz/amethyst-relief.jpg";
+import jasperRevive2oz from "../../assets/shop/2oz/jasper-revive.jpg";
+import malachiteFusion2oz from "../../assets/shop/2oz/malachite-fusion.jpg";
+import olivineRelief2oz from "../../assets/shop/2oz/olivine-relief.jpg";
+import obsidianInfusion2oz from "../../assets/shop/2oz/obsidian-infusion.jpg";
+import talumaHairCare2oz from "../../assets/shop/2oz/taluma-hair-care.jpg";
+import bareWhippedTallow2oz from "../../assets/shop/2oz/bare-whipped-tallow.jpg";
+import furkindPet2oz from "../../assets/shop/2oz/furkind-pet-tallow.jpg";
+// the whole range side by side, shown at the end of the page
+import collectionLineup from "../../assets/shop/collection-lineup.jpg";
 
 import recentPost1 from "../../assets/shop/product/small/1.png";
 import recentPost2 from "../../assets/shop/product/small/2.png";
@@ -33,7 +46,18 @@ import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
 import Header from "../../components/Header";
 
-const SIZES = ["4 OZ", "1.7 OZ", "all"];
+// Size filter: value is what the cards use ("" = all sizes).
+const SIZES = [
+    { value: "2oz", label: "2 OZ" },
+    { value: "4oz", label: "4 OZ" },
+    { value: "", label: "all" },
+];
+
+// Card size toggle: each product shows its 4 oz photo (`img`) or 2 oz photo (`img2oz`).
+const JAR_SIZES = [
+    { value: "2oz", label: "2 oz" },
+    { value: "4oz", label: "4 oz" },
+];
 
 const PRODUCTS = [
     {
@@ -48,6 +72,7 @@ const PRODUCTS = [
         price: "$66",
         was: "$89",
         img: malachiteFusionJar,
+        img2oz: malachiteFusion2oz,
     },
     {
         id: 2,
@@ -61,6 +86,7 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: bareWhippedTallowJar,
+        img2oz: bareWhippedTallow2oz,
     },
     {
         id: 3,
@@ -74,6 +100,7 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: talumaHairCareJar,
+        img2oz: talumaHairCare2oz,
     },
     {
         id: 4,
@@ -87,6 +114,7 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: jasperReviveJar,
+        img2oz: jasperRevive2oz,
     },
     {
         id: 5,
@@ -100,6 +128,7 @@ const PRODUCTS = [
         price: "$80",
         was: "$89",
         img: amberGlowJar,
+        img2oz: amberGlow2oz,
     },
     {
         id: 6,
@@ -113,6 +142,7 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: amethystReliefJar,
+        img2oz: amethystRelief2oz,
     },
     {
         id: 7,
@@ -126,6 +156,7 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: obsidianInfusionJar,
+        img2oz: obsidianInfusion2oz,
     },
     {
         id: 8,
@@ -139,6 +170,7 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: olivineReliefJar,
+        img2oz: olivineRelief2oz,
     },
     {
         id: 9,
@@ -152,11 +184,18 @@ const PRODUCTS = [
         price: "$00",
         was: "$00",
         img: furkindPetJar,
+        img2oz: furkindPet2oz,
     },
 ];
 
-const PRICE_MIN = 0;
-const PRICE_MAX = 500;
+// "$66" -> 66 ("$00" placeholders count as 0)
+const priceOf = (p) => Number(String(p.price).replace(/[^0-9.]/g, "")) || 0;
+// Sizes a product is sold in: every jar has a 4 oz photo; a 2 oz photo means it comes in 2 oz too.
+const sizesOf = (p) => (p.img2oz ? ["2oz", "4oz"] : ["4oz"]);
+
+// The price slider spans the products' real prices.
+const PRICE_MIN = Math.floor(Math.min(...PRODUCTS.map(priceOf)));
+const PRICE_MAX = Math.max(PRICE_MIN + 1, Math.ceil(Math.max(...PRODUCTS.map(priceOf))));
 
 export default function ShopList() {
     return (
@@ -164,6 +203,7 @@ export default function ShopList() {
             <Header />
             <PageBanner />
             <ShopSection />
+            <CollectionLineup />
             <Footer />
             <ScrollTop />
         </div>
@@ -195,62 +235,142 @@ function PageBanner() {
     );
 }
 
+/* --------------------------- Collection line-up --------------------------- */
+
+// Full-width photo of the whole Chantallow range, after the product list.
+function CollectionLineup() {
+    return (
+        <section className="ctw-lineup" aria-label="The Chantallow collection">
+            <img
+                src={collectionLineup}
+                alt="The full Chantallow tallow collection: nine jars lined up on a stone ledge at sunset"
+                loading="lazy"
+                decoding="async"
+            />
+        </section>
+    );
+}
+
 /* ------------------------------ Shop Section ------------------------------ */
 
 function ShopSection() {
-    const [sizes, setSizes] = useState([]);
-    const [minPrice, setMinPrice] = useState(19);
-    const [maxPrice, setMaxPrice] = useState(346);
-    const [tags, setTags] = useState(["Tallow"]);
+    // the search box is kept in the URL (?search=…), so the header search and
+    // shared links open the shop already filtered
+    const [params, setParams] = useSearchParams();
+    const query = params.get("search") || "";
+    const setQuery = (value) =>
+        setParams(
+            (prev) => {
+                const next = new URLSearchParams(prev);
+                if (value) next.set("search", value);
+                else next.delete("search");
+                return next;
+            },
+            { replace: true }
+        );
 
-    const toggleSize = (size) =>
-        setSizes((prev) => (prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]));
+    const [sizes, setSizes] = useState([]); // [] = all sizes
+    const [minPrice, setMinPrice] = useState(PRICE_MIN);
+    const [maxPrice, setMaxPrice] = useState(PRICE_MAX);
+    const [panelOpen, setPanelOpen] = useState(false); // filter panel on phones / tablets
 
-    const removeTag = (tag) => setTags((prev) => prev.filter((t) => t !== tag));
+    // ticking both sizes is the same as "all"
+    const toggleSize = (value) => {
+        if (!value) return setSizes([]);
+        setSizes((prev) => {
+            const next = prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value];
+            return next.length === SIZES.length - 1 ? [] : next;
+        });
+    };
+
+    // one size picked -> every card shows that size's photo
+    const filterSize = sizes.length === 1 ? sizes[0] : null;
+    const priceFiltered = minPrice > PRICE_MIN || maxPrice < PRICE_MAX;
+
+    const visible = useMemo(() => {
+        const q = query.trim().toLowerCase();
+        return PRODUCTS.filter((p) => {
+            const price = priceOf(p);
+            return (
+                (!q || [p.name, p.tag, p.description].some((t) => String(t).toLowerCase().includes(q))) &&
+                (!sizes.length || sizes.some((size) => sizesOf(p).includes(size))) &&
+                price >= minPrice &&
+                price <= maxPrice
+            );
+        });
+    }, [query, sizes, minPrice, maxPrice]);
 
     const resetFilters = () => {
+        setQuery("");
         setSizes([]);
-        setMinPrice(19);
-        setMaxPrice(346);
-        setTags(["Tallow"]);
+        setMinPrice(PRICE_MIN);
+        setMaxPrice(PRICE_MAX);
     };
+
+    // chips for the filters in use (click to remove one)
+    const chips = [
+        query && { key: "search", label: `“${query}”`, clear: () => setQuery("") },
+        ...sizes.map((size) => ({
+            key: size,
+            label: SIZES.find((s) => s.value === size).label,
+            clear: () => toggleSize(size),
+        })),
+        priceFiltered && {
+            key: "price",
+            label: `$${minPrice} – $${maxPrice}`,
+            clear: () => {
+                setMinPrice(PRICE_MIN);
+                setMaxPrice(PRICE_MAX);
+            },
+        },
+    ].filter(Boolean);
 
     return (
         <section className="ctw-shop-section">
             <div className="ctw-shop-container">
                 {/* SIDEBAR */}
-                <aside className="ctw-shop-sidebar">
+                <aside id="shop-filters" className={panelOpen ? "ctw-shop-sidebar is-open" : "ctw-shop-sidebar"}>
                     <div className="ctw-filter-head">
                         <SlidersHorizontal size={20} strokeWidth={1.6} />
                         <h6>Filter</h6>
                     </div>
 
                     <div className="ctw-widget">
-                        <div className="ctw-search-group">
+                        {/* filters as you type; the button just closes the panel on phones */}
+                        <form
+                            className="ctw-search-group"
+                            role="search"
+                            onSubmit={(e) => {
+                                e.preventDefault();
+                                setPanelOpen(false);
+                            }}
+                        >
                             <input
                                 type="search"
                                 placeholder="Search Product"
                                 className="ctw-search-input"
                                 aria-label="Search product"
+                                value={query}
+                                onChange={(e) => setQuery(e.target.value)}
                             />
-                            <button className="ctw-search-submit" aria-label="Submit search">
+                            <button type="submit" className="ctw-search-submit" aria-label="Submit search">
                                 <Search size={18} color="#fff" strokeWidth={1.6} />
                             </button>
-                        </div>
+                        </form>
                     </div>
 
                     <div className="ctw-widget">
                         <h6 className="ctw-widget-title">Select Size</h6>
                         <ul className="ctw-size-list">
                             {SIZES.map((size) => (
-                                <li key={size}>
+                                <li key={size.label}>
                                     <label className="ctw-checkbox-label">
                                         <input
                                             type="checkbox"
-                                            checked={sizes.includes(size)}
-                                            onChange={() => toggleSize(size)}
+                                            checked={size.value ? sizes.includes(size.value) : sizes.length === 0}
+                                            onChange={() => toggleSize(size.value)}
                                         />
-                                        {size}
+                                        {size.label}
                                     </label>
                                 </li>
                             ))}
@@ -280,36 +400,63 @@ function ShopSection() {
                 <div>
                     <div className="ctw-filter-wrapper">
                         <div className="ctw-filter-left">
-                            <span className="ctw-results-count">
-                                Showing 1–{PRODUCTS.length} Of {PRODUCTS.length} Results
+                            <span className="ctw-results-count" aria-live="polite">
+                                Showing {visible.length} Of {PRODUCTS.length} Results
                             </span>
-                            <ul className="ctw-filter-tags">
-                                {tags.map((tag) => (
-                                    <li key={tag}>
-                                        <button
-                                            type="button"
-                                            className="ctw-tag-btn"
-                                            onClick={() => removeTag(tag)}
-                                        >
-                                            {tag}
-                                            <X size={13} />
-                                        </button>
-                                    </li>
-                                ))}
-                            </ul>
+                            {chips.length > 0 && (
+                                <ul className="ctw-filter-tags">
+                                    {chips.map((chip) => (
+                                        <li key={chip.key}>
+                                            <button
+                                                type="button"
+                                                className="ctw-tag-btn"
+                                                onClick={chip.clear}
+                                                aria-label={`Remove filter ${chip.label}`}
+                                            >
+                                                {chip.label}
+                                                <X size={13} />
+                                            </button>
+                                        </li>
+                                    ))}
+                                    {chips.length > 1 && (
+                                        <li>
+                                            <button type="button" className="ctw-clear-btn" onClick={resetFilters}>
+                                                Clear all
+                                            </button>
+                                        </li>
+                                    )}
+                                </ul>
+                            )}
                         </div>
 
-                        <button type="button" className="ctw-panel-btn">
+                        <button
+                            type="button"
+                            className="ctw-panel-btn"
+                            aria-expanded={panelOpen}
+                            aria-controls="shop-filters"
+                            onClick={() => setPanelOpen((v) => !v)}
+                        >
                             <SlidersHorizontal size={16} />
-                            Filter
+                            {panelOpen ? "Hide Filters" : "Filter"}
+                            {chips.length > 0 && <span className="ctw-panel-count">{chips.length}</span>}
                         </button>
                     </div>
 
-                    <div className="ctw-product-list">
-                        {PRODUCTS.map((p) => (
-                            <ProductCard key={p.id} {...p} />
-                        ))}
-                    </div>
+                    {visible.length === 0 ? (
+                        <div className="ctw-no-results">
+                            <h4>No products match</h4>
+                            <p>Try a different search, size or price range.</p>
+                            <button type="button" className="ctw-reset-btn" onClick={resetFilters}>
+                                Reset All Filters
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="ctw-product-list">
+                            {visible.map((p) => (
+                                <ProductCard key={p.id} {...p} filterSize={filterSize} />
+                            ))}
+                        </div>
+                    )}
                 </div>
             </div>
         </section>
@@ -354,13 +501,21 @@ function PriceRange({ min, max, onMinChange, onMaxChange }) {
 
 /* ------------------------------ Product Card ------------------------------ */
 
-function ProductCard({ name, tag, path, rating, reviews, description, price, was, img }) {
+function ProductCard({ name, tag, path, rating, reviews, description, price, was, img, img2oz, filterSize }) {
     const [saved, setSaved] = useState(false);
+    // which jar is shown: 4 oz by default; the sidebar size filter overrides it
+    const [size, setSize] = useState("4oz");
+    useEffect(() => {
+        if (filterSize) setSize(filterSize);
+    }, [filterSize]);
+    const photo = size === "2oz" && img2oz ? img2oz : img;
+    const sizeLabel = size === "2oz" ? "2 oz" : "4 oz";
 
     return (
         <article className="ctw-product-card">
             <div className="ctw-product-media">
-                <img src={img} alt={`Chantallow ${name} tallow skincare jar`} />
+                {/* key: the new photo fades in when the size changes */}
+                <img key={photo} className="ctw-product-photo" src={photo} alt={`Chantallow ${name} tallow skincare jar, ${sizeLabel}`} />
             </div>
 
             <div>
@@ -398,6 +553,23 @@ function ProductCard({ name, tag, path, rating, reviews, description, price, was
                     {price}
                     <del>{was}</del>
                 </div>
+
+                {img2oz && (
+                    <div className="ctw-jar-sizes" role="radiogroup" aria-label={`${name} size`}>
+                        {JAR_SIZES.map((s) => (
+                            <button
+                                key={s.value}
+                                type="button"
+                                role="radio"
+                                aria-checked={size === s.value}
+                                className={size === s.value ? "ctw-jar-size is-active" : "ctw-jar-size"}
+                                onClick={() => setSize(s.value)}
+                            >
+                                {s.label}
+                            </button>
+                        ))}
+                    </div>
+                )}
 
                 <div className="ctw-product-actions">
                     <Link to="/shopcart" className="ctw-cart-btn">

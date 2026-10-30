@@ -24,9 +24,10 @@
   text-align: left;
 }
 
-/* Empty lines left at the end of an answer (or between blocks) add no space. */
-.rich-text p:empty,
-.rich-text p:has(> br:only-child) {
+/* Truly empty paragraphs add no space. (Not "p:has(> br:only-child)": text
+   doesn't count as a child, so it would also hide "text<br>more text".
+   Empty trailing lines are removed when saving instead.) */
+.rich-text p:empty {
   display: none;
 }
 

@@ -9,8 +9,9 @@ import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
 import Header from "../../components/Header";
 
+// 110 SE 6th Street, Suite 1700, Ft. Lauderdale, Florida 33301
 const MAP_SRC =
-  "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d227748.3825624477!2d75.65046970649679!3d26.88544791796718!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x396c4adf4c57e281%3A0xce1c63a0cf22e09!2sJaipur%2C+Rajasthan!5e0!3m2!1sen!2sin!4v1500819483219";
+  "https://www.google.com/maps?q=110+SE+6th+Street,+Suite+1700,+Fort+Lauderdale,+FL+33301&output=embed";
 
 const RECENT_POSTS = [
   { name: "Hydrated Supple Skin", time: "July 23, 2023", img: recentPost1 },
@@ -47,9 +48,11 @@ function ContactInfo() {
         <h3>United States</h3>
         <ul>
           <li>
-            Address: 3553 Brandywine Street
+            Address: 110 SE 6th Street,
             <br />
-            Northwest, Washington AR 20008
+            Suite 1700 Ft. Lauderdale,
+            <br />
+            Florida . 33301
           </li>
         </ul>
       </div>
@@ -173,7 +176,7 @@ function Footer() {
             <img src={logo} alt="Chantallow" />
           </div>
           <p className="footer-contact">
-            <strong>Address :</strong> 000 Wall Street, UK, London
+            <strong>Address :</strong> 110 SE 6th Street, Suite 1700, Ft. Lauderdale, Florida 33301
           </p>
           <p className="footer-contact">
             <strong>E-mail :</strong> example@info.com

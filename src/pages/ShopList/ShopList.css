@@ -538,7 +538,9 @@
 .ctw-product-card {
   display: flex;
   gap: 32px;
-  align-items: center;
+  /* the photo box runs the full height of the text beside it, so its top
+     lines up with the product name and its bottom with Add To Cart */
+  align-items: stretch;
   background: transparent;
 }
 
@@ -571,20 +573,32 @@
 }
 
 .ctw-product-media {
+  position: relative;
   background: #fff;
   overflow: hidden;
-  aspect-ratio: 1 / 1;
+  min-height: 300px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
+/* the jar fills the box's height (small even padding top and bottom) */
 .ctw-product-media img {
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  inset: 12px;
+  width: calc(100% - 24px);
+  height: calc(100% - 24px);
   object-fit: contain;
   display: block;
   transition: transform .4s ease;
+}
+
+/* phones: photo above the text, square again */
+@media (max-width: 768px) {
+  .ctw-product-media {
+    min-height: 0;
+    aspect-ratio: 1 / 1;
+  }
 }
 
 .ctw-product-card:hover .ctw-product-media img {
@@ -683,6 +697,55 @@
   color: #B4B4A8;
   font-weight: 400;
   margin-left: 8px;
+}
+
+/* 2 oz / 4 oz toggle: switches the card's jar photo */
+.ctw-jar-sizes {
+  display: flex;
+  gap: 8px;
+  margin: -6px 0 20px;
+}
+
+.ctw-jar-size {
+  min-width: 58px;
+  padding: 7px 14px;
+  font-family: 'Lufga', 'DM Sans', sans-serif;
+  font-size: 13.5px;
+  color: #2D2E2F;
+  background: transparent;
+  border: 1px solid #C9D2CC;
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.ctw-jar-size:hover {
+  border-color: #2C7A55;
+}
+
+.ctw-jar-size.is-active {
+  color: #fff;
+  background: #2C7A55;
+  border-color: #2C7A55;
+}
+
+.ctw-jar-size:focus-visible {
+  outline: 2px solid #2C7A55;
+  outline-offset: 2px;
+}
+
+/* the new photo fades in when the size changes */
+.ctw-product-photo {
+  animation: ctwPhotoIn 0.3s ease;
+}
+
+@keyframes ctwPhotoIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctw-product-photo { animation: none; }
 }
 
 .ctw-product-actions {
@@ -939,4 +1002,89 @@
   .ctw-header-inner { padding: 14px 12px; }
   .ctw-header-logo img { height: 32px; }
   .ctw-header-actions { gap: 10px; }
+}
+
+/* ---------- collection line-up photo (end of the page) ---------- */
+.ctw-lineup {
+  width: 100%;
+  overflow: hidden;
+  line-height: 0;
+  background: #2a2620;
+}
+
+.ctw-lineup img {
+  display: block;
+  width: 100%;
+  /* a short strip, trimmed mostly from the top: 21.5% of the page width (at
+     most 500px). The photo is ~42% as tall as it is wide, so only sky and a
+     little stone are cut, never the sides; the jars (52–83% of its height)
+     stay fully in view. */
+  height: min(21.5vw, 500px);
+  object-fit: cover;
+  object-position: center 80%;
+}
+
+/* ---------- dynamic filters ---------- */
+.ctw-filter-tags {
+  flex-wrap: wrap;
+}
+
+.ctw-clear-btn {
+  padding: 6px 4px;
+  font-family: 'Lufga', sans-serif;
+  font-size: 13.5px;
+  color: #2C7A55;
+  background: none;
+  border: none;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.ctw-panel-count {
+  min-width: 20px;
+  padding: 0 6px;
+  font-size: 11.5px;
+  line-height: 20px;
+  text-align: center;
+  color: #fff;
+  background: #2C7A55;
+  border-radius: 10px;
+}
+
+.ctw-no-results {
+  padding: 48px 24px;
+  text-align: center;
+  background: #fff;
+  border: 1px solid #E2E9DA;
+}
+
+.ctw-no-results h4 {
+  margin: 0 0 8px;
+  font-family: 'Marcellus', serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: #1C1C1A;
+}
+
+.ctw-no-results p {
+  margin: 0 0 20px;
+  color: #5A5A52;
+}
+
+.ctw-no-results .ctw-reset-btn {
+  width: auto;
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+/* phones / tablets: the filter panel opens from the "Filter" button */
+@media (max-width: 1024px) {
+  .ctw-shop-sidebar {
+    display: none;
+  }
+
+  .ctw-shop-sidebar.is-open {
+    display: block;
+  }
 }

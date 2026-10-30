@@ -1,22 +1,3 @@
-// src/admin/RichTextEditor.jsx
-// Rich text editor for admin forms (Quill, via react-quill-new):
-// font family, size, headings, bold / italic / underline / strike, text and
-// highlight colours, sub/superscript, alignment, ordered and bullet lists,
-// quotes, links, special characters, importing a Word (.docx) file and
-// downloading the content as a Word file.
-//
-// Images are shrunk, uploaded to the server and inserted 320px wide. Click an
-// image to select it: drag a corner to resize, or use its bar for 25/50/75/100%,
-// alignment, replace and delete (Delete / Backspace also removes it).
-// Shift+Enter inserts a line break inside the same paragraph / list item.
-//
-//   <RichTextEditor value={html} onChange={(html) => ...} />
-//
-// `value` is only read when the editor mounts (remount with a `key` to load
-// different content). onChange receives clean HTML: formatting is written as
-// inline styles and lists as ordinary <ul>/<ol>, so it displays the same
-// anywhere. The server sanitises it again before saving.
-
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import ReactQuill, { Quill } from 'react-quill-new';
 import Delta from 'quill-delta';

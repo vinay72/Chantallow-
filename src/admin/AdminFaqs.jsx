@@ -44,7 +44,17 @@ function FaqForm({ initial = EMPTY, categories, busy, onSave, onCancel, submitLa
         <label htmlFor={`${uid}-a`}>
           Answer <span className="required">*</span> <span className="sub">a blank line starts a new paragraph</span>
         </label>
-        <textarea id={`${uid}-a`} value={faq.answer} onChange={(e) => set('answer', e.target.value)} maxLength={5000} required />
+        <textarea
+          id={`${uid}-a`}
+          value={faq.answer}
+          onChange={(e) => set('answer', e.target.value)}
+          // no Shift+Enter line breaks in answers (Enter still starts a new line)
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && e.shiftKey) e.preventDefault();
+          }}
+          maxLength={5000}
+          required
+        />
       </div>
       <div className="faq-form-row">
         <div className="field">
