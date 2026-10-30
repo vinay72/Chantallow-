@@ -3,12 +3,16 @@
 // localStorage so it survives refreshes and page navigation.
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
-import { getProductById } from "../data/products";
+import { getProductById, isServerProductId } from "../data/products";
 
 const ShopContext = createContext(null);
 
 const CART_KEY = "chantallow_cart";
 const WISHLIST_KEY = "chantallow_wishlist";
+const WISHLIST_ITEMS_KEY = "chantallow_wishlist_items"; // copies of admin-added items, by id
+
+// Built-in products use numeric ids; admin-added ones keep their "srv-12" / "combo-3" id.
+const normId = (id) => (isServerProductId(id) ? id : Number(id));
 
 function load(key, fallback) {
     try {
@@ -29,12 +33,16 @@ function save(key, value) {
 
 export function ShopProvider({ children }) {
     // cart line: { key: "4-2oz", productId: 4, size: "2oz", qty: 1 }
+    // A product added in the admin panel isn't in data/products.js, so its line
+    // also carries a copy of it: { productId: "srv-12", ..., product: {...} }
     const [cart, setCart] = useState(() => load(CART_KEY, []));
     // wishlist: array of product ids
     const [wishlist, setWishlist] = useState(() => load(WISHLIST_KEY, []));
+    const [wishlistCopies, setWishlistCopies] = useState(() => load(WISHLIST_ITEMS_KEY, {}));
 
     useEffect(() => save(CART_KEY, cart), [cart]);
     useEffect(() => save(WISHLIST_KEY, wishlist), [wishlist]);
+    useEffect(() => save(WISHLIST_ITEMS_KEY, wishlistCopies), [wishlistCopies]);
 
     /* ---------------- Toast (small "Added to cart" popup) ---------------- */
     const [toast, setToast] = useState(null);
@@ -49,15 +57,16 @@ export function ShopProvider({ children }) {
     useEffect(() => () => clearTimeout(toastTimer.current), []);
 
     /* ---------------- Cart ---------------- */
-    const addToCart = useCallback((productId, qty = 1, size = "2oz") => {
-        const id = Number(productId);
+    // `product` is only needed for admin-added products (see fromServerProduct).
+    const addToCart = useCallback((productId, qty = 1, size = "2oz", product = null) => {
+        const id = normId(productId);
         const key = `${id}-${size}`;
         setCart((prev) => {
             const existing = prev.find((line) => line.key === key);
             if (existing) {
                 return prev.map((line) => (line.key === key ? { ...line, qty: line.qty + qty } : line));
             }
-            return [...prev, { key, productId: id, size, qty }];
+            return [...prev, { key, productId: id, size, qty, ...(isServerProductId(id) && product ? { product } : {}) }];
         });
     }, []);
 
@@ -74,41 +83,60 @@ export function ShopProvider({ children }) {
     const clearCart = useCallback(() => setCart([]), []);
 
     /* ---------------- Wishlist ---------------- */
-    const addToWishlist = useCallback((productId) => {
-        const id = Number(productId);
-        setWishlist((prev) => (prev.includes(id) ? prev : [...prev, id]));
+    // `product` is only needed for admin-added items (as with addToCart).
+    const rememberCopy = useCallback((id, product) => {
+        if (isServerProductId(id) && product) setWishlistCopies((prev) => ({ ...prev, [id]: product }));
     }, []);
 
+    const addToWishlist = useCallback(
+        (productId, product = null) => {
+            const id = normId(productId);
+            rememberCopy(id, product);
+            setWishlist((prev) => (prev.includes(id) ? prev : [...prev, id]));
+        },
+        [rememberCopy]
+    );
+
     const removeFromWishlist = useCallback((productId) => {
-        const id = Number(productId);
+        const id = normId(productId);
         setWishlist((prev) => prev.filter((x) => x !== id));
     }, []);
 
-    const toggleWishlist = useCallback((productId) => {
-        const id = Number(productId);
-        setWishlist((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
-    }, []);
+    const toggleWishlist = useCallback(
+        (productId, product = null) => {
+            const id = normId(productId);
+            rememberCopy(id, product);
+            setWishlist((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+        },
+        [rememberCopy]
+    );
 
-    const isInWishlist = useCallback((productId) => wishlist.includes(Number(productId)), [wishlist]);
+    const isInWishlist = useCallback((productId) => wishlist.includes(normId(productId)), [wishlist]);
 
     const moveToCart = useCallback(
         (productId) => {
-            addToCart(productId, 1);
-            removeFromWishlist(productId);
+            const id = normId(productId);
+            const copy = wishlistCopies[id];
+            // a combo is one fixed set, so it has no size to pick
+            addToCart(id, 1, copy?.items ? "Combo" : "2oz", copy || null);
+            removeFromWishlist(id);
         },
-        [addToCart, removeFromWishlist]
+        [addToCart, removeFromWishlist, wishlistCopies]
     );
 
     /* ---------------- Derived data ---------------- */
     const cartItems = useMemo(
         () =>
             cart
-                .map((line) => ({ ...line, product: getProductById(line.productId) }))
+                .map((line) => ({ ...line, product: getProductById(line.productId) || line.product }))
                 .filter((line) => line.product),
         [cart]
     );
 
-    const wishlistItems = useMemo(() => wishlist.map((id) => getProductById(id)).filter(Boolean), [wishlist]);
+    const wishlistItems = useMemo(
+        () => wishlist.map((id) => getProductById(id) || wishlistCopies[id]).filter(Boolean),
+        [wishlist, wishlistCopies]
+    );
 
     const cartCount = cart.reduce((sum, line) => sum + line.qty, 0);
     const wishlistCount = wishlistItems.length;

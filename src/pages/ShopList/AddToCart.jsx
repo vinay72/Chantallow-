@@ -4,7 +4,7 @@ import "./AddToCart.css";
 import cartBanner from "../../assets/background/bg1.jpg";
 import SiteFooter from "../../components/SiteFooter";
 import { useShop } from "../../context/ShopContext";
-import { formatPrice } from "../../data/products";
+import { formatPrice, productPath } from "../../data/products";
 import Header from "../../components/Header";
 
 /**
@@ -137,12 +137,12 @@ export default function AddToCart() {
                         return (
                           <tr key={line.key}>
                             <td className="sc-td-img">
-                              <Link to={`/product/${product.slug}`}>
+                              <Link to={productPath(product)}>
                                 <img src={product.cardImage || product.gallery[0]} alt={product.displayName || product.name} />
                               </Link>
                             </td>
                             <td className="sc-td-name">
-                              <Link to={`/product/${product.slug}`} className="sc-item-title" style={{ color: "inherit", textDecoration: "none" }}>
+                              <Link to={productPath(product)} className="sc-item-title" style={{ color: "inherit", textDecoration: "none" }}>
                                 {product.displayName || product.name}
                               </Link>
                               <ul className="sc-item-attrs">
@@ -225,12 +225,12 @@ export default function AddToCart() {
                     {wishlistItems.map((product) => (
                       <tr key={product.id}>
                         <td className="sc-td-img">
-                          <Link to={`/product/${product.slug}`}>
+                          <Link to={productPath(product)}>
                             <img src={product.cardImage || product.gallery[0]} alt={product.displayName || product.name} />
                           </Link>
                         </td>
                         <td className="sc-td-name">
-                          <Link to={`/product/${product.slug}`} className="sc-item-title" style={{ color: "inherit", textDecoration: "none" }}>
+                          <Link to={productPath(product)} className="sc-item-title" style={{ color: "inherit", textDecoration: "none" }}>
                             {product.displayName || product.name}
                           </Link>
                           <ul className="sc-item-attrs">

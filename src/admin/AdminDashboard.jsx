@@ -1,9 +1,10 @@
 // src/admin/AdminDashboard.jsx
 // /admin/dashboard — store totals, monthly charts and the latest orders.
-// Numbers come from GET /api/admin/stats; an order's status can be changed
-// from the recent-orders table (e.g. mark it delivered).
+// Numbers come from GET /api/admin/stats. Each card links to the matching
+// list, and an order's status can be changed from the recent-orders list.
 
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   Area,
   AreaChart,
@@ -21,39 +22,31 @@ import {
 } from 'recharts';
 import { Ban, CircleDollarSign, PackageCheck, ReceiptText, ShoppingCart, Undo2, Users } from 'lucide-react';
 import { api } from './api';
+import { ORDER_STATUS as STATUS, money } from './orderMeta';
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-const STATUS = {
-  'in-progress': { label: 'In Progress', color: '#3b82c4' },
-  delayed: { label: 'Delayed', color: '#d9a21b' },
-  delivered: { label: 'Delivered', color: '#3c8a5a' },
-  canceled: { label: 'Canceled', color: '#b5483a' },
-};
-
-const money = (n) =>
-  `$${Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 const shortMoney = (n) => (n >= 1000 ? `$${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}k` : `$${n}`);
 
 const CARDS = [
-  { key: 'users', label: 'Total Users', Icon: Users, color: '#4a6fd1' },
-  { key: 'orders', label: 'Total Orders', Icon: ShoppingCart, color: '#2aa3a3' },
-  { key: 'order_value', label: 'Total Order Value', Icon: CircleDollarSign, color: '#3c8a5a', money: true },
-  { key: 'delivered', label: 'Orders Delivered', Icon: PackageCheck, color: '#5b9b3a' },
-  { key: 'canceled', label: 'Orders Cancelled', Icon: Ban, color: '#b5483a' },
-  { key: 'returned', label: 'Orders Returned', Icon: Undo2, color: '#d9a21b' },
-  { key: 'refund_value', label: 'Total Refund Value', Icon: ReceiptText, color: '#8a5cc2', money: true },
+  { key: 'users', label: 'Total Users', Icon: Users, color: '#4a6fd1', to: '/admin/users' },
+  { key: 'orders', label: 'Total Orders', Icon: ShoppingCart, color: '#2aa3a3', to: '/admin/orders' },
+  { key: 'order_value', label: 'Total Order Value', Icon: CircleDollarSign, color: '#3c8a5a', money: true, to: '/admin/orders' },
+  { key: 'delivered', label: 'Orders Delivered', Icon: PackageCheck, color: '#5b9b3a', to: '/admin/orders?status=delivered' },
+  { key: 'canceled', label: 'Orders Cancelled', Icon: Ban, color: '#b5483a', to: '/admin/orders?status=canceled' },
+  { key: 'returned', label: 'Orders Returned', Icon: Undo2, color: '#d9a21b', to: '/admin/returns' },
+  { key: 'refund_value', label: 'Total Refund Value', Icon: ReceiptText, color: '#8a5cc2', money: true, to: '/admin/returns?status=Refunded' },
 ];
 
-function StatCard({ label, value, Icon, color }) {
+function StatCard({ label, value, Icon, color, to }) {
   return (
-    <div className="stat-card" style={{ '--accent': color }}>
+    <Link to={to} className="stat-card" style={{ '--accent': color }}>
       <div>
         <div className="stat-label">{label}</div>
         <div className="stat-value">{value}</div>
       </div>
       <Icon className="stat-icon" size={38} strokeWidth={1.5} aria-hidden="true" />
-    </div>
+    </Link>
   );
 }
 
@@ -137,6 +130,13 @@ export default function AdminDashboard() {
 
       {stats && (
         <>
+          {stats.totals.pending_returns > 0 && (
+            <Link to="/admin/returns?status=Pending" className="notice">
+              {stats.totals.pending_returns} return request{stats.totals.pending_returns > 1 ? 's' : ''} waiting for a
+              decision →
+            </Link>
+          )}
+
           <div className="stat-grid">
             {CARDS.map((c) => (
               <StatCard
@@ -144,6 +144,7 @@ export default function AdminDashboard() {
                 label={c.label}
                 Icon={c.Icon}
                 color={c.color}
+                to={c.to}
                 value={c.money ? money(stats.totals[c.key]) : stats.totals[c.key].toLocaleString('en-US')}
               />
             ))}
@@ -223,7 +224,9 @@ export default function AdminDashboard() {
                   {stats.recent_orders.map((o) => (
                     <li key={o.id}>
                       <div className="ro-main">
-                        <strong>#{o.id}</strong>
+                        <Link to={`/admin/orders/${o.id}`} className="order-no">
+                          #{o.id}
+                        </Link>
                         <span>{o.customer || o.email || 'Guest'}</span>
                         <span className="ro-date">{new Date(o.placed_at).toLocaleDateString()}</span>
                       </div>

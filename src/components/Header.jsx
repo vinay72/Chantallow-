@@ -12,7 +12,7 @@ import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Heart, Menu, Search, ShoppingCart, X } from "lucide-react";
 import AccountLink from "./AccountLink";
 import { useShop } from "../context/ShopContext";
-import { formatPrice } from "../data/products";
+import { formatPrice, productPath } from "../data/products";
 import logo from "../assets/logo.png";
 import "./Header.css";
 
@@ -250,11 +250,11 @@ function CartDrawer({ open, onClose, tab, setTab }) {
                     const name = row.product.displayName || row.product.name;
                     return (
                         <div key={row.key} className="sh-row">
-                            <button type="button" className="sh-row-img" onClick={() => goTo(`/product/${row.product.slug}`)}>
+                            <button type="button" className="sh-row-img" onClick={() => goTo(productPath(row.product))}>
                                 <img src={row.product.cardImage || row.product.gallery[0]} alt={name} />
                             </button>
                             <div className="sh-row-info">
-                                <button type="button" className="sh-row-name" onClick={() => goTo(`/product/${row.product.slug}`)}>
+                                <button type="button" className="sh-row-name" onClick={() => goTo(productPath(row.product))}>
                                     {name}
                                 </button>
                                 <div className="sh-row-meta">{row.meta}</div>

@@ -110,8 +110,10 @@
 }
 
 /* Desktop: the row is as tall as the main image. The info card and thumbnail
-   rail take height 0 + min-height 100% so they never grow the row — instead
-   they scroll inside it, keeping the images on the left still. */
+   rail are size-contained, so they add nothing to the row's height but are
+   still stretched to it — they scroll inside it, keeping the images still.
+   (height: 0 + min-height: 100% doesn't work here: the row has no fixed
+   height, so the percentage resolves to 0 and the card collapses.) */
 @media (min-width: 1025px) {
   .pd-gallery-section {
     align-items: stretch;
@@ -119,8 +121,7 @@
 
   .pd-info-card,
   .pd-thumb-rail {
-    height: 0;
-    min-height: 100%;
+    contain: size;
     overflow-y: auto; /* at either end, scrolling hands off to the page */
     scroll-behavior: smooth;
     scrollbar-width: thin;

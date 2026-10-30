@@ -72,3 +72,49 @@ CREATE TABLE IF NOT EXISTS order_returns (
 );
 
 CREATE INDEX IF NOT EXISTS idx_order_returns_order ON order_returns (order_id);
+
+-- Added for the full order flow (user panel + admin panel).
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS phone TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS address JSONB;            -- delivery address
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS history JSONB NOT NULL DEFAULT '[]'; -- [{type, at, by}]
+ALTER TABLE order_returns ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
+
+-- Small site-wide settings the admin edits (e.g. which products the home page
+-- shows as new launches). key -> JSON value.
+CREATE TABLE IF NOT EXISTS site_settings (
+  key TEXT PRIMARY KEY,
+  value JSONB NOT NULL,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Combo products ("The Chantallow Duos" on the home page): one image, one price,
+-- and the products inside the combo.
+CREATE TABLE IF NOT EXISTS combos (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT,
+  price NUMERIC(10,2) NOT NULL DEFAULT 0,
+  compare_at_price NUMERIC(10,2),
+  tag TEXT,                              -- badge on the card, e.g. "Get 20% Off"
+  accent TEXT,                           -- card tint, #RRGGBB
+  image TEXT,                            -- /uploads/products/...
+  items JSONB NOT NULL DEFAULT '[]',     -- [{product_id, name, size, qty}]
+  position INTEGER NOT NULL DEFAULT 0,   -- lower shows first
+  is_active BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- Frequently asked questions, managed from Admin -> Home -> FAQs.
+CREATE TABLE IF NOT EXISTS faqs (
+  id SERIAL PRIMARY KEY,
+  question TEXT NOT NULL,
+  answer TEXT NOT NULL,
+  category TEXT,
+  position INTEGER NOT NULL DEFAULT 0,
+  is_published BOOLEAN NOT NULL DEFAULT true,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);

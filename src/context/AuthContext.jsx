@@ -4,6 +4,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api, clearToken, getToken, setToken, UNAUTHORIZED_EVENT } from "../api/client";
+import { clearAccountOrders } from "../data/account";
 
 const AuthContext = createContext(null);
 
@@ -25,7 +26,10 @@ export function AuthProvider({ children }) {
     }, []);
 
     useEffect(() => {
-        const onUnauthorized = () => setUser(null);
+        const onUnauthorized = () => {
+            setUser(null);
+            clearAccountOrders();
+        };
         window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
         return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
     }, []);
@@ -47,6 +51,7 @@ export function AuthProvider({ children }) {
     const logout = useCallback(() => {
         clearToken();
         setUser(null);
+        clearAccountOrders();
     }, []);
 
     const value = useMemo(

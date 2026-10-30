@@ -21,7 +21,8 @@ const REASONS = [
 
 const RETURN_STATUS = {
   Pending: { label: "Pending", color: "#f0a30a" },
-  Approved: { label: "Approved", color: "#2c8a5a" },
+  Approved: { label: "Approved", color: "#1e88e5" },
+  Refunded: { label: "Refunded", color: "#2c8a5a" },
   Rejected: { label: "Rejected", color: "#d32f2f" },
 };
 
@@ -32,6 +33,7 @@ export default function AccountReturnRequest() {
   const { showToast } = useShop();
   const [form, setForm] = useState(EMPTY);
   const [errors, setErrors] = useState({});
+  const [busy, setBusy] = useState(false);
 
   const delivered = useMemo(
     () => orders.filter((o) => o.status === "delivered").sort((a, b) => new Date(b.placedAt) - new Date(a.placedAt)),
@@ -42,7 +44,7 @@ export default function AccountReturnRequest() {
 
   const set = (k, v) => setForm((p) => ({ ...p, [k]: v }));
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault();
     const out = {};
     if (!order) out.orderId = "Please choose an order.";
@@ -52,16 +54,32 @@ export default function AccountReturnRequest() {
     setErrors(out);
     if (Object.keys(out).length) return;
 
-    const req = addReturnRequest({
-      orderId: order.id,
-      productId: line.productId,
-      size: line.size,
-      qty: Number(form.qty),
-      reason: form.reason,
-      comment: form.comment.trim(),
-    });
-    setForm(EMPTY);
-    showToast && showToast(`Return request ${req.id} submitted`);
+    setBusy(true);
+    try {
+      const req = await addReturnRequest({
+        orderId: order.id,
+        productId: line.productId,
+        size: line.size,
+        qty: Number(form.qty),
+        reason: form.reason,
+        comment: form.comment.trim(),
+      });
+      setForm(EMPTY);
+      showToast && showToast(`Return request ${req.id} submitted`);
+    } catch (err) {
+      setErrors({ submit: err.message });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onWithdraw = async (id) => {
+    try {
+      await cancelReturnRequest(id);
+      showToast && showToast(`Return request ${id} withdrawn`);
+    } catch (err) {
+      showToast && showToast(err.message);
+    }
   };
 
   return (
@@ -132,8 +150,9 @@ export default function AccountReturnRequest() {
                 {errors.comment && <em>{errors.comment}</em>}
               </label>
             </div>
-            <button type="submit" className="ua-btn ua-btn--primary">
-              Submit Request
+            {errors.submit && <p className="ua-form__error" role="alert">{errors.submit}</p>}
+            <button type="submit" className="ua-btn ua-btn--primary" disabled={busy}>
+              {busy ? "Submitting…" : "Submit Request"}
             </button>
           </form>
         )}
@@ -172,7 +191,7 @@ export default function AccountReturnRequest() {
                     </td>
                     <td className="ua-right">
                       {r.status === "Pending" && (
-                        <button type="button" className="ua-link ua-link-btn ua-link--danger" onClick={() => cancelReturnRequest(r.id)}>
+                        <button type="button" className="ua-link ua-link-btn ua-link--danger" onClick={() => onWithdraw(r.id)}>
                           Withdraw
                         </button>
                       )}

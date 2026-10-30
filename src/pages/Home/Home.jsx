@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Header from "../../components/Header";
 import {
   Heart,
@@ -28,7 +28,8 @@ import lavender from "../../assets/lavender.png";
 
 import CollectionCard from "../../components/CollectionCard";
 import { useShop } from "../../context/ShopContext";
-import { formatPrice, getProductById } from "../../data/products";
+import { formatPrice, fromServerCombo, fromServerProduct, getProductById } from "../../data/products";
+import { api } from "../../api/client";
 
 import petMap from "../../assets/map/map2.png";
 import petDog from "../../assets/pet/dog.png";
@@ -128,6 +129,8 @@ const PRODUCTS = [
     { id: 8, slug: "bare-whipped-tallow", jarScale: 1.05, name: "Bare Whipped Tallow", accent: "#c5502f", items: "4 items", img: bareWhippedTallowJar },
 ];
 
+// Built-in combo cards, shown until the combos from Admin → Home → Combo
+// Products load (and if the server can't be reached or has none).
 // Each photo shows two jars: a big one in front and a small one beside it.
 // `name` = big jar + small jar.  `id` = the BIG jar's product, so clicking the
 // card, the heart and the cart button all use the product that's in front.
@@ -196,6 +199,13 @@ const HERO_SIZES = [
     { value: "4oz", label: "4 oz" },
 ];
 const HERO_SIZE_LABEL = { "2oz": "2 oz", "4oz": "4 oz" };
+
+// Shown in the hero when the admin hasn't picked any new launches
+// (Admin → Home). These come from data/products.js.
+const DEFAULT_HERO_PRODUCTS = [
+    { id: 1, name: "Amber Glow", img: pic1 },
+    { id: 2, name: "Amethyst Relief", img: pic2 },
+].map((p) => ({ ...p, price: getProductById(p.id)?.price, was: null, sizes: HERO_SIZES, inStock: true, product: null }));
 
 export default function Home() {
     const navigate = useNavigate();
@@ -368,8 +378,38 @@ function GlobalStyle() {
 function Hero({ navigate }) {
     const { addToCart, showToast } = useShop();
 
-    // Selected size for each hero mini product (product id -> size)
-    const [heroSizes, setHeroSizes] = useState({ 1: "2oz", 2: "2oz" });
+    // New launch products picked in Admin → Home (null while loading).
+    const [launches, setLaunches] = useState(null);
+    useEffect(() => {
+        let cancelled = false;
+        api("/home")
+            .then((data) => !cancelled && setLaunches(data.new_launches.map(fromServerProduct)))
+            .catch(() => !cancelled && setLaunches([])); // backend down: fall back to the defaults
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const heroProducts =
+        launches === null
+            ? []
+            : launches.length
+            ? launches.map((p) => ({
+                  id: p.id,
+                  name: p.name,
+                  img: p.cardImage,
+                  price: p.price,
+                  was: p.compareAtPrice,
+                  sizes: p.size ? [{ value: p.size, label: p.size }] : [],
+                  inStock: p.inStock,
+                  product: p,
+              }))
+            : DEFAULT_HERO_PRODUCTS;
+
+    // Selected size for each hero mini product (product id -> size); first size by default
+    const [heroSizes, setHeroSizes] = useState({});
+    const sizeOf = (p) => heroSizes[p.id] ?? p.sizes[0]?.value ?? "";
+    const sizeLabel = (p, value) => p.sizes.find((s) => s.value === value)?.label || HERO_SIZE_LABEL[value] || value;
 
     return (
         <section
@@ -501,13 +541,10 @@ function Hero({ navigate }) {
                         Shop Now
                     </button>
 
-                    {/* Mini product cards — "+" now adds that product to the cart */}
-                    <div className="ctw-hero-minis">
-                        {[
-                            { id: 1, name: "Amber Glow", img: IMAGES.productPic1 },
-                            { id: 2, name: "Amethyst Relief", img: IMAGES.productPic2 },
-                        ].map((p) => (
-                            <div key={p.name} style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
+                    {/* Mini product cards (new launches) — "+" adds that product to the cart */}
+                    <div className="ctw-hero-minis" style={{ minHeight: 110 }}>
+                        {heroProducts.map((p) => (
+                            <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
                                 <div style={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
                                     <div
                                         style={{
@@ -530,13 +567,15 @@ function Hero({ navigate }) {
                                         }}
                                     />
                                     <button
-                                        aria-label={`Add ${p.name} (${HERO_SIZE_LABEL[heroSizes[p.id]]}) to cart`}
+                                        aria-label={p.inStock ? `Add ${p.name}${sizeOf(p) ? ` (${sizeLabel(p, sizeOf(p))})` : ""} to cart` : `${p.name} is sold out`}
+                                        disabled={!p.inStock}
                                         onClick={() => {
-                                            const size = heroSizes[p.id];
-                                            addToCart(p.id, 1, size);
-                                            showToast(`${p.name} (${HERO_SIZE_LABEL[size]}) added to cart`);
+                                            const size = sizeOf(p);
+                                            addToCart(p.id, 1, size || "One size", p.product);
+                                            showToast(`${p.name}${size ? ` (${sizeLabel(p, size)})` : ""} added to cart`);
                                         }}
                                         style={{
+                                            opacity: p.inStock ? 1 : 0.4,
                                             position: "absolute",
                                             top: 0,
                                             right: 0,
@@ -549,7 +588,7 @@ function Hero({ navigate }) {
                                             display: "flex",
                                             alignItems: "center",
                                             justifyContent: "center",
-                                            cursor: "pointer",
+                                            cursor: p.inStock ? "pointer" : "not-allowed",
                                         }}
                                     >
                                         <Plus size={16} strokeWidth={2.4} />
@@ -570,43 +609,46 @@ function Hero({ navigate }) {
                                         {p.name}
                                     </div>
                                     <div style={{ fontSize: 17, fontFamily: "Marcellus, sans-serif" }}>
-                                        <span style={{ color: "#41705B" }}>$00</span>{" "}
-                                        <del style={{ color: "#B4B4A8", marginLeft: 6 }}>$00</del>
+                                        <span style={{ color: "#41705B" }}>{p.price != null ? formatPrice(p.price) : "$00"}</span>
+                                        {p.was != null && <del style={{ color: "#B4B4A8", marginLeft: 6 }}>{formatPrice(p.was)}</del>}
+                                        {!p.inStock && <span style={{ color: "#B5483A", marginLeft: 10, fontSize: 14 }}>Sold out</span>}
                                     </div>
 
-                                    {/* Size selector: 2 oz / 4 oz */}
-                                    <div
-                                        role="radiogroup"
-                                        aria-label={`${p.name} size`}
-                                        style={{ display: "flex", gap: 8, marginTop: 10 }}
-                                    >
-                                        {HERO_SIZES.map((s) => {
-                                            const active = heroSizes[p.id] === s.value;
-                                            return (
-                                                <button
-                                                    key={s.value}
-                                                    type="button"
-                                                    role="radio"
-                                                    aria-checked={active}
-                                                    onClick={() => setHeroSizes((prev) => ({ ...prev, [p.id]: s.value }))}
-                                                    style={{
-                                                        minWidth: 52,
-                                                        padding: "6px 12px",
-                                                        borderRadius: 20,
-                                                        border: `1px solid ${active ? "#2C7A55" : "#C9D2CC"}`,
-                                                        background: active ? "#2C7A55" : "transparent",
-                                                        color: active ? "#fff" : "#2D2E2F",
-                                                        fontSize: 13,
-                                                        fontFamily: "Lufga, 'DM Sans', sans-serif",
-                                                        cursor: "pointer",
-                                                        transition: "all .2s ease",
-                                                    }}
-                                                >
-                                                    {s.label}
-                                                </button>
-                                            );
-                                        })}
-                                    </div>
+                                    {/* Size selector (2 oz / 4 oz, or the launch product's size) */}
+                                    {p.sizes.length > 0 && (
+                                        <div
+                                            role="radiogroup"
+                                            aria-label={`${p.name} size`}
+                                            style={{ display: "flex", gap: 8, marginTop: 10 }}
+                                        >
+                                            {p.sizes.map((s) => {
+                                                const active = sizeOf(p) === s.value;
+                                                return (
+                                                    <button
+                                                        key={s.value}
+                                                        type="button"
+                                                        role="radio"
+                                                        aria-checked={active}
+                                                        onClick={() => setHeroSizes((prev) => ({ ...prev, [p.id]: s.value }))}
+                                                        style={{
+                                                            minWidth: 52,
+                                                            padding: "6px 12px",
+                                                            borderRadius: 20,
+                                                            border: `1px solid ${active ? "#2C7A55" : "#C9D2CC"}`,
+                                                            background: active ? "#2C7A55" : "transparent",
+                                                            color: active ? "#fff" : "#2D2E2F",
+                                                            fontSize: 13,
+                                                            fontFamily: "Lufga, 'DM Sans', sans-serif",
+                                                            cursor: "pointer",
+                                                            transition: "all .2s ease",
+                                                        }}
+                                                    >
+                                                        {s.label}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         ))}
@@ -812,6 +854,32 @@ function MissionStrip() {
      bag    -> adds to cart, stays on Home                                    */
 
 function TallowCollection({ onQuickView }) {
+    // Combos managed in the admin panel; null until loaded.
+    const [combos, setCombos] = useState(null);
+    useEffect(() => {
+        let cancelled = false;
+        api("/combos")
+            .then((data) => !cancelled && setCombos(data.combos.map(fromServerCombo)))
+            .catch(() => !cancelled && setCombos([]));
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    // Server combos fill the 3 columns left to right, like the built-in layout.
+    const cards = combos?.length
+        ? combos.map((combo, i) => ({
+              key: combo.id,
+              id: combo.id,
+              name: combo.name,
+              tag: combo.tag,
+              accent: combo.accent,
+              img: combo.cardImage,
+              col: (i % 3) + 1,
+              combo,
+          }))
+        : COLLECTION_CARDS;
+
     return (
         <section
             id="shop"
@@ -890,7 +958,7 @@ function TallowCollection({ onQuickView }) {
                 <div className="ctw-duos-grid">
                     {[1, 2, 3].map((col) => (
                         <div key={col} className={col === 2 ? "ctw-duos-col ctw-duos-col--offset" : "ctw-duos-col"}>
-                            {COLLECTION_CARDS.map((c, i) =>
+                            {cards.map((c, i) =>
                                 c.col === col ? (
                                     <div key={c.key || c.id} className="ctw-duos-card" style={{ order: i }}>
                                         <CollectionCard c={c} onQuickView={() => onQuickView(c)} />

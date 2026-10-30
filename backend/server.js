@@ -3,8 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
-const { pool, testConnection } = require('./db');
+const { pool, testConnection, isConnectError } = require('./db');
 const { upload } = require('./upload');
+const { seedHomeContent } = require('./seed');
 const {
   ROLES,
   publicUser,
@@ -190,14 +191,153 @@ async function findProducts(query = {}) {
 
 const isValidId = (id) => /^\d+$/.test(String(id));
 
+// ---------- home page settings ----------
+
+const MAX_NEW_LAUNCHES = 4;
+
+// The products picked as "new launches", in the admin's order. Products that
+// were deleted since are skipped.
+async function getNewLaunches() {
+  const { rows: setting } = await pool.query(`SELECT value FROM site_settings WHERE key = 'home_new_launches'`);
+  const ids = (setting[0]?.value || []).filter(isValidId).map(Number);
+  if (!ids.length) return [];
+  const { rows } = await pool.query(
+    'SELECT * FROM products WHERE id = ANY($1::int[]) ORDER BY array_position($1::int[], id)',
+    [ids]
+  );
+  return rows;
+}
+
+// ---------- combos & FAQs ----------
+
+const COMBO_SIZES = ['2 oz', '4 oz', '8 oz', '16 oz'];
+const isHexColor = (c) => /^#[0-9a-f]{6}$/i.test(String(c));
+const asBool = (v, fallback) =>
+  v === undefined || v === '' ? fallback : v === true || v === 'true' || v === '1' || v === 'on';
+
+const publicCombo = (row) => ({
+  ...row,
+  price: Number(row.price),
+  compare_at_price: row.compare_at_price == null ? null : Number(row.compare_at_price),
+});
+
+// Combo form fields (multipart or JSON). `items` may arrive as a JSON string.
+async function validateComboBody(body, { hasImage }) {
+  const errors = [];
+  const name = clip(body.name, 200);
+  if (!name) errors.push('Combo name is required.');
+
+  const price = Number(body.price);
+  if (body.price === undefined || String(body.price).trim() === '' || !isMoney(price)) {
+    errors.push('Price must be a number of 0 or more.');
+  }
+  let compare = null;
+  if (body.compare_at_price != null && String(body.compare_at_price).trim() !== '') {
+    compare = Number(body.compare_at_price);
+    if (!isMoney(compare)) errors.push('Compare-at price must be a number of 0 or more.');
+  }
+
+  const accent = clip(body.accent, 7) || null;
+  if (accent && !isHexColor(accent)) errors.push('Card colour must look like #3B1941.');
+
+  const position = body.position === undefined || String(body.position).trim() === '' ? 0 : Number(body.position);
+  if (!Number.isInteger(position) || position < 0) errors.push('Position must be a whole number of 0 or more.');
+
+  let raw = body.items;
+  if (typeof raw === 'string') {
+    try {
+      raw = JSON.parse(raw);
+    } catch (_) {
+      raw = null;
+    }
+  }
+  if (!Array.isArray(raw) || raw.length === 0) errors.push('Add at least one product to the combo.');
+  const items = (Array.isArray(raw) ? raw : []).map((it) => ({
+    product_id: isValidId(it?.product_id) ? Number(it.product_id) : null,
+    name: clip(it?.name, 200),
+    size: clip(it?.size, 20),
+    qty: Number(it?.qty ?? 1),
+  }));
+  if (items.length > 10) errors.push('A combo can have at most 10 products.');
+  if (items.some((it) => !it.name)) errors.push('Every product in the combo needs a name.');
+  if (items.some((it) => it.size && !COMBO_SIZES.includes(it.size))) errors.push('Unknown size in the combo.');
+  if (items.some((it) => !Number.isInteger(it.qty) || it.qty < 1 || it.qty > 99)) {
+    errors.push('Each product quantity must be between 1 and 99.');
+  }
+
+  // Linked products must exist; their current name is kept on the combo.
+  const ids = [...new Set(items.map((it) => it.product_id).filter(Boolean))];
+  if (ids.length) {
+    const { rows } = await pool.query('SELECT id, name FROM products WHERE id = ANY($1::int[])', [ids]);
+    const names = new Map(rows.map((r) => [r.id, r.name]));
+    if (names.size !== ids.length) errors.push('One of the linked products no longer exists.');
+    for (const it of items) if (it.product_id && names.has(it.product_id)) it.name = names.get(it.product_id);
+  }
+
+  if (!hasImage) errors.push('Add a combo image.');
+
+  return {
+    errors,
+    values: {
+      name, price, compare, accent, position, items,
+      description: clip(body.description, 4000) || null,
+      tag: clip(body.tag, 40) || null,
+      is_active: asBool(body.is_active, true),
+    },
+  };
+}
+
+function validateFaqBody(body) {
+  const errors = [];
+  const question = clip(body?.question, 500);
+  const answer = clip(body?.answer, 5000);
+  if (!question) errors.push('Question is required.');
+  if (!answer) errors.push('Answer is required.');
+  return {
+    errors,
+    values: {
+      question, answer,
+      category: clip(body?.category, 80) || null,
+      is_published: asBool(body?.is_published, true),
+    },
+  };
+}
+
 // ---------- order helpers ----------
 
 const ORDER_STATUSES = ['in-progress', 'delayed', 'delivered', 'canceled'];
 const CANCELLABLE_STATUSES = ['in-progress', 'delayed'];
+const RETURN_STATUSES = ['Pending', 'Approved', 'Rejected', 'Refunded'];
+// Where an admin may move a return request from each status. Refunded and
+// Rejected are final.
+const RETURN_NEXT = { Pending: ['Approved', 'Rejected'], Approved: ['Refunded', 'Rejected'], Rejected: [], Refunded: [] };
+
 const isOrderId = (id) => /^[A-Z0-9]{6,20}$/.test(String(id));
 const isReturnId = (id) => /^RR-[A-Z0-9]{4,20}$/.test(String(id));
 const money = (n) => Math.round(Number(n) * 100) / 100;
 const isMoney = (n) => typeof n === 'number' && Number.isFinite(n) && n >= 0;
+const clip = (v, max = 500) => String(v ?? '').trim().slice(0, max);
+
+const ADDRESS_FIELDS = ['firstName', 'lastName', 'company', 'country', 'street1', 'street2', 'city', 'cityOther', 'state', 'zip'];
+function cleanAddress(a) {
+  if (!a || typeof a !== 'object') return null;
+  const out = {};
+  for (const k of ADDRESS_FIELDS) if (clip(a[k], 200)) out[k] = clip(a[k], 200);
+  return Object.keys(out).length ? out : null;
+}
+
+// One timeline entry, ready to append with `history || $n::jsonb`.
+const historyEntry = (type, by) => JSON.stringify([{ type, at: new Date().toISOString(), by }]);
+
+// pg returns NUMERIC columns as strings; the API sends numbers.
+const publicOrder = (row) => ({
+  ...row,
+  subtotal: Number(row.subtotal),
+  discount: Number(row.discount),
+  shipping_cost: Number(row.shipping_cost),
+  total: Number(row.total),
+});
+const publicReturn = (row) => ({ ...row, amount: Number(row.amount) });
 
 // Checks the order sent by checkout and works out its totals.
 function validateOrderBody(body) {
@@ -207,8 +347,11 @@ function validateOrderBody(body) {
 
   const rawItems = Array.isArray(body?.items) ? body.items : [];
   if (!rawItems.length) errors.push('An order needs at least one item.');
+  if (rawItems.length > 100) errors.push('Too many items in one order.');
   const items = rawItems.map((l) => ({
     productId: String(l?.productId ?? ''),
+    name: clip(l?.name, 200) || undefined,
+    img: clip(l?.img, 500) || undefined,
     size: String(l?.size ?? ''),
     qty: Number(l?.qty),
     price: Number(l?.price),
@@ -221,14 +364,18 @@ function validateOrderBody(body) {
   const shippingCost = Number(body?.shippingCost ?? 0);
   if (!isMoney(discount) || !isMoney(shippingCost)) errors.push('Discount and shipping must be 0 or more.');
 
+  const address = cleanAddress(body?.address);
   const subtotal = money(items.reduce((sum, l) => sum + l.qty * l.price, 0));
   const total = money(Math.max(0, subtotal - discount + shippingCost));
   return {
     errors,
     values: {
-      id, items, subtotal, discount: money(discount), shippingCost: money(shippingCost), total,
-      email: String(body?.email || '').trim().toLowerCase() || null,
-      payment: String(body?.payment || '').trim() || null,
+      id, items, subtotal, discount: money(discount), shippingCost: money(shippingCost), total, address,
+      customerName: [address?.firstName, address?.lastName].filter(Boolean).join(' ') || null,
+      email: clip(body?.email, 200).toLowerCase() || null,
+      phone: clip(body?.phone, 40) || null,
+      payment: clip(body?.payment, 40) || null,
+      notes: clip(body?.notes, 2000) || null,
     },
   };
 }
@@ -295,6 +442,46 @@ api.get('/meta', (req, res) => {
   res.json({ success: true, categories: CATEGORIES, sizes: SIZES, stock_statuses: STOCK_STATUSES });
 });
 
+// --- GET /api/home --- (what the home page shows: new launch products)
+api.get('/home', async (req, res, next) => {
+  try {
+    res.json({ success: true, new_launches: await getNewLaunches() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/combos --- (active combos, in display order)
+api.get('/combos', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM combos WHERE is_active ORDER BY position, id');
+    res.json({ success: true, count: rows.length, combos: rows.map(publicCombo) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/combos/:id --- (an active combo; hidden ones 404 on the storefront)
+api.get('/combos/:id', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM combos WHERE id = $1 AND is_active', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Combo not found' });
+    res.json({ success: true, combo: publicCombo(rows[0]) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/faqs --- (published FAQs, in display order)
+api.get('/faqs', async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT id, question, answer, category FROM faqs WHERE is_published ORDER BY position, id');
+    res.json({ success: true, count: rows.length, faqs: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // --- GET /api/products ---
 api.get('/products', async (req, res, next) => {
   try {
@@ -330,12 +517,17 @@ api.post('/orders', optionalAuth, async (req, res, next) => {
     if (errors.length) return res.status(400).json({ success: false, errors });
 
     const { rows } = await pool.query(
-      `INSERT INTO orders (id, user_id, email, items, subtotal, discount, shipping_cost, total, payment)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      `INSERT INTO orders (id, user_id, email, customer_name, phone, address, notes, items,
+                           subtotal, discount, shipping_cost, total, payment, history)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
        RETURNING *`,
-      [v.id, req.user?.id || null, v.email, JSON.stringify(v.items), v.subtotal, v.discount, v.shippingCost, v.total, v.payment]
+      [
+        v.id, req.user?.id || null, v.email, v.customerName, v.phone, v.address && JSON.stringify(v.address),
+        v.notes, JSON.stringify(v.items), v.subtotal, v.discount, v.shippingCost, v.total, v.payment,
+        historyEntry('placed', 'customer'),
+      ]
     );
-    res.status(201).json({ success: true, order: rows[0] });
+    res.status(201).json({ success: true, order: publicOrder(rows[0]) });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ success: false, error: 'An order with that number already exists.' });
@@ -344,19 +536,43 @@ api.post('/orders', optionalAuth, async (req, res, next) => {
   }
 });
 
+// --- GET /api/orders/mine --- (the signed-in customer's orders, newest first)
+api.get('/orders/mine', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM orders WHERE user_id = $1 ORDER BY placed_at DESC', [
+      req.user.id,
+    ]);
+    res.json({ success: true, count: rows.length, orders: rows.map(publicOrder) });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // --- POST /api/orders/:orderId/cancel --- (the customer's own order, while not yet delivered)
 api.post('/orders/:orderId/cancel', requireAuth, async (req, res, next) => {
   try {
     const { rows } = await pool.query(
-      `UPDATE orders SET status = 'canceled', updated_at = now()
+      `UPDATE orders SET status = 'canceled', history = history || $4::jsonb, updated_at = now()
        WHERE id = $1 AND user_id = $2 AND status = ANY($3)
        RETURNING *`,
-      [req.params.orderId, req.user.id, CANCELLABLE_STATUSES]
+      [req.params.orderId, req.user.id, CANCELLABLE_STATUSES, historyEntry('canceled', 'customer')]
     );
     if (!rows.length) {
       return res.status(404).json({ success: false, error: 'No order of yours that can still be canceled.' });
     }
-    res.json({ success: true, order: rows[0] });
+    res.json({ success: true, order: publicOrder(rows[0]) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/returns/mine --- (the signed-in customer's return requests, newest first)
+api.get('/returns/mine', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM order_returns WHERE user_id = $1 ORDER BY created_at DESC', [
+      req.user.id,
+    ]);
+    res.json({ success: true, count: rows.length, returns: rows.map(publicReturn) });
   } catch (err) {
     next(err);
   }
@@ -386,8 +602,19 @@ api.post('/returns', requireAuth, async (req, res, next) => {
 
     const line = orders[0].items.find((l) => String(l.productId) === productId && String(l.size) === size);
     if (!line) return res.status(400).json({ success: false, error: 'That item is not on this order.' });
-    if (!Number.isInteger(qty) || qty < 1 || qty > line.qty) {
-      return res.status(400).json({ success: false, error: `Quantity must be between 1 and ${line.qty}.` });
+
+    // Earlier requests for the same item (other than rejected ones) use up the quantity.
+    const { rows: prior } = await pool.query(
+      `SELECT coalesce(sum(qty), 0)::int AS n FROM order_returns
+       WHERE order_id = $1 AND product_id = $2 AND size = $3 AND status <> 'Rejected'`,
+      [orderId, productId, size]
+    );
+    const left = line.qty - prior[0].n;
+    if (!Number.isInteger(qty) || qty < 1 || qty > left) {
+      return res.status(400).json({
+        success: false,
+        error: left > 0 ? `Quantity must be between 1 and ${left}.` : 'A return has already been requested for all of this item.',
+      });
     }
 
     const { rows } = await pool.query(
@@ -395,9 +622,9 @@ api.post('/returns', requireAuth, async (req, res, next) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [id, orderId, req.user.id, productId, size, qty, money(qty * line.price),
-       String(req.body?.reason || '').trim() || null, String(req.body?.comment || '').trim() || null]
+       clip(req.body?.reason, 200) || null, clip(req.body?.comment, 2000) || null]
     );
-    res.status(201).json({ success: true, return: rows[0] });
+    res.status(201).json({ success: true, return: publicReturn(rows[0]) });
   } catch (err) {
     if (err.code === '23505') {
       return res.status(409).json({ success: false, error: 'That return request already exists.' });
@@ -413,7 +640,7 @@ api.delete('/returns/:returnId', requireAuth, async (req, res, next) => {
       `DELETE FROM order_returns WHERE id = $1 AND user_id = $2 AND status = 'Pending' RETURNING id`,
       [req.params.returnId, req.user.id]
     );
-    if (!rows.length) return res.status(404).json({ success: false, error: 'Return request not found.' });
+    if (!rows.length) return res.status(404).json({ success: false, error: 'No pending return request with that number.' });
     res.json({ success: true, deleted: rows[0].id });
   } catch (err) {
     next(err);
@@ -581,8 +808,210 @@ api.patch('/admin/users/:id', adminOnly, async (req, res, next) => {
   }
 });
 
+// --- PUT /api/admin/home --- body: { new_launches: [productId, ...] } (in display order)
+api.put('/admin/home', adminOnly, async (req, res, next) => {
+  try {
+    const raw = req.body?.new_launches;
+    if (!Array.isArray(raw) || !raw.every(isValidId)) {
+      return res.status(400).json({ success: false, error: '`new_launches` must be a list of product ids.' });
+    }
+    const ids = [...new Set(raw.map(Number))];
+    if (ids.length > MAX_NEW_LAUNCHES) {
+      return res.status(400).json({ success: false, error: `Pick at most ${MAX_NEW_LAUNCHES} new launch products.` });
+    }
+    const { rows } = await pool.query('SELECT id FROM products WHERE id = ANY($1::int[])', [ids]);
+    if (rows.length !== ids.length) {
+      return res.status(400).json({ success: false, error: 'One of those products no longer exists.' });
+    }
+
+    await pool.query(
+      `INSERT INTO site_settings (key, value) VALUES ('home_new_launches', $1)
+       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+      [JSON.stringify(ids)]
+    );
+    res.json({ success: true, new_launches: await getNewLaunches() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ---------------------------- admin: combos ----------------------------
+
+const comboImage = upload.single('image');
+const removeComboUpload = (req) => req.file && removeMediaFiles([{ url: '/uploads/products/' + req.file.filename }]);
+
+// --- GET /api/admin/combos --- (all combos, hidden ones included)
+api.get('/admin/combos', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM combos ORDER BY position, id');
+    res.json({ success: true, count: rows.length, combos: rows.map(publicCombo) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/combos/:id ---
+api.get('/admin/combos/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM combos WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Combo not found' });
+    res.json({ success: true, combo: publicCombo(rows[0]) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/admin/combos --- (multipart: fields + `image`)
+api.post('/admin/combos', adminOnly, comboImage, async (req, res, next) => {
+  try {
+    const { errors, values: v } = await validateComboBody(req.body, { hasImage: Boolean(req.file) });
+    if (req.file && !req.file.mimetype.startsWith('image/')) errors.push('The combo image must be an image file.');
+    if (errors.length) {
+      removeComboUpload(req);
+      return res.status(400).json({ success: false, errors });
+    }
+    const { rows } = await pool.query(
+      `INSERT INTO combos (name, description, price, compare_at_price, tag, accent, image, items, position, is_active)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
+      [v.name, v.description, v.price, v.compare, v.tag, v.accent, '/uploads/products/' + req.file.filename,
+       JSON.stringify(v.items), v.position, v.is_active]
+    );
+    res.status(201).json({ success: true, combo: publicCombo(rows[0]) });
+  } catch (err) {
+    removeComboUpload(req);
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/combos/:id --- (multipart; a new `image` replaces the old one)
+api.put('/admin/combos/:id', adminOnly, comboImage, async (req, res, next) => {
+  try {
+    const { rows: existing } = await pool.query('SELECT * FROM combos WHERE id = $1', [req.params.id]);
+    if (!existing.length) {
+      removeComboUpload(req);
+      return res.status(404).json({ success: false, error: 'Combo not found' });
+    }
+    const { errors, values: v } = await validateComboBody(req.body, {
+      hasImage: Boolean(req.file || existing[0].image),
+    });
+    if (req.file && !req.file.mimetype.startsWith('image/')) errors.push('The combo image must be an image file.');
+    if (errors.length) {
+      removeComboUpload(req);
+      return res.status(400).json({ success: false, errors });
+    }
+
+    const image = req.file ? '/uploads/products/' + req.file.filename : existing[0].image;
+    const { rows } = await pool.query(
+      `UPDATE combos
+       SET name = $1, description = $2, price = $3, compare_at_price = $4, tag = $5, accent = $6,
+           image = $7, items = $8, position = $9, is_active = $10, updated_at = now()
+       WHERE id = $11
+       RETURNING *`,
+      [v.name, v.description, v.price, v.compare, v.tag, v.accent, image, JSON.stringify(v.items),
+       v.position, v.is_active, req.params.id]
+    );
+    if (req.file && existing[0].image) removeMediaFiles([{ url: existing[0].image }]);
+    res.json({ success: true, combo: publicCombo(rows[0]) });
+  } catch (err) {
+    removeComboUpload(req);
+    next(err);
+  }
+});
+
+// --- DELETE /api/admin/combos/:id ---
+api.delete('/admin/combos/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM combos WHERE id = $1 RETURNING image', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Combo not found' });
+    if (rows[0].image) removeMediaFiles([{ url: rows[0].image }]);
+    res.json({ success: true, deleted: Number(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ----------------------------- admin: FAQs -----------------------------
+
+// --- GET /api/admin/faqs --- (all FAQs, drafts included)
+api.get('/admin/faqs', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM faqs ORDER BY position, id');
+    res.json({ success: true, count: rows.length, faqs: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/faqs/reorder --- body: { ids: [id, ...] } in the new order
+// (declared before /:id so "reorder" isn't read as an id)
+api.put('/admin/faqs/reorder', adminOnly, async (req, res, next) => {
+  try {
+    const ids = req.body?.ids;
+    if (!Array.isArray(ids) || !ids.every(isValidId)) {
+      return res.status(400).json({ success: false, error: '`ids` must be a list of FAQ ids.' });
+    }
+    await pool.query(
+      `UPDATE faqs SET position = o.pos, updated_at = now()
+       FROM unnest($1::int[]) WITH ORDINALITY AS o(id, pos)
+       WHERE faqs.id = o.id`,
+      [ids.map(Number)]
+    );
+    const { rows } = await pool.query('SELECT * FROM faqs ORDER BY position, id');
+    res.json({ success: true, faqs: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/admin/faqs --- (added at the end of the list)
+api.post('/admin/faqs', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, values: v } = validateFaqBody(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    const { rows } = await pool.query(
+      `INSERT INTO faqs (question, answer, category, is_published, position)
+       VALUES ($1, $2, $3, $4, (SELECT coalesce(max(position), 0) + 1 FROM faqs))
+       RETURNING *`,
+      [v.question, v.answer, v.category, v.is_published]
+    );
+    res.status(201).json({ success: true, faq: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/faqs/:id ---
+api.put('/admin/faqs/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, values: v } = validateFaqBody(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    const { rows } = await pool.query(
+      `UPDATE faqs SET question = $1, answer = $2, category = $3, is_published = $4, updated_at = now()
+       WHERE id = $5 RETURNING *`,
+      [v.question, v.answer, v.category, v.is_published, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'FAQ not found' });
+    res.json({ success: true, faq: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- DELETE /api/admin/faqs/:id ---
+api.delete('/admin/faqs/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM faqs WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'FAQ not found' });
+    res.json({ success: true, deleted: rows[0].id });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // --- GET /api/admin/stats?year=2026 --- (dashboard numbers + chart data)
-// Order value excludes canceled orders; refunds are the sum of return requests.
+// Order value leaves out canceled orders. An order counts as returned once a
+// return on it is approved or refunded; refund value is what has been refunded.
 api.get('/admin/stats', adminOnly, async (req, res, next) => {
   try {
     const thisYear = new Date().getFullYear();
@@ -597,7 +1026,9 @@ api.get('/admin/stats', adminOnly, async (req, res, next) => {
                count(*) FILTER (WHERE status = 'canceled')::int AS canceled
         FROM orders`),
       pool.query(`
-        SELECT count(DISTINCT order_id)::int AS orders, coalesce(sum(amount), 0)::float AS value
+        SELECT count(DISTINCT order_id) FILTER (WHERE status IN ('Approved', 'Refunded'))::int AS orders,
+               coalesce(sum(amount) FILTER (WHERE status = 'Refunded'), 0)::float AS value,
+               count(*) FILTER (WHERE status = 'Pending')::int AS pending
         FROM order_returns`),
       pool.query(`
         SELECT extract(month FROM placed_at)::int AS month,
@@ -609,7 +1040,8 @@ api.get('/admin/stats', adminOnly, async (req, res, next) => {
       pool.query(`SELECT status, count(*)::int AS n FROM orders GROUP BY status`),
       pool.query(`SELECT DISTINCT extract(year FROM placed_at)::int AS y FROM orders`),
       pool.query(`
-        SELECT o.id, o.email, o.status, o.total::float AS total, o.placed_at, u.name AS customer
+        SELECT o.id, o.email, o.status, o.total::float AS total, o.placed_at,
+               coalesce(o.customer_name, u.name) AS customer
         FROM orders o LEFT JOIN users u ON u.id = o.user_id
         ORDER BY o.placed_at DESC LIMIT 8`),
     ]);
@@ -621,24 +1053,79 @@ api.get('/admin/stats', adminOnly, async (req, res, next) => {
       return { month: i + 1, orders: r?.orders || 0, value: money(r?.value || 0), canceled: r?.canceled || 0 };
     });
     const t = totals.rows[0];
+    const r = returns.rows[0];
 
     res.json({
       success: true,
       year,
-      years: [...new Set([thisYear, ...years.rows.map((r) => r.y)])].sort((a, b) => b - a),
+      years: [...new Set([thisYear, ...years.rows.map((x) => x.y)])].sort((a, b) => b - a),
       totals: {
         users: users.rows[0].n,
         orders: t.orders,
         order_value: money(t.value),
         delivered: t.delivered,
         canceled: t.canceled,
-        returned: returns.rows[0].orders,
-        refund_value: money(returns.rows[0].value),
+        returned: r.orders,
+        refund_value: money(r.value),
+        pending_returns: r.pending,
       },
       months,
-      statuses: ORDER_STATUSES.map((st) => ({ status: st, count: statuses.rows.find((r) => r.status === st)?.n || 0 })),
+      statuses: ORDER_STATUSES.map((st) => ({ status: st, count: statuses.rows.find((x) => x.status === st)?.n || 0 })),
       recent_orders: recent.rows,
     });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/orders?status=&search= --- (newest first, up to 500)
+api.get('/admin/orders', adminOnly, async (req, res, next) => {
+  try {
+    const status = ORDER_STATUSES.includes(req.query.status) ? req.query.status : '';
+    const search = clip(req.query.search, 100);
+
+    const [list, counts] = await Promise.all([
+      pool.query(
+        `SELECT o.*, u.name AS account_name,
+                (SELECT count(*)::int FROM order_returns r WHERE r.order_id = o.id) AS return_count
+         FROM orders o LEFT JOIN users u ON u.id = o.user_id
+         WHERE ($1 = '' OR o.status = $1)
+           AND ($2 = '' OR o.id ILIKE $2 OR o.email ILIKE $2 OR o.customer_name ILIKE $2 OR u.name ILIKE $2)
+         ORDER BY o.placed_at DESC
+         LIMIT 500`,
+        [status, search ? `%${search}%` : '']
+      ),
+      pool.query(`SELECT status, count(*)::int AS n FROM orders GROUP BY status`),
+    ]);
+
+    const byStatus = Object.fromEntries(ORDER_STATUSES.map((st) => [st, 0]));
+    for (const row of counts.rows) byStatus[row.status] = row.n;
+    res.json({
+      success: true,
+      count: list.rows.length,
+      counts: { all: counts.rows.reduce((n, row) => n + row.n, 0), ...byStatus },
+      orders: list.rows.map(publicOrder),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/orders/:orderId --- (order + account + its return requests)
+api.get('/admin/orders/:orderId', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT o.*, u.name AS account_name, u.email AS account_email
+       FROM orders o LEFT JOIN users u ON u.id = o.user_id
+       WHERE o.id = $1`,
+      [req.params.orderId]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Order not found' });
+    const { rows: returns } = await pool.query(
+      'SELECT * FROM order_returns WHERE order_id = $1 ORDER BY created_at DESC',
+      [req.params.orderId]
+    );
+    res.json({ success: true, order: publicOrder(rows[0]), returns: returns.map(publicReturn) });
   } catch (err) {
     next(err);
   }
@@ -651,12 +1138,64 @@ api.patch('/admin/orders/:orderId', adminOnly, async (req, res, next) => {
     if (!ORDER_STATUSES.includes(status)) {
       return res.status(400).json({ success: false, error: `Status must be one of: ${ORDER_STATUSES.join(', ')}.` });
     }
+    // Only a real change adds a timeline entry.
     const { rows } = await pool.query(
-      'UPDATE orders SET status = $1, updated_at = now() WHERE id = $2 RETURNING *',
-      [status, req.params.orderId]
+      `UPDATE orders SET status = $1, history = history || $3::jsonb, updated_at = now()
+       WHERE id = $2 AND status <> $1
+       RETURNING *`,
+      [status, req.params.orderId, historyEntry(status, 'admin')]
     );
-    if (!rows.length) return res.status(404).json({ success: false, error: 'Order not found' });
-    res.json({ success: true, order: rows[0] });
+    if (rows.length) return res.json({ success: true, order: publicOrder(rows[0]) });
+
+    const { rows: same } = await pool.query('SELECT * FROM orders WHERE id = $1', [req.params.orderId]);
+    if (!same.length) return res.status(404).json({ success: false, error: 'Order not found' });
+    res.json({ success: true, order: publicOrder(same[0]) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/returns?status= --- (newest first)
+api.get('/admin/returns', adminOnly, async (req, res, next) => {
+  try {
+    const status = RETURN_STATUSES.includes(req.query.status) ? req.query.status : '';
+    const { rows } = await pool.query(
+      `SELECT r.*, o.email, coalesce(o.customer_name, u.name) AS customer, o.items AS order_items
+       FROM order_returns r
+       JOIN orders o ON o.id = r.order_id
+       LEFT JOIN users u ON u.id = o.user_id
+       WHERE ($1 = '' OR r.status = $1)
+       ORDER BY r.created_at DESC
+       LIMIT 500`,
+      [status]
+    );
+    res.json({ success: true, count: rows.length, returns: rows.map(publicReturn) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PATCH /api/admin/returns/:returnId --- body: { status }
+// Pending -> Approved | Rejected, Approved -> Refunded | Rejected.
+api.patch('/admin/returns/:returnId', adminOnly, async (req, res, next) => {
+  try {
+    const status = String(req.body?.status || '');
+    if (!RETURN_STATUSES.includes(status)) {
+      return res.status(400).json({ success: false, error: `Status must be one of: ${RETURN_STATUSES.join(', ')}.` });
+    }
+    const { rows: found } = await pool.query('SELECT status FROM order_returns WHERE id = $1', [req.params.returnId]);
+    if (!found.length) return res.status(404).json({ success: false, error: 'Return request not found' });
+    const from = found[0].status;
+    if (!(RETURN_NEXT[from] || []).includes(status)) {
+      return res.status(400).json({ success: false, error: `A ${from.toLowerCase()} return can't be marked ${status.toLowerCase()}.` });
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE order_returns SET status = $1, updated_at = now() WHERE id = $2 AND status = $3 RETURNING *`,
+      [status, req.params.returnId, from]
+    );
+    if (!rows.length) return res.status(409).json({ success: false, error: 'That return was just changed. Reload and try again.' });
+    res.json({ success: true, return: publicReturn(rows[0]) });
   } catch (err) {
     next(err);
   }
@@ -675,10 +1214,16 @@ app.get('/', (req, res) => {
       'POST   /api/auth/login',
       'GET    /api/auth/me              (signed in)',
       'POST   /api/orders               (guest or signed in)',
+      'GET    /api/orders/mine          (signed in)',
       'POST   /api/orders/:orderId/cancel (signed in, own order)',
+      'GET    /api/returns/mine         (signed in)',
       'POST   /api/returns              (signed in, own delivered order)',
       'DELETE /api/returns/:returnId    (signed in, own pending request)',
       'GET    /api/meta',
+      'GET    /api/home',
+      'GET    /api/combos',
+      'GET    /api/combos/:id',
+      'GET    /api/faqs',
       'GET    /api/products',
       'GET    /api/products/:id',
       'POST   /api/products             (admin)',
@@ -686,8 +1231,23 @@ app.get('/', (req, res) => {
       'DELETE /api/products/:id         (admin)',
       'GET    /api/admin/users          (admin)',
       'PATCH  /api/admin/users/:id      (admin)',
+      'PUT    /api/admin/home           (admin)',
+      'GET    /api/admin/combos         (admin)',
+      'GET    /api/admin/combos/:id     (admin)',
+      'POST   /api/admin/combos         (admin, multipart)',
+      'PUT    /api/admin/combos/:id     (admin, multipart)',
+      'DELETE /api/admin/combos/:id     (admin)',
+      'GET    /api/admin/faqs           (admin)',
+      'POST   /api/admin/faqs           (admin)',
+      'PUT    /api/admin/faqs/reorder   (admin)',
+      'PUT    /api/admin/faqs/:id       (admin)',
+      'DELETE /api/admin/faqs/:id       (admin)',
       'GET    /api/admin/stats?year=    (admin)',
+      'GET    /api/admin/orders?status=&search= (admin)',
+      'GET    /api/admin/orders/:orderId (admin)',
       'PATCH  /api/admin/orders/:orderId (admin)',
+      'GET    /api/admin/returns?status= (admin)',
+      'PATCH  /api/admin/returns/:returnId (admin)',
     ],
   });
 });
@@ -698,6 +1258,13 @@ app.use((req, res) => {
 
 app.use((err, req, res, next) => {
   console.error(err);
+  // Database unreachable even after retrying: say so, rather than "Server error".
+  if (isConnectError(err)) {
+    return res.status(503).json({
+      success: false,
+      error: "The database isn't responding right now. Please try again in a moment.",
+    });
+  }
   const message =
     err.code === 'LIMIT_FILE_SIZE'
       ? 'That file is too large. Each file must be under 50MB.'
@@ -720,6 +1287,7 @@ testConnection()
     try {
       await ensureSchema();
       await seedAccounts();
+      await seedHomeContent();
       console.log('Database tables ready.');
     } catch (e) {
       console.error('Failed to set up database tables:', e.message);

@@ -4,7 +4,7 @@ import "./Account.css";
 import accountBanner from "../../assets/background/bg1.jpg";
 import SiteFooter from "../../components/SiteFooter";
 import { useAuth } from "../../context/AuthContext";
-import { DEMO_EMAIL, saveProfile, useAccount } from "../../data/account";
+import { DEMO_EMAIL, loadAccountOrders, saveProfile, useAccount } from "../../data/account";
 import Header from "../../components/Header";
 
 /**
@@ -59,6 +59,15 @@ export default function AccountLayout({ crumb, children }) {
     const [firstName = "", ...rest] = (user.name || "").trim().split(/\s+/);
     saveProfile({ firstName: firstName || profile.firstName, lastName: rest.join(" "), email: user.email });
   }, [user, profile.email, profile.firstName]);
+
+  // Orders and return requests come from the server. Each account page mounts
+  // its own layout, so this refreshes them on every visit (status changes made
+  // in the admin panel show up without a reload). Already-loaded orders stay
+  // on screen while it refreshes.
+  const userId = user?.id;
+  useEffect(() => {
+    if (userId) loadAccountOrders(userId).catch(() => {}); // pages show ordersStatus === "error"
+  }, [userId]);
 
   const onLogout = () => {
     logout();

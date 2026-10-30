@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import AccountLayout, { EmptyState, Pagination, StatusBadge } from "./AccountLayout";
-import { ORDER_STATUS, formatLongDate, formatMoney, orderTotal, useAccount } from "../../data/account";
+import { ORDER_STATUS, formatLongDate, formatMoney, loadAccountOrders, orderTotal, useAccount } from "../../data/account";
 
 /**
  * My Account → Orders
@@ -10,11 +10,11 @@ import { ORDER_STATUS, formatLongDate, formatMoney, orderTotal, useAccount } fro
 const PER_PAGE = 8;
 
 export default function AccountOrders() {
-  const { orders } = useAccount();
+  const { orders, ordersStatus, ordersUserId } = useAccount();
   const [params, setParams] = useSearchParams();
   const [filter, setFilter] = useState("all");
 
-  // Same order as the original design; new orders from checkout are added at the top.
+  // Newest first (the server sends them in that order).
   const list = useMemo(() => orders.filter((o) => filter === "all" || o.status === filter), [orders, filter]);
 
   const pageCount = Math.max(1, Math.ceil(list.length / PER_PAGE));
@@ -49,7 +49,19 @@ export default function AccountOrders() {
           </label>
         </div>
 
-        {rows.length === 0 ? (
+        {ordersStatus === "loading" && orders.length === 0 ? (
+          <p className="ua-card__text">Loading your orders…</p>
+        ) : ordersStatus === "error" ? (
+          <EmptyState
+            title="Couldn't load your orders"
+            text="Please check your connection and try again."
+            action={
+              <button type="button" className="ua-btn ua-btn--primary" onClick={() => loadAccountOrders(ordersUserId).catch(() => {})}>
+                Try Again
+              </button>
+            }
+          />
+        ) : rows.length === 0 ? (
           <EmptyState
             title="No orders found"
             text={filter === "all" ? "You haven't placed any orders yet." : "There are no orders with this status."}

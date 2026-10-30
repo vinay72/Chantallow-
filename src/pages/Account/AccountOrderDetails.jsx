@@ -33,12 +33,23 @@ const CANCELLABLE = ["in-progress", "delayed"];
 
 export default function AccountOrderDetails() {
   const { orderId } = useParams();
-  const { orders } = useAccount();
+  const { orders, ordersStatus } = useAccount();
   const { showToast } = useShop();
   const [tab, setTab] = useState("history");
   const [confirmCancel, setConfirmCancel] = useState(false);
+  const [canceling, setCanceling] = useState(false);
 
   const order = orders.find((o) => o.id === String(orderId).replace(/^#/, ""));
+
+  if (!order && (ordersStatus === "loading" || ordersStatus === "idle")) {
+    return (
+      <AccountLayout crumb="Account Order Details">
+        <div className="ua-card">
+          <p className="ua-card__text">Loading order…</p>
+        </div>
+      </AccountLayout>
+    );
+  }
 
   if (!order) {
     return (
@@ -75,11 +86,18 @@ export default function AccountOrderDetails() {
     showToast && showToast(`Confirmation sent to ${order.email}`);
   };
 
-  const onCancel = () => {
-    cancelOrder(order.id);
-    setConfirmCancel(false);
-    setTab("history");
-    showToast && showToast(`Order #${order.id} has been canceled`);
+  const onCancel = async () => {
+    setCanceling(true);
+    try {
+      await cancelOrder(order.id);
+      setConfirmCancel(false);
+      setTab("history");
+      showToast && showToast(`Order #${order.id} has been canceled`);
+    } catch (err) {
+      showToast && showToast(err.message);
+    } finally {
+      setCanceling(false);
+    }
   };
 
   return (
@@ -138,8 +156,8 @@ export default function AccountOrderDetails() {
               Are you sure you want to cancel order <strong>#{order.id}</strong>? This can't be undone.
             </p>
             <div>
-              <button type="button" className="ua-btn ua-btn--danger-fill ua-btn--sm" onClick={onCancel}>
-                Yes, Cancel Order
+              <button type="button" className="ua-btn ua-btn--danger-fill ua-btn--sm" onClick={onCancel} disabled={canceling}>
+                {canceling ? "Canceling…" : "Yes, Cancel Order"}
               </button>
               <button type="button" className="ua-btn ua-btn--outline ua-btn--sm" onClick={() => setConfirmCancel(false)}>
                 Keep Order

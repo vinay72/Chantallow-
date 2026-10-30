@@ -4,38 +4,47 @@
 //   • heart (top right)       -> adds/removes favourite, stays on the page
 //   • bag (bottom right)      -> adds to cart, stays on the page
 //   • Quick View              -> opens the quick view modal (unchanged)
+//
+// `c.combo` is set for combos managed in Admin → Home → Combo Products
+// (see fromServerCombo): the card then uses the combo's own price, page,
+// cart and wishlist entry, and Quick View opens the combo page.
 
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { Heart, ShoppingBag } from "lucide-react";
 import { useShop } from "../context/ShopContext";
-import { getProductById, formatPrice } from "../data/products";
+import { getProductById, formatPrice, productPath } from "../data/products";
 
 export default function CollectionCard({ c, onQuickView }) {
     const navigate = useNavigate();
     const { addToCart, toggleWishlist, isInWishlist, showToast } = useShop();
-    const product = getProductById(c.id);
+    const combo = c.combo || null;
+    const product = combo || getProductById(c.id);
     const liked = isInWishlist(c.id);
+    const price = combo ? combo.price : product?.price;
+    const was = combo ? combo.compareAtPrice : product?.oldPrice;
 
     const openDetail = () => {
-        if (product) navigate(`/product/${product.slug}`);
+        if (product) navigate(productPath(product));
     };
 
     const handleWishlist = (e) => {
         e.stopPropagation(); // don't also open the detail page
-        toggleWishlist(c.id);
+        toggleWishlist(c.id, combo);
         showToast(liked ? `${c.name} removed from favourites` : `${c.name} added to favourites ♥`);
     };
 
     const handleCart = (e) => {
         e.stopPropagation();
-        addToCart(c.id, 1);
+        if (combo) addToCart(c.id, 1, "Combo", combo);
+        else addToCart(c.id, 1);
         showToast(`${c.name} added to cart`);
     };
 
     const handleQuickView = (e) => {
         e.stopPropagation();
-        onQuickView && onQuickView(c.id);
+        if (combo) openDetail();
+        else onQuickView && onQuickView(c.id);
     };
 
     const handleKeyDown = (e) => {
@@ -191,8 +200,8 @@ export default function CollectionCard({ c, onQuickView }) {
                         )}
                 </h5>
                 <span style={{ fontSize: 20, fontFamily: "Marcellus, sans-serif", color: "#8A8A80" }}>
-                    {formatPrice(product?.price)}{" "}
-                    <span style={{ textDecoration: "line-through" }}>{formatPrice(product?.oldPrice)}</span>
+                    {formatPrice(price)}{" "}
+                    {(!combo || was != null) && <span style={{ textDecoration: "line-through" }}>{formatPrice(was)}</span>}
                 </span>
             </div>
         </div>

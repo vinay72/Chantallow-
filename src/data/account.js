@@ -2,12 +2,12 @@
 // ------------------------------------------------------------------
 // User Panel data store (My Account).
 // Everything the account pages show lives here: profile, addresses,
-// orders, return requests and reviews. It is saved in localStorage so
-// it survives a page refresh, and every page that calls useAccount()
+// orders, return requests and reviews. Every page that calls useAccount()
 // re-renders automatically when something changes.
 //
-// Orders, cancellations and return requests are also sent to the
-// backend (see syncToServer) so the admin dashboard can count them.
+// Orders and return requests live on the server (they are what the admin
+// panel works with) and are loaded with loadAccountOrders(). Profile,
+// addresses, payment method and reviews are saved in localStorage.
 // ------------------------------------------------------------------
 import { useSyncExternalStore } from "react";
 import { api } from "../api/client";
@@ -78,45 +78,28 @@ export const orderTotal = (order) => Math.max(0, orderSubtotal(order) - (order.d
 
 const addHours = (iso, h) => new Date(new Date(iso).getTime() + h * 3600 * 1000).toISOString();
 
-// Builds the "Order History" timeline (newest first) from the order's status.
-function buildHistory({ placedAt, status, courier }) {
-  const placed = { title: "Order Placed", at: placedAt, done: true };
-  const packaging = { title: "Product Packaging", at: addHours(placedAt, 20), done: true };
-  const shipped = {
-    title: "Product Shipped",
-    at: addHours(placedAt, 30),
-    done: true,
-    details: [
-      ["Tracking Number", courier.tracking],
-      ["Warehouse", courier.warehouse],
-    ],
-  };
-  const outFor = {
-    title: "Out For Delivery",
-    at: addHours(placedAt, 52),
-    done: true,
-    details: [
-      ["Courier Service", `${courier.service}, ${courier.agent}`],
-      ["Estimated Delivery Date", courier.eta],
-    ],
-  };
-  const delivered = { title: "Product Delivered", at: addHours(placedAt, 60), done: true };
+// Server timeline events -> the "Order History" entries the page shows.
+const HISTORY_STEPS = {
+  placed: { title: "Order Placed" },
+  "in-progress": { title: "Order Processing" },
+  delayed: { title: "Shipment Delayed", warning: true },
+  delivered: { title: "Product Delivered" },
+  canceled: { title: "Order Canceled", danger: true },
+};
 
-  if (status === "canceled")
-    return [{ title: "Order Canceled", at: addHours(placedAt, 6), done: true, danger: true }, placed];
-  if (status === "delayed")
-    return [
-      { title: "Shipment Delayed", at: addHours(placedAt, 54), done: true, warning: true, details: [["Reason", "Courier backlog — new date will be shared soon"]] },
-      shipped,
-      packaging,
-      placed,
-    ];
-  if (status === "delivered") return [delivered, outFor, shipped, packaging, placed];
-  // in progress
-  return [outFor, shipped, packaging, placed];
+// Newest first, as the timeline is drawn top-down.
+function buildHistory(events = []) {
+  return events
+    .map((e) => ({
+      ...(HISTORY_STEPS[e.type] || { title: e.type }),
+      at: e.at,
+      done: true,
+      details: e.type === "canceled" ? [["Canceled By", e.by === "admin" ? "Chantallow" : "You"]] : undefined,
+    }))
+    .reverse();
 }
 
-/* ------------------------------ seed data ------------------------------ */
+/* ------------------------------ defaults ------------------------------ */
 // Placeholder profile email; replaced with the signed-in user's on first visit.
 export const DEMO_EMAIL = "info@example.com";
 
@@ -140,69 +123,53 @@ const COURIERS = [
   { service: "Blue Dart", agent: "A. Mehra" },
 ];
 
-// [order id, placed date, status, [[productId, size, qty, unitPrice], ...], discount]
-const SEED = [
-  ["34VB5540K83", "2024-05-21T15:43:23", "in-progress", [[4, "4oz", 2, 66], [1, "4oz", 2, 80], [6, "2oz", 1, 66.75]], 0],
-  ["78A643CD409", "2024-12-09T11:12:05", "canceled", [[7, "4oz", 4, 95], [8, "4oz", 4, 95.125]], 0],
-  ["112P45A90V2", "2024-10-15T09:30:44", "delayed", [[2, "4oz", 8, 89], [3, "4oz", 6, 92]], 0],
-  ["28BA67U0981", "2024-07-19T18:02:10", "delivered", [[5, "4oz", 1, 95], [3, "2oz", 2, 51.675]], 0],
-  ["502TR872W2", "2024-04-04T13:21:50", "delivered", [[1, "4oz", 10, 80], [4, "4oz", 12, 66], [6, "4oz", 5, 108.38]], 0],
-  ["47H76G09F33", "2024-03-30T10:45:00", "delivered", [[8, "2oz", 1, 86.4]], 0],
-  ["53U76G09E38", "2024-04-21T16:10:31", "delivered", [[2, "2oz", 1, 86.4]], 0],
-  ["31M76G09G76", "2024-05-07T12:05:17", "delivered", [[7, "2oz", 2, 56.2]], 0],
-  ["19K42L77P10", "2024-02-18T14:22:09", "delivered", [[4, "4oz", 1, 66]], 0],
-  ["61D20Q88S41", "2024-02-02T09:12:40", "delivered", [[1, "2oz", 3, 45]], 0],
-  ["90F31H65R27", "2024-01-26T17:48:13", "canceled", [[3, "4oz", 1, 92]], 0],
-  ["74C18B39N55", "2024-01-11T11:03:56", "delivered", [[5, "4oz", 2, 95]], 10],
-  ["38P90W12E63", "2023-12-28T19:31:22", "delivered", [[6, "4oz", 1, 89]], 0],
-  ["25T67Y40M18", "2023-12-14T08:40:05", "delivered", [[2, "4oz", 2, 89], [8, "2oz", 1, 45]], 15],
-  ["82G55J21K09", "2023-11-30T15:15:15", "delivered", [[7, "4oz", 1, 95]], 0],
-  ["57R04V93X36", "2023-11-17T13:57:48", "delivered", [[4, "2oz", 4, 40]], 0],
-  ["13N88U26D72", "2023-11-02T10:20:34", "delivered", [[1, "4oz", 1, 80]], 0],
-  ["66Z31A57C84", "2023-10-21T16:44:02", "delivered", [[3, "2oz", 2, 48]], 0],
-];
-
-function makeOrder({ id, placedAt, status, items, discount = 0, shippingCost = 0, payment = "cod", address = DEMO_ADDRESS, email = "info@example.com", phone = "", notes = "", index = 0 }) {
+// Courier shown on an order (the shop doesn't track couriers yet, so this is
+// picked from the order number and stays the same for each order).
+function courierFor(order) {
+  const index = [...order.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
   const c = COURIERS[index % COURIERS.length];
-  const courier = {
+  return {
     ...c,
-    tracking: `${3409 + index * 7}-${4216 + index * 13}-${8759 - index * 11}`,
-    warehouse: `Chantallow Warehouse ${12 + (index % 5)}b`,
-    eta: formatStamp(addHours(placedAt, 72)).split(" ")[0],
+    eta: formatStamp(addHours(order.placed_at, 72)).split(" ")[0],
     note:
       `Your parcel is handled by ${c.service}. Our courier partner will contact you on your registered phone number before delivery. ` +
-      `You can track the parcel any time with the tracking number above. If you are not at home, the parcel will be left with a neighbour ` +
+      `If you are not at home, the parcel will be left with a neighbour ` +
       `or taken back to the nearest ${c.service} point for collection within 5 working days.`,
-  };
-  return {
-    id,
-    placedAt,
-    status,
-    items,
-    discount,
-    shippingCost,
-    payment,
-    address,
-    email,
-    phone,
-    notes,
-    courier,
-    history: buildHistory({ placedAt, status, courier }),
   };
 }
 
-function seedOrders() {
-  return SEED.map(([id, placedAt, status, lines, discount], index) =>
-    makeOrder({
-      id,
-      placedAt: new Date(placedAt).toISOString(),
-      status,
-      discount,
-      index,
-      items: lines.map(([productId, size, qty, price]) => ({ productId, size, qty, price })),
-    })
-  );
+// API order row -> the shape the account pages use.
+function fromServerOrder(o) {
+  return {
+    id: o.id,
+    placedAt: o.placed_at,
+    status: o.status,
+    items: o.items,
+    discount: o.discount,
+    shippingCost: o.shipping_cost,
+    payment: o.payment,
+    address: o.address || {},
+    email: o.email || "",
+    phone: o.phone || "",
+    notes: o.notes || "",
+    courier: courierFor(o),
+    history: buildHistory(o.history),
+  };
 }
+
+// API return row -> the shape the account pages use.
+const fromServerReturn = (r) => ({
+  id: r.id,
+  orderId: r.order_id,
+  productId: r.product_id,
+  size: r.size,
+  qty: r.qty,
+  amount: r.amount,
+  reason: r.reason,
+  comment: r.comment || "",
+  status: r.status,
+  createdAt: r.created_at,
+});
 
 function initialState() {
   return {
@@ -219,8 +186,10 @@ function initialState() {
       billing: { ...DEMO_ADDRESS },
       shipping: { ...DEMO_ADDRESS },
     },
-    orders: seedOrders(),
-    returns: [],
+    orders: [], // loaded from the server
+    returns: [], // loaded from the server
+    ordersStatus: "idle", // idle | loading | ready | error
+    ordersUserId: null, // whose orders are loaded
     reviews: [],
     // default way to pay; a card keeps only brand / last4 / expiry / name
     paymentMethod: { type: "cod", card: null, paypalEmail: "" },
@@ -232,7 +201,8 @@ function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
-      const saved = JSON.parse(raw);
+      // eslint-disable-next-line no-unused-vars
+      const { orders, returns, ordersStatus, ordersUserId, ...saved } = JSON.parse(raw);
       return { ...initialState(), ...saved };
     }
   } catch (e) {
@@ -247,7 +217,9 @@ const listeners = new Set();
 function setState(updater) {
   state = { ...state, ...updater(state) };
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    // eslint-disable-next-line no-unused-vars
+    const { orders, returns, ordersStatus, ordersUserId, ...local } = state;
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(local));
   } catch (e) {
     /* ignore quota / private mode */
   }
@@ -270,38 +242,50 @@ export const getOrder = (id) => state.orders.find((o) => o.id === String(id).rep
 const randomId = () =>
   Array.from({ length: 11 }, () => "0123456789ABCDEFGHJKLMNPQRSTUVWXYZ"[Math.floor(Math.random() * 34)]).join("");
 
-// The page updates straight away from localStorage; the server copy is sent in
-// the background. A failure is logged rather than shown, because the
-// customer's own copy is already saved (e.g. demo orders don't exist server-side).
-function syncToServer(path, options) {
-  api(path, options).catch((err) => console.warn(`Couldn't sync ${path} to the server:`, err.message));
+/** Loads the signed-in customer's orders and return requests from the server. */
+export async function loadAccountOrders(userId) {
+  // a different account: don't show the previous one's orders while loading
+  setState((s) => (s.ordersUserId === userId ? { ordersStatus: "loading" } : { orders: [], returns: [], ordersStatus: "loading", ordersUserId: userId }));
+  try {
+    const [o, r] = await Promise.all([api("/orders/mine"), api("/returns/mine")]);
+    setState(() => ({ orders: o.orders.map(fromServerOrder), returns: r.returns.map(fromServerReturn), ordersStatus: "ready" }));
+  } catch (err) {
+    setState(() => ({ ordersStatus: "error" }));
+    throw err;
+  }
 }
 
-/** Called by the checkout page. Returns the new order. */
-export function placeOrder({ items, address, email, phone, payment, shippingCost = 0, discount = 0, notes = "" }) {
-  const placedAt = new Date().toISOString();
-  const order = {
-    ...makeOrder({ id: randomId(), placedAt, status: "in-progress", items, discount, shippingCost, payment, address, email, phone, notes, index: state.orders.length }),
+/** Called on sign-out so the next person doesn't see these orders. */
+export function clearAccountOrders() {
+  setState(() => ({ orders: [], returns: [], ordersStatus: "idle", ordersUserId: null }));
+}
+
+/** Called by the checkout page. Saves the order on the server and returns it. Throws on failure. */
+export async function placeOrder({ items, address, email, phone, payment, shippingCost = 0, discount = 0, notes = "" }) {
+  const body = {
+    id: randomId(),
+    // the name is kept on the order so the admin can read it even if the product changes
+    items: items.map((l) => ({ ...l, name: l.name || lineProduct(l).name })),
+    address,
+    email,
+    phone,
+    payment,
+    shippingCost,
+    discount,
+    notes,
   };
-  // A brand-new order has only been placed so far.
-  order.history = [{ title: "Order Placed", at: placedAt, done: true }];
-  setState((s) => ({ orders: [order, ...s.orders] }));
-  syncToServer("/orders", {
-    method: "POST",
-    body: { id: order.id, items, discount, shippingCost, payment, email },
-  });
-  return order;
+  const { order } = await api("/orders", { method: "POST", body });
+  const saved = fromServerOrder(order);
+  setState((s) => ({ orders: [saved, ...s.orders.filter((o) => o.id !== saved.id)] }));
+  return saved;
 }
 
-export function cancelOrder(id) {
-  setState((s) => ({
-    orders: s.orders.map((o) =>
-      o.id === id
-        ? { ...o, status: "canceled", history: [{ title: "Order Canceled", at: new Date().toISOString(), done: true, danger: true }, ...o.history] }
-        : o
-    ),
-  }));
-  syncToServer(`/orders/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+/** Cancels one of the customer's orders on the server. Throws on failure. */
+export async function cancelOrder(id) {
+  const { order } = await api(`/orders/${encodeURIComponent(id)}/cancel`, { method: "POST" });
+  const saved = fromServerOrder(order);
+  setState((s) => ({ orders: s.orders.map((o) => (o.id === id ? { ...saved, confirmationRequestedAt: o.confirmationRequestedAt } : o)) }));
+  return saved;
 }
 
 export function requestConfirmation(id) {
@@ -336,29 +320,19 @@ export function removeSavedCard() {
   }));
 }
 
-export function addReturnRequest({ orderId, productId, size, qty, reason, comment }) {
-  const req = {
-    id: `RR-${randomId().slice(0, 8)}`,
-    orderId,
-    productId,
-    size,
-    qty,
-    reason,
-    comment,
-    status: "Pending",
-    createdAt: new Date().toISOString(),
-  };
+/** Sends a return request to the server and returns it. Throws on failure. */
+export async function addReturnRequest({ orderId, productId, size, qty, reason, comment }) {
+  const body = { id: `RR-${randomId().slice(0, 8)}`, orderId, productId, size, qty, reason, comment };
+  const { return: row } = await api("/returns", { method: "POST", body });
+  const req = fromServerReturn(row);
   setState((s) => ({ returns: [req, ...s.returns] }));
-  syncToServer("/returns", {
-    method: "POST",
-    body: { id: req.id, orderId, productId, size, qty, reason, comment },
-  });
   return req;
 }
 
-export function cancelReturnRequest(id) {
+/** Withdraws a pending return request. Throws on failure. */
+export async function cancelReturnRequest(id) {
+  await api(`/returns/${encodeURIComponent(id)}`, { method: "DELETE" });
   setState((s) => ({ returns: s.returns.filter((r) => r.id !== id) }));
-  syncToServer(`/returns/${encodeURIComponent(id)}`, { method: "DELETE" });
 }
 
 export function saveReview({ productId, rating, title, text }) {
@@ -375,7 +349,7 @@ export function deleteReview(id) {
   setState((s) => ({ reviews: s.reviews.filter((r) => r.id !== id) }));
 }
 
-/** Clears everything back to the demo data. */
+/** Clears everything stored in this browser back to the defaults. */
 export function resetAccountData() {
   setState(() => initialState());
 }

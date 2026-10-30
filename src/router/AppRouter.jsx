@@ -9,6 +9,7 @@ import ContactUs from "../pages/ContactUs/ContactUs";
 import Login from "../pages/Login/Login";
 import SignUpSection from "../pages/SignUp/SignUp";
 import ProductDetail from "../pages/ShopList/ProductDetail";
+import ComboDetail from "../pages/Combo/ComboDetail";
 import AddToCart from "../pages/ShopList/AddToCart";
 import CheckOut from "../pages/ShopList/CheckOut";
 // import Register from "../components/Register";
@@ -34,6 +35,14 @@ import AdminProducts from "../admin/AdminProducts";
 import AdminProductForm from "../admin/AdminProductForm";
 import AdminProductDetail from "../admin/AdminProductDetail";
 import AdminUsers from "../admin/AdminUsers";
+import AdminOrders from "../admin/AdminOrders";
+import AdminOrderDetail from "../admin/AdminOrderDetail";
+import AdminReturns from "../admin/AdminReturns";
+import AdminHome from "../admin/AdminHome";
+import AdminCombos from "../admin/AdminCombos";
+import AdminComboForm from "../admin/AdminComboForm";
+import AdminComboDetail from "../admin/AdminComboDetail";
+import AdminFaqs from "../admin/AdminFaqs";
 
 // Loaded on demand so shoppers never download the charting library.
 const AdminDashboard = lazy(() => import("../admin/AdminDashboard"));
@@ -59,6 +68,9 @@ function AppRouter() {
         <Route path="/product/:slug" element={<ProductDetail />} />
         {/* Old style also works — e.g. /shop-list/1 or /shop-list/malachite-fusion */}
         <Route path="/shop-list/:slug" element={<ProductDetail />} />
+
+        {/* Combo products from Admin → Home → Combo Products */}
+        <Route path="/combo/:id" element={<ComboDetail />} />
 
         {/* My Account (User Panel) — role "user" only; admins are sent to /admin */}
         <Route path="/account" element={<Navigate to="/account/orders" replace />} />
@@ -95,6 +107,17 @@ function AppRouter() {
           <Route path="products/new" element={<AdminProductForm mode="create" />} />
           <Route path="products/:id" element={<AdminProductDetail />} />
           <Route path="products/:id/edit" element={<AdminProductForm mode="edit" />} />
+          {/* Home sub-menu: new launches, combo products, FAQs */}
+          <Route path="home" element={<Navigate to="launches" replace />} />
+          <Route path="home/launches" element={<AdminHome />} />
+          <Route path="home/combos" element={<AdminCombos />} />
+          <Route path="home/combos/new" element={<AdminComboForm mode="create" />} />
+          <Route path="home/combos/:id" element={<AdminComboDetail />} />
+          <Route path="home/combos/:id/edit" element={<AdminComboForm mode="edit" />} />
+          <Route path="home/faqs" element={<AdminFaqs />} />
+          <Route path="orders" element={<AdminOrders />} />
+          <Route path="orders/:orderId" element={<AdminOrderDetail />} />
+          <Route path="returns" element={<AdminReturns />} />
           <Route path="users" element={<AdminUsers />} />
         </Route>
       </Routes>

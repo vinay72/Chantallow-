@@ -9,6 +9,7 @@
 //   directions    -> string, or array of strings (shown as a numbered list)
 //   directionsNote-> bold line under the directions (e.g. "Use within 12 months of opening.")
 
+import { mediaUrl } from "../api/client";
 import amberGlowCard from "../assets/product/new/1.jpg";
 import amethystReliefCard from "../assets/product/new/2.jpg";
 import jasperReviveCard from "../assets/product/new/3.jpg";
@@ -216,6 +217,64 @@ export const PRODUCTS = [
 export const getProductById = (id) => PRODUCTS.find((p) => p.id === Number(id));
 export const getProductBySlug = (slug) => PRODUCTS.find((p) => p.slug === slug);
 export const formatPrice = (value) => `$${Number(value || 0).toFixed(2)}`;
+
+// Where a product's name / image should link to. Combos have their own page;
+// products added in the admin panel (see fromServerProduct) have no detail
+// page yet, so they go to the shop.
+export const productPath = (product) =>
+    product?.path || (product?.slug ? `/product/${product.slug}` : "/shop-list");
+
+// Products and combos added in the admin panel live in the database, not in
+// PRODUCTS. In the cart / wishlist they use ids like "srv-12" and "combo-3" so
+// they never clash with the ids above.
+export const isServerProductId = (id) => typeof id === "string" && /^(srv|combo)-\d+$/.test(id);
+
+// "Malachite Fusion (4 oz) + Amethyst Relief (2 oz)"
+export const comboItemsLabel = (items = []) =>
+    items.map((it) => `${it.qty > 1 ? `${it.qty} × ` : ""}${it.name}${it.size ? ` (${it.size})` : ""}`).join(" + ");
+
+// API combo row -> the same shape as an entry in PRODUCTS, plus the combo's
+// card fields (tag, accent, items).
+export function fromServerCombo(row) {
+    const img = mediaUrl(row.image || "");
+    return {
+        id: `combo-${row.id}`,
+        comboId: row.id,
+        name: row.name,
+        displayName: row.name,
+        subtitle: comboItemsLabel(row.items),
+        description: row.description || "",
+        price: Number(row.price),
+        compareAtPrice: row.compare_at_price != null && Number(row.compare_at_price) > Number(row.price) ? Number(row.compare_at_price) : null,
+        tag: row.tag || "",
+        accent: row.accent || "#3B1941",
+        items: row.items || [],
+        cardImage: img,
+        gallery: [img],
+        slug: null,
+        path: `/combo/${row.id}`,
+    };
+}
+
+// API product row -> the same shape as an entry in PRODUCTS (what the cart,
+// header drawer and checkout read), so it can be added to the cart.
+export function fromServerProduct(row) {
+    const img = mediaUrl(row.main_image || row.images?.find((m) => m.type === "image")?.url || "");
+    const compare = row.compare_at_price == null ? null : Number(row.compare_at_price);
+    return {
+        id: `srv-${row.id}`,
+        name: row.name,
+        displayName: row.name,
+        subtitle: row.subname || "",
+        price: Number(row.price),
+        compareAtPrice: compare && compare > Number(row.price) ? compare : null,
+        size: row.size || "",
+        inStock: row.stock_status !== "out_of_stock",
+        cardImage: img,
+        gallery: [img],
+        slug: null,
+    };
+}
 
 /* =====================================================================
    PRODUCT DETAIL PAGE PHOTOS  (front · ingredients · description · 360°)

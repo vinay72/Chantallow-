@@ -219,6 +219,7 @@ export default function CheckOut() {
 
   const [errors, setErrors] = useState({});
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [placing, setPlacing] = useState(false);
 
   const shippingCost = shippingMethod === "flat" ? FLAT_RATE : 0;
   const total = subtotal + shippingCost;
@@ -249,7 +250,7 @@ export default function CheckOut() {
     if (!/^[A-Za-z0-9 -]{3,10}$/.test(a.zip.trim())) out[`${prefix}zip`] = "Please enter a valid ZIP code.";
   };
 
-  const handlePlaceOrder = (e) => {
+  const handlePlaceOrder = async (e) => {
     e.preventDefault();
     const out = {};
     validateAddress(billing, "", out);
@@ -270,21 +271,32 @@ export default function CheckOut() {
       return;
     }
 
-    // Save the order to My Account → Orders (src/data/account.js)
-    const saved = placeOrder({
-      items: cartItems.map((line) => ({
-        productId: line.product.id,
-        size: line.size,
-        qty: line.qty,
-        price: line.product.price,
-      })),
-      address: shipDifferent ? shipping : billing,
-      email: email.trim(),
-      phone: phone.trim(),
-      payment,
-      shippingCost,
-      notes,
-    });
+    // Save the order on the server (shows in My Account → Orders and the admin panel)
+    setPlacing(true);
+    let saved;
+    try {
+      saved = await placeOrder({
+        items: cartItems.map((line) => ({
+          productId: line.product.id,
+          name: line.product.displayName || line.product.name,
+          img: line.product.cardImage || line.product.gallery[0],
+          size: line.size,
+          qty: line.qty,
+          price: line.product.price,
+        })),
+        address: shipDifferent ? shipping : billing,
+        email: email.trim(),
+        phone: phone.trim(),
+        payment,
+        shippingCost,
+        notes,
+      });
+    } catch (err) {
+      setErrors({ submit: `Your order wasn't placed: ${err.message}` });
+      return;
+    } finally {
+      setPlacing(false);
+    }
     const orderNo = `#${saved.id}`;
     setPlacedOrder({ id: saved.id, orderNo, total, email: email.trim(), payment });
     clearCart();
@@ -552,8 +564,13 @@ export default function CheckOut() {
                 </label>
                 {errors.agree && <p className="co-error">{errors.agree}</p>}
 
-                <button type="submit" className="co-btn co-btn--primary co-btn--block" disabled={orderLines.length === 0}>
-                  Place Order
+                {errors.submit && (
+                  <p className="co-error" role="alert">
+                    {errors.submit}
+                  </p>
+                )}
+                <button type="submit" className="co-btn co-btn--primary co-btn--block" disabled={orderLines.length === 0 || placing}>
+                  {placing ? "Placing Order…" : "Place Order"}
                 </button>
               </div>
             </aside>
