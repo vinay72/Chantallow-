@@ -26,7 +26,16 @@ export const api = {
 
   getHome: () => request('/home'),
 
-  saveHome: (newLaunches) => request('/admin/home', { method: 'PUT', body: { new_launches: newLaunches } }),
+  // picks: { new_launches | best_sellers | featured | tattoo: [id or { id, style?, label?, image? }] }, plus optional
+  // expected: { <section>: [ids the page loaded] } to refuse saving over newer picks
+  saveHome: (picks) => request('/admin/home', { method: 'PUT', body: picks }),
+
+  // a card photo for one home page pick; resolves to { url }
+  uploadHomeImage: (file) => {
+    const fd = new FormData();
+    fd.append('image', file);
+    return request('/admin/home/image', { method: 'POST', body: fd });
+  },
 
   listCombos: () => request('/admin/combos'),
   getCombo: (id) => request(`/admin/combos/${id}`),
@@ -41,6 +50,14 @@ export const api = {
   reorderFaqs: (ids) => request('/admin/faqs/reorder', { method: 'PUT', body: { ids } }),
 
   listUsers: () => request('/admin/users'),
+
+  getUser: (id) => request(`/admin/users/${id}`),
+
+  listPosts: () => request('/admin/blog'),
+  getPost: (id) => request(`/admin/blog/${id}`),
+  createPost: (post) => request('/admin/blog', { method: 'POST', body: post }),
+  updatePost: (id, post) => request(`/admin/blog/${id}`, { method: 'PUT', body: post }),
+  deletePost: (id) => request(`/admin/blog/${id}`, { method: 'DELETE' }),
 
   setUserRole: (id, role) => request(`/admin/users/${id}`, { method: 'PATCH', body: { role } }),
 

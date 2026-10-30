@@ -10,6 +10,8 @@ import Login from "../pages/Login/Login";
 import SignUpSection from "../pages/SignUp/SignUp";
 import ProductDetail from "../pages/ShopList/ProductDetail";
 import ComboDetail from "../pages/Combo/ComboDetail";
+import Faq from "../pages/Faq/Faq";
+import BlogPost from "../pages/BlogPost/BlogPost";
 import AddToCart from "../pages/ShopList/AddToCart";
 import CheckOut from "../pages/ShopList/CheckOut";
 // import Register from "../components/Register";
@@ -35,6 +37,8 @@ import AdminProducts from "../admin/AdminProducts";
 import AdminProductForm from "../admin/AdminProductForm";
 import AdminProductDetail from "../admin/AdminProductDetail";
 import AdminUsers from "../admin/AdminUsers";
+import AdminUserDetail from "../admin/AdminUserDetail";
+import AdminBlog from "../admin/AdminBlog";
 import AdminOrders from "../admin/AdminOrders";
 import AdminOrderDetail from "../admin/AdminOrderDetail";
 import AdminReturns from "../admin/AdminReturns";
@@ -42,10 +46,13 @@ import AdminHome from "../admin/AdminHome";
 import AdminCombos from "../admin/AdminCombos";
 import AdminComboForm from "../admin/AdminComboForm";
 import AdminComboDetail from "../admin/AdminComboDetail";
-import AdminFaqs from "../admin/AdminFaqs";
 
 // Loaded on demand so shoppers never download the charting library.
 const AdminDashboard = lazy(() => import("../admin/AdminDashboard"));
+// FAQs bring in the rich text editor + Word import, so they load on demand too.
+const AdminFaqs = lazy(() => import("../admin/AdminFaqs"));
+const AdminBlogForm = lazy(() => import("../admin/AdminBlogForm"));
+const loadingEditor = <div className="empty-state">Loading editor…</div>;
 
 function AppRouter() {
   return (
@@ -85,11 +92,17 @@ function AppRouter() {
         <Route path="/account/review" element={<ProtectedRoute role="user"><AccountReview /></ProtectedRoute>} />
 
         <Route path="/blog" element={<BlogCategory />} />
+        {/* posts from Admin → Blog */}
+        <Route path="/blog/:slug" element={<BlogPost />} />
         <Route path="/privacy-policy" element={<PrivacyPolicy />} />
         <Route path="/return-refund-policy" element={<ReturnRefundPolicy />} />
         <Route path="/furkind-pet-tallow" element={<FurkindPetTallow />} />
         <Route path="/terms-and-conditions" element={<TermsConditionsPage />} />
         <Route path="/contactus" element={<ContactUs />} />
+
+        {/* FAQs from Admin → Home → FAQs */}
+        <Route path="/faq" element={<Faq />} />
+        <Route path="/faqs" element={<Navigate to="/faq" replace />} />
 
         {/* Auth — one login page for both roles; admins are sent on to /admin */}
         <Route path="/login" element={<Login />} />
@@ -109,16 +122,24 @@ function AppRouter() {
           <Route path="products/:id/edit" element={<AdminProductForm mode="edit" />} />
           {/* Home sub-menu: new launches, combo products, FAQs */}
           <Route path="home" element={<Navigate to="launches" replace />} />
-          <Route path="home/launches" element={<AdminHome />} />
+          {/* key: switching between the two remounts the page with fresh state */}
+          <Route path="home/launches" element={<AdminHome key="new_launches" section="new_launches" />} />
+          <Route path="home/best-sellers" element={<AdminHome key="best_sellers" section="best_sellers" />} />
+          <Route path="home/featured" element={<AdminHome key="featured" section="featured" />} />
+          <Route path="home/tattoo" element={<AdminHome key="tattoo" section="tattoo" />} />
           <Route path="home/combos" element={<AdminCombos />} />
           <Route path="home/combos/new" element={<AdminComboForm mode="create" />} />
           <Route path="home/combos/:id" element={<AdminComboDetail />} />
           <Route path="home/combos/:id/edit" element={<AdminComboForm mode="edit" />} />
-          <Route path="home/faqs" element={<AdminFaqs />} />
+          <Route path="home/faqs" element={<Suspense fallback={<div className="empty-state">Loading FAQs…</div>}><AdminFaqs /></Suspense>} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="orders/:orderId" element={<AdminOrderDetail />} />
           <Route path="returns" element={<AdminReturns />} />
           <Route path="users" element={<AdminUsers />} />
+          <Route path="users/:id" element={<AdminUserDetail />} />
+          <Route path="blog" element={<AdminBlog />} />
+          <Route path="blog/new" element={<Suspense fallback={loadingEditor}><AdminBlogForm key="new" mode="create" /></Suspense>} />
+          <Route path="blog/:id/edit" element={<Suspense fallback={loadingEditor}><AdminBlogForm mode="edit" /></Suspense>} />
         </Route>
       </Routes>
     </BrowserRouter>

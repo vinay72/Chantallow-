@@ -1,16 +1,113 @@
 // src/admin/AdminHome.jsx
-// /admin/home/launches — the home page's new launches. "New launches" are the
-// small product cards in the hero (next to Shop Now): pick up to 4 products,
-// order them, and save. With none picked the home page shows its default two.
-// A brand-new product is created under Products first, then added here.
+// Home page sections filled by picking products:
+//   /admin/home/launches      <AdminHome section="new_launches" />  hero cards next to "Shop Now"
+//   /admin/home/best-sellers  <AdminHome section="best_sellers" />  "Our Best Sellers" row
+//   /admin/home/featured      <AdminHome section="featured" />      "Nourish Your Skin, Naturally" pair
+//   /admin/home/tattoo        <AdminHome section="tattoo" />        "Pure Care for Every Tattoo" pair
+// Pick products, order them, and save. With none picked the home page shows its
+// built-in products. A brand-new product is created under Products first.
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowDown, ArrowUp, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { ArrowDown, ArrowUp, Award, Droplet, Leaf, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { api, mediaUrl } from './api';
 import { money } from './orderMeta';
 
-const MAX = 4;
+// One entry per section; `key` is the field name in GET/PUT /api/home.
+const SECTIONS = {
+  new_launches: {
+    key: 'new_launches',
+    title: 'New Launches',
+    Icon: Sparkles,
+    max: 4,
+    help: 'Shown in the home page hero, next to “Shop Now”.',
+    empty: 'No new launches picked. The home page shows its default products (Amber Glow and Amethyst Relief).',
+    saved: 'Home page updated. The new launches are live.',
+    addHint: 'Launching something new? Create it first, then add it here.',
+  },
+  best_sellers: {
+    key: 'best_sellers',
+    title: 'Best Sellers',
+    Icon: Award,
+    max: 8,
+    help: 'Shown in “Our Best Sellers” on the home page, 4 to a row.',
+    empty:
+      'No best sellers picked. The home page shows its default four (Olivine Relief, Malachite Fusion, Taluma Hair Care and Bare Whipped Tallow).',
+    saved: 'Home page updated. The best sellers are live.',
+    addHint: "Pick the products you sell most. A product that isn't listed yet can be created first.",
+  },
+  featured: {
+    key: 'featured',
+    title: 'Nourish Your Skin',
+    Icon: Leaf,
+    max: 2,
+    help: 'The two cards in “Nourish Your Skin, Naturally” on the home page. Each can have a short sale line.',
+    empty: 'No products picked. The home page shows its default pair (Jasper Revive and Obsidian Infusion).',
+    saved: 'Home page updated. The Nourish Your Skin cards are live.',
+    addHint: 'Edit a product’s photo, name or price under Products; it updates here too.',
+  },
+  tattoo: {
+    key: 'tattoo',
+    title: 'Pure Care for Every Tattoo',
+    Icon: Droplet,
+    max: 2,
+    help: 'The two cards in “Pure Care for Every Tattoo” on the home page. Each can have a star badge and its own card photo.',
+    empty: 'No products picked. The home page shows its default pair (Malachite Fusion and Amethyst Relief).',
+    saved: 'Home page updated. The tattoo care cards are live.',
+    addHint: 'Name, subtitle and prices come from the product (edit them under Products).',
+  },
+};
+
+const STAR_CLIP =
+  'polygon(50% 0%, 59% 18%, 79% 10%, 76% 31%, 97% 33%, 83% 50%, 97% 67%, 76% 69%, 79% 90%, 59% 82%, 50% 100%, 41% 82%, 21% 90%, 24% 69%, 3% 67%, 17% 50%, 3% 33%, 24% 31%, 21% 10%, 41% 18%)';
+
+// How a "Pure Care for Every Tattoo" card will look: white card, jar photo,
+// mint name/price box, optional green star badge.
+function TattooPreview({ product, label, image }) {
+  const url = image || coverOf(product);
+  const compare = product.compare_at_price != null ? Number(product.compare_at_price) : null;
+  return (
+    <div className="tattoo-preview-card">
+      <div className="tattoo-preview-img">{url ? <img src={mediaUrl(url)} alt="" /> : <span className="muted">No image</span>}</div>
+      <div className="tattoo-preview-info">
+        <div>
+          <div className="tattoo-preview-name">{product.name}</div>
+          {product.subname && <div className="tattoo-preview-sub">{product.subname}</div>}
+        </div>
+        <div className="tattoo-preview-price">
+          {money(product.price)}
+          {compare != null && compare > Number(product.price) && <del>{money(compare)}</del>}
+        </div>
+      </div>
+      {label && (
+        <span className="tattoo-preview-star" style={{ clipPath: STAR_CLIP }}>
+          {label}
+        </span>
+      )}
+    </div>
+  );
+}
+
+// How a "Nourish Your Skin" card will look: cream photo box, sale line, name, price.
+function FeaturedPreview({ product, label }) {
+  const url = coverOf(product);
+  const compare = product.compare_at_price != null ? Number(product.compare_at_price) : null;
+  return (
+    <div className="featured-preview-card">
+      <div className="featured-preview-img">{url ? <img src={mediaUrl(url)} alt="" /> : <span className="muted">No image</span>}</div>
+      <div className="featured-preview-row">
+        <div>
+          {label && <div className="featured-preview-sale">{label}</div>}
+          <div className="featured-preview-name">{product.name}</div>
+        </div>
+        <div className="featured-preview-price">
+          {money(product.price)}
+          {compare != null && compare > Number(product.price) && <del>{money(compare)}</del>}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 const coverOf = (p) => p.main_image || p.images?.find((m) => m.type === 'image')?.url || null;
 
@@ -20,6 +117,30 @@ function Thumb({ product, size = 56 }) {
     <span className="launch-thumb" style={{ width: size, height: size }}>
       {url ? <img src={mediaUrl(url)} alt="" /> : <span>No image</span>}
     </span>
+  );
+}
+
+// How a best seller will look in "Our Best Sellers": arched image + name.
+// 'photo': the photo already has the backdrop, shown as is. 'scene': a plain
+// product photo, drawn on the arched backdrop + stand (same as Home.css).
+function BestSellerPreview({ product, style }) {
+  const url = coverOf(product);
+  if (style === 'photo' || !url) {
+    return (
+      <div className="best-preview-card">
+        <div className="best-preview-img">{url ? <img src={mediaUrl(url)} alt="" /> : <span className="muted">No image</span>}</div>
+        <div className="best-preview-name">{product.name}</div>
+      </div>
+    );
+  }
+  return (
+    <div className="best-preview-card">
+      <div className="best-preview-scene">
+        <span className="best-preview-stand" aria-hidden="true" />
+        <img className="best-preview-jar" src={mediaUrl(url)} alt="" />
+      </div>
+      <div className="best-preview-name">{product.name}</div>
+    </div>
   );
 }
 
@@ -46,26 +167,49 @@ function PreviewCard({ product }) {
   );
 }
 
-export default function AdminHome() {
+export default function AdminHome({ section = 'new_launches' }) {
+  const cfg = SECTIONS[section];
+  const MAX = cfg.max;
   const [products, setProducts] = useState([]);
   const [saved, setSaved] = useState([]); // ids as stored on the server
   const [picked, setPicked] = useState([]); // ids being edited
+  // Best sellers only: id -> 'photo' when its photo already has the backdrop
+  const [savedStyles, setSavedStyles] = useState({});
+  const [styles, setStyles] = useState({});
+  // Nourish Your Skin only: id -> sale line shown on the card
+  const [savedLabels, setSavedLabels] = useState({});
+  const [labels, setLabels] = useState({});
+  // Tattoo care only: id -> card photo used instead of the product's own
+  const [savedImages, setSavedImages] = useState({});
+  const [images, setImages] = useState({});
+  const [uploadingId, setUploadingId] = useState(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
   const [loadFailed, setLoadFailed] = useState(false);
+  const [stale, setStale] = useState(false); // someone saved newer picks since this page loaded
   const [flash, setFlash] = useState(null);
 
   const load = useCallback(() => {
     setLoading(true);
     setError(null);
     setLoadFailed(false);
+    setStale(false);
     return Promise.all([api.getHome(), api.listProducts()])
       .then(([home, list]) => {
-        const ids = home.new_launches.map((p) => p.id);
+        const ids = home[cfg.key].map((p) => p.id);
+        const loadedStyles = Object.fromEntries(home[cfg.key].map((p) => [p.id, p.home_style || 'scene']));
+        const loadedLabels = Object.fromEntries(home[cfg.key].map((p) => [p.id, p.home_label || '']));
+        const loadedImages = Object.fromEntries(home[cfg.key].map((p) => [p.id, p.home_image || '']));
         setSaved(ids);
         setPicked(ids);
+        setSavedStyles(loadedStyles);
+        setStyles(loadedStyles);
+        setSavedLabels(loadedLabels);
+        setLabels(loadedLabels);
+        setSavedImages(loadedImages);
+        setImages(loadedImages);
         setProducts(list.products);
       })
       .catch((err) => {
@@ -73,7 +217,7 @@ export default function AdminHome() {
         setLoadFailed(true);
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [cfg.key]);
 
   useEffect(() => {
     load();
@@ -81,7 +225,13 @@ export default function AdminHome() {
 
   const byId = useMemo(() => new Map(products.map((p) => [p.id, p])), [products]);
   const pickedProducts = picked.map((id) => byId.get(id)).filter(Boolean);
-  const dirty = picked.join(',') !== saved.join(',');
+  const styleOf = (id) => (styles[id] === 'photo' ? 'photo' : 'scene');
+  const labelOf = (id) => (labels[id] || '').trim();
+  const dirty =
+    picked.join(',') !== saved.join(',') ||
+    picked.some((id) => styleOf(id) !== (savedStyles[id] === 'photo' ? 'photo' : 'scene')) ||
+    picked.some((id) => labelOf(id) !== (savedLabels[id] || '').trim()) ||
+    picked.some((id) => (images[id] || '') !== (savedImages[id] || ''));
   const full = picked.length >= MAX;
 
   const available = useMemo(() => {
@@ -103,18 +253,51 @@ export default function AdminHome() {
       return next;
     });
 
+  // Uploads a card photo for one pick (saved with the picks on "Save changes").
+  const uploadCardPhoto = async (id, file) => {
+    setUploadingId(id);
+    setError(null);
+    try {
+      const { url } = await api.uploadHomeImage(file);
+      setImages((m) => ({ ...m, [id]: url }));
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploadingId(null);
+    }
+  };
+
   const save = async () => {
     setSaving(true);
     setError(null);
     setFlash(null);
     try {
-      const res = await api.saveHome(picked);
-      const ids = res.new_launches.map((p) => p.id);
+      // `expected` lets the server refuse the save if these picks changed since loading
+      // a plain id, or { id, style?, label? } when the pick has extras
+      const picks = picked.map((id) => {
+        const pick = { id };
+        if (styleOf(id) === 'photo') pick.style = 'photo';
+        if (labelOf(id)) pick.label = labelOf(id);
+        if (images[id]) pick.image = images[id];
+        return Object.keys(pick).length > 1 ? pick : id;
+      });
+      const res = await api.saveHome({ [cfg.key]: picks, expected: { [cfg.key]: saved } });
+      const ids = res[cfg.key].map((p) => p.id);
+      const savedNow = Object.fromEntries(res[cfg.key].map((p) => [p.id, p.home_style || 'scene']));
+      const savedLabelsNow = Object.fromEntries(res[cfg.key].map((p) => [p.id, p.home_label || '']));
+      const savedImagesNow = Object.fromEntries(res[cfg.key].map((p) => [p.id, p.home_image || '']));
       setSaved(ids);
       setPicked(ids);
-      setFlash('Home page updated. The new launches are live.');
+      setSavedStyles(savedNow);
+      setStyles(savedNow);
+      setSavedLabels(savedLabelsNow);
+      setLabels(savedLabelsNow);
+      setSavedImages(savedImagesNow);
+      setImages(savedImagesNow);
+      setFlash(cfg.saved);
     } catch (err) {
       setError(err.message);
+      setStale(err.status === 409);
     } finally {
       setSaving(false);
     }
@@ -125,7 +308,7 @@ export default function AdminHome() {
   return (
     <>
       <div className="page-head">
-        <h1>New Launches</h1>
+        <h1>{cfg.title}</h1>
         <a href="/" target="_blank" rel="noreferrer" className="btn btn-outline btn-sm">
           View home page
         </a>
@@ -134,13 +317,13 @@ export default function AdminHome() {
       {flash && <div className="flash">{flash}</div>}
       {error && (
         <div className="errors">
-          <strong>{loadFailed ? "Couldn't load the new launches:" : "Couldn't save:"}</strong>
+          <strong>{loadFailed ? `Couldn't load the ${cfg.title.toLowerCase()}:` : "Couldn't save:"}</strong>
           <ul>
             <li>{error}</li>
           </ul>
           <div className="row-actions" style={{ justifyContent: 'flex-start', marginTop: 10 }}>
-            <button type="button" className="btn btn-outline btn-sm" onClick={loadFailed ? load : save} disabled={saving}>
-              Try again
+            <button type="button" className="btn btn-outline btn-sm" onClick={loadFailed || stale ? load : save} disabled={saving}>
+              {stale ? 'Reload latest' : 'Try again'}
             </button>
             <button type="button" className="btn btn-outline btn-sm" onClick={() => setError(null)}>
               Dismiss
@@ -151,15 +334,15 @@ export default function AdminHome() {
 
       {loadFailed ? null : (
         <div className="home-grid">
-          {/* ---------- Current new launches ---------- */}
+          {/* ---------- Current picks ---------- */}
           <section className="panel">
             <div className="panel-head">
               <div>
                 <h2>
-                  <Sparkles size={17} aria-hidden="true" /> New launches
+                  <cfg.Icon size={17} aria-hidden="true" /> {cfg.title}
                 </h2>
                 <p className="muted">
-                  Shown in the home page hero, next to “Shop Now”. Pick up to {MAX}; they appear in this order (use the arrows to change it).
+                  {cfg.help} Pick up to {MAX}; they appear in this order (use the arrows to change it).
                 </p>
               </div>
               <span className="muted">
@@ -169,7 +352,7 @@ export default function AdminHome() {
 
             {pickedProducts.length === 0 ? (
               <div className="launch-empty">
-                No new launches picked. The home page shows its default products (Amber Glow and Amethyst Relief).
+                {cfg.empty}
               </div>
             ) : (
               <ol className="launch-list">
@@ -186,6 +369,61 @@ export default function AdminHome() {
                         {p.size && ` · ${p.size}`}
                         {p.stock_status === 'out_of_stock' && <span className="sold-out"> · Out of stock</span>}
                       </div>
+                      {section === 'best_sellers' && (
+                        <label className="style-check">
+                          <input
+                            type="checkbox"
+                            checked={styleOf(p.id) === 'photo'}
+                            onChange={(e) => setStyles((m) => ({ ...m, [p.id]: e.target.checked ? 'photo' : 'scene' }))}
+                          />
+                          Photo already has the arch backdrop
+                        </label>
+                      )}
+                      {section === 'tattoo' && (
+                        <div className="card-photo-row">
+                          <input
+                            className="label-input"
+                            value={labels[p.id] || ''}
+                            maxLength={60}
+                            placeholder="Star badge, e.g. 20% Sale (empty = none)"
+                            aria-label={`Star badge for ${p.name}`}
+                            onChange={(e) => setLabels((m) => ({ ...m, [p.id]: e.target.value }))}
+                          />
+                          <div className="card-photo">
+                            <span className="card-photo-thumb">
+                              {(images[p.id] || coverOf(p)) && <img src={mediaUrl(images[p.id] || coverOf(p))} alt="" />}
+                            </span>
+                            <label className={uploadingId === p.id ? 'btn btn-outline btn-sm is-busy' : 'btn btn-outline btn-sm'}>
+                              {uploadingId === p.id ? 'Uploading…' : images[p.id] ? 'Replace card photo' : 'Upload card photo'}
+                              <input
+                                type="file"
+                                accept="image/jpeg,image/png,image/webp,image/gif"
+                                hidden
+                                disabled={uploadingId === p.id}
+                                onChange={(e) => {
+                                  if (e.target.files[0]) uploadCardPhoto(p.id, e.target.files[0]);
+                                  e.target.value = '';
+                                }}
+                              />
+                            </label>
+                            {images[p.id] && (
+                              <button type="button" className="link-btn" onClick={() => setImages((m) => ({ ...m, [p.id]: '' }))}>
+                                Use product photo
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                      {section === 'featured' && (
+                        <input
+                          className="label-input"
+                          value={labels[p.id] || ''}
+                          maxLength={60}
+                          placeholder="Sale line, e.g. Up To 10% Off"
+                          aria-label={`Sale line for ${p.name}`}
+                          onChange={(e) => setLabels((m) => ({ ...m, [p.id]: e.target.value }))}
+                        />
+                      )}
                     </div>
                     <div className="launch-actions">
                       <button type="button" className="icon-btn" aria-label={`Move ${p.name} up`} disabled={i === 0} onClick={() => move(i, -1)}>
@@ -214,7 +452,17 @@ export default function AdminHome() {
                 {saving ? 'Saving…' : 'Save changes'}
               </button>
               {dirty && (
-                <button type="button" className="btn btn-outline" disabled={saving} onClick={() => setPicked(saved)}>
+                <button
+                  type="button"
+                  className="btn btn-outline"
+                  disabled={saving}
+                  onClick={() => {
+                    setPicked(saved);
+                    setStyles(savedStyles);
+                    setLabels(savedLabels);
+                    setImages(savedImages);
+                  }}
+                >
                   Discard
                 </button>
               )}
@@ -223,10 +471,26 @@ export default function AdminHome() {
             {pickedProducts.length > 0 && (
               <>
                 <h3 className="preview-title">Preview</h3>
-                <div className="launch-preview">
-                  {pickedProducts.map((p) => (
-                    <PreviewCard key={p.id} product={p} />
-                  ))}
+                <div
+                  className={
+                    section === 'best_sellers'
+                      ? 'launch-preview best-preview'
+                      : section === 'featured' || section === 'tattoo'
+                      ? 'launch-preview featured-preview'
+                      : 'launch-preview'
+                  }
+                >
+                  {pickedProducts.map((p) =>
+                    section === 'best_sellers' ? (
+                      <BestSellerPreview key={p.id} product={p} style={styleOf(p.id)} />
+                    ) : section === 'featured' ? (
+                      <FeaturedPreview key={p.id} product={p} label={labelOf(p.id)} />
+                    ) : section === 'tattoo' ? (
+                      <TattooPreview key={p.id} product={p} label={labelOf(p.id)} image={images[p.id]} />
+                    ) : (
+                      <PreviewCard key={p.id} product={p} />
+                    )
+                  )}
                 </div>
               </>
             )}
@@ -237,7 +501,7 @@ export default function AdminHome() {
             <div className="panel-head">
               <div>
                 <h2>Add a product</h2>
-                <p className="muted">Launching something new? Create it first, then add it here.</p>
+                <p className="muted">{cfg.addHint}</p>
               </div>
               <Link to="/admin/products/new" className="btn btn-sm">
                 <Plus size={14} aria-hidden="true" /> New product

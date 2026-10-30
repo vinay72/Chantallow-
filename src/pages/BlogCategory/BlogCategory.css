@@ -338,6 +338,19 @@
     gap: 9px;
 }
 
+/* short summary under a post title (from Admin → Blog) */
+.post-excerpt {
+    margin: 0 0 14px;
+    font-size: 14.5px;
+    line-height: 1.6;
+    text-align: left;
+    color: #5a5a52;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
 .load-more-wrap {
     display: flex;
     justify-content: center;

@@ -118,3 +118,23 @@ CREATE TABLE IF NOT EXISTS faqs (
   created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
+
+-- Blog posts written in Admin -> Blog. `content` is sanitised HTML from the
+-- rich text editor; only 'published' posts are shown on the website.
+CREATE TABLE IF NOT EXISTS blog_posts (
+  id SERIAL PRIMARY KEY,
+  title TEXT NOT NULL,
+  slug TEXT NOT NULL UNIQUE,              -- used in the URL: /blog/<slug>
+  excerpt TEXT,                           -- short summary for the blog list
+  content TEXT NOT NULL DEFAULT '',
+  cover_image TEXT,                       -- /uploads/products/... or /assets/...
+  category TEXT,
+  tags JSONB NOT NULL DEFAULT '[]',       -- ["Skincare", "Tallow"]
+  author_name TEXT,
+  status TEXT NOT NULL DEFAULT 'draft' CHECK (status IN ('draft', 'published')),
+  published_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_blog_posts_published ON blog_posts (status, published_at DESC);

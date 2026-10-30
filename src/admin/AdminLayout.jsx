@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ExternalLink, House, LayoutDashboard, LogOut, Menu, Package, ShoppingCart, Undo2, Users, X } from 'lucide-react';
+import { ChevronDown, ExternalLink, House, LayoutDashboard, LogOut, Menu, Newspaper, Package, ShoppingCart, Undo2, Users, X } from 'lucide-react';
 import { homeForRole, useAuth } from '../context/AuthContext';
 import './admin.css';
 
@@ -18,6 +18,9 @@ const NAV = [
     Icon: House,
     children: [
       { to: '/admin/home/launches', label: 'New Launches' },
+      { to: '/admin/home/best-sellers', label: 'Best Sellers' },
+      { to: '/admin/home/featured', label: 'Nourish Your Skin' },
+      { to: '/admin/home/tattoo', label: 'Pure Care for Every Tattoo' },
       { to: '/admin/home/combos', label: 'Combo Products' },
       { to: '/admin/home/faqs', label: 'FAQs' },
     ],
@@ -25,6 +28,7 @@ const NAV = [
   { to: '/admin/products', label: 'Products', Icon: Package },
   { to: '/admin/orders', label: 'Orders', Icon: ShoppingCart },
   { to: '/admin/returns', label: 'Returns', Icon: Undo2 },
+  { to: '/admin/blog', label: 'Blog', Icon: Newspaper },
   { to: '/admin/users', label: 'Users', Icon: Users },
 ];
 

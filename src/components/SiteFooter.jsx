@@ -17,6 +17,7 @@ const USEFUL_LINKS = [
     { label: "Returns", path: "#" },
     { label: "Terms & Conditions", path: "/terms-and-conditions" },
     { label: "Privacy-Policy", path: "/privacy-policy" },
+    { label: "FAQ", path: "/faq" },
     { label: "Contact Us", path: "/contactus" },
 ];
 

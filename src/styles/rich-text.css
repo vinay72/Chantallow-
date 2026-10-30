@@ -1,0 +1,99 @@
+/* src/styles/rich-text.css
+   Content written in the admin's RichTextEditor (FAQ answers, blog posts),
+   shown on the storefront: <div class="rich-text" dangerouslySetInnerHTML=…>.
+   Colours can be tuned per page with --rt-text / --rt-ink / --rt-link /
+   --rt-muted / --rt-line. */
+
+/* the admin's rich text: keep its fonts / colours / sizes, tidy the rest.
+   Text is justified (both edges straight) unless the admin aligned it in the
+   editor — that inline text-align still wins. index.css centres everything in
+   #root, so the alignment is set here explicitly. */
+.rich-text {
+  font-size: 15.5px;
+  line-height: 1.75;
+  text-align: justify;
+  hyphens: auto;
+  color: var(--rt-text, #4a4a44);
+  overflow-wrap: break-word;
+}
+
+.rich-text h1,
+.rich-text h2,
+.rich-text h3,
+.rich-text li {
+  text-align: left;
+}
+
+/* Empty lines left at the end of an answer (or between blocks) add no space. */
+.rich-text p:empty,
+.rich-text p:has(> br:only-child) {
+  display: none;
+}
+
+/* Images sit on their own line, centred by default; images the admin aligned
+   left / right in the editor keep that side. */
+.rich-text img {
+  display: block;
+  margin: 14px auto;
+}
+
+.rich-text [style*="text-align:left"] img,
+.rich-text [style*="text-align: left"] img {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.rich-text [style*="text-align:right"] img,
+.rich-text [style*="text-align: right"] img {
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.rich-text > :first-child {
+  margin-top: 0;
+}
+
+.rich-text > :last-child {
+  margin-bottom: 0;
+}
+
+.rich-text p {
+  margin: 0 0 0.75em;
+}
+
+.rich-text h1,
+.rich-text h2,
+.rich-text h3 {
+  margin: 1em 0 0.5em;
+  font-family: "Marcellus", serif;
+  font-weight: 400;
+  color: var(--rt-ink, #1c1c1a);
+}
+
+.rich-text ul,
+.rich-text ol {
+  margin: 0 0 0.75em;
+  padding-left: 1.4em;
+}
+
+.rich-text li {
+  margin-bottom: 0.3em;
+}
+
+.rich-text a {
+  color: var(--rt-link, #2c7a55);
+  text-decoration: underline;
+}
+
+.rich-text img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 6px;
+}
+
+.rich-text blockquote {
+  margin: 0 0 0.75em;
+  padding-left: 14px;
+  color: var(--rt-muted, #8a8a80);
+  border-left: 3px solid var(--rt-line, #e2e9da);
+}

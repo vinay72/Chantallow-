@@ -28,8 +28,9 @@ import lavender from "../../assets/lavender.png";
 
 import CollectionCard from "../../components/CollectionCard";
 import { useShop } from "../../context/ShopContext";
-import { formatPrice, fromServerCombo, fromServerProduct, getProductById } from "../../data/products";
+import { PRODUCTS as CATALOGUE, formatPrice, fromServerCombo, fromServerProduct, getProductById } from "../../data/products";
 import { useCachedApi } from "../../api/useCachedApi";
+import { mediaUrl } from "../../api/client";
 
 import petMap from "../../assets/map/map2.png";
 import petDog from "../../assets/pet/dog.png";
@@ -146,6 +147,8 @@ const COLLECTION_CARDS = [
     { key: "c8", id: 2, name: "Amethyst Relief (4oz) + Jasper Revive (2oz)", accent: "#5d1100", img: collectionImg6, col: 3 },
 ];
 
+// Built-in "Our Best Sellers", shown until the picks from Admin → Home →
+// Best Sellers load (and if none are picked or the server can't be reached).
 // "Our Best Sellers" — each name matches the jar shown in its image.
 // To add more products, import their arch photo and add a row here.
 // "Our Best Sellers" — same style photos (jar on a grey-blue stand), each name matches its jar.
@@ -156,11 +159,17 @@ const MORE_COLLECTIONS = [
     { id: 4, slug: "bare-whipped-tallow", name: "Bare Whipped Tallow", img: bestBare },
 ];
 
+// Built-in "Nourish Your Skin, Naturally" cards, shown until the picks from
+// Admin → Home → Nourish Your Skin load (and if none are picked or the server
+// can't be reached).
 const SIMILAR_PROFILES = [
     { id: 1, name: "Jasper Revive", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg2 },      // Jasper Revive 4oz + 2oz jars
     { id: 2, name: "Obsidian Infusion", sale: "Up To 10% Off", price: "$00", was: "$00", img: similarImg3 },  // Obsidian Infusion 4oz + 2oz jars
 ];
 
+// Built-in "Pure Care for Every Tattoo" cards, shown until the picks from
+// Admin → Home → Pure Care for Every Tattoo load (and if none are picked or the
+// server can't be reached).
 const SAVING_LEFT = [
     { id: 1, name: "Malachite Fusion", sub: "Moringa + Butterfly Pea", price: "$00.00", was: "$00.00", img: savingImg1, path: "/shop-list" },
     { id: 2, name: "Amethyst Relief", sub: "Lavender Whipped Tallow", price: "$00.00", was: "$00.00", img: savingImg2, badge: true, path: "/shop-list" },
@@ -210,6 +219,8 @@ const DEFAULT_HERO_PRODUCTS = [
 export default function Home() {
     const navigate = useNavigate();
     const [quickView, setQuickView] = useState(null); // card shown in Quick View (null = closed)
+    // Products picked in Admin → Home (new launches + best sellers)
+    const home = useCachedApi("/home");
 
     return (
         <div
@@ -226,14 +237,14 @@ export default function Home() {
             <QuickViewModal card={quickView} onClose={() => setQuickView(null)} />
 
             <main>
-                <Hero navigate={navigate} />
+                <Hero navigate={navigate} home={home} />
                 <MissionStrip />
                 <CompleteCareBanner />
                 {/* <CategoryMarquee /> */}
                 <TallowCollection onQuickView={(card) => setQuickView(card)} />
-                <MoreCollections />
-                <SimilarProfilesSection />
-                <SavingSection />
+                <MoreCollections home={home} />
+                <SimilarProfilesSection home={home} />
+                <SavingSection home={home} />
                 <FurkindPetSection />
                 <FeaturedOffers />
                 <ShortlistSection />
@@ -242,6 +253,16 @@ export default function Home() {
             <Footer />
             <ScrollTop />
         </div>
+    );
+}
+
+// A "Nourish Your Skin" card: links to the product when it has a page to go to.
+function SimilarCardLink({ path, children }) {
+    if (!path) return <div style={{ minWidth: 0 }}>{children}</div>;
+    return (
+        <Link to={path} style={{ minWidth: 0, display: "block", color: "inherit", textDecoration: "none" }}>
+            {children}
+        </Link>
     );
 }
 
@@ -375,11 +396,10 @@ function GlobalStyle() {
 
 /* --------------------------------- Hero --------------------------------- */
 
-function Hero({ navigate }) {
+function Hero({ navigate, home }) {
     const { addToCart, showToast } = useShop();
 
     // New launch products picked in Admin → Home → New Launches.
-    const home = useCachedApi("/home");
     const launches = home.data ? home.data.new_launches.map(fromServerProduct) : null;
 
     // Nothing until loaded (or the defaults if the server can't be reached).
@@ -1386,8 +1406,31 @@ function RotatingLinkBadge({ label = "ALL PRODUCTS", href = "#shop", size = 190 
 
 /* ---------------------------- More Collections ---------------------------- */
 
-function MoreCollections() {
+function MoreCollections({ home }) {
     // 4 in one row on desktop, 2 on tablet / phone (see .ctw-best-* in Home.css)
+
+    // Admin's picks; undefined until loaded (an older saved copy may not have them yet).
+    const picks = home.data?.best_sellers;
+    const waiting = picks === undefined && (home.status === "loading" || home.status === "stale");
+    const items = picks?.length
+        ? picks.map((row) => {
+              const p = fromServerProduct(row);
+              // Products that also exist in the built-in catalogue keep their detail page.
+              const builtIn = CATALOGUE.find((x) => x.name.toLowerCase() === p.name.toLowerCase());
+              // `scene`: an ordinary product photo, so it's drawn on the arched backdrop + stand.
+              // Photos marked "already has the backdrop" in the admin are shown as they are.
+              return {
+                  id: p.id,
+                  name: p.name,
+                  img: p.cardImage,
+                  scene: row.home_style !== "photo",
+                  path: builtIn ? `/product/${builtIn.slug}` : "/shop-list",
+              };
+          })
+        : waiting
+        ? Array.from({ length: 4 }, (_, i) => ({ id: `placeholder-${i}`, placeholder: true }))
+        : MORE_COLLECTIONS.map((c) => ({ ...c, path: `/product/${c.slug}` }));
+
     return (
         <section className="ctw-best" style={{ background: "#fff", overflow: "hidden" }}>
             <div className="ctw-best-grid">
@@ -1444,52 +1487,68 @@ function MoreCollections() {
                     </div>
 
                     <div className="ctw-best-list">
-                        {MORE_COLLECTIONS.map((c) => (
-                            <Link
-                                key={c.id}
-                                to={`/product/${c.slug}`}
-                                style={{ textDecoration: "none", display: "block" }}
-                            >
-                                <div
-                                    style={{
-                                        aspectRatio: "1 / 1",
-                                        borderRadius: "150px 150px 0 0",
-                                        overflow: "hidden",
-                                        marginBottom: 14,
-                                        background: c.bg || "#EDF8F3",
-                                    }}
+                        {items.map((c) =>
+                            c.placeholder ? (
+                                <div key={c.id} aria-hidden="true">
+                                    <div className="ctw-best-placeholder" />
+                                </div>
+                            ) : (
+                                <Link
+                                    key={c.id}
+                                    to={c.path}
+                                    style={{ textDecoration: "none", display: "block" }}
                                 >
-                                    <img
-                                        src={c.img}
-                                        alt={`Chantallow ${c.name} tallow skincare jar`}
+                                    {c.scene ? (
+                                        // Admin-picked product: the built-in photos have the arched
+                                        // backdrop and stand baked in; here CSS draws them and the
+                                        // white photo background is blended away (see Home.css).
+                                        <div className="ctw-best-scene">
+                                            <span className="ctw-best-stand" aria-hidden="true" />
+                                            <img className="ctw-best-jar" src={c.img} alt={`Chantallow ${c.name} tallow skincare jar`} />
+                                        </div>
+                                    ) : (
+                                        <div
+                                            style={{
+                                                aspectRatio: "1 / 1",
+                                                borderRadius: "150px 150px 0 0",
+                                                overflow: "hidden",
+                                                marginBottom: 14,
+                                                background: c.bg || "#EDF8F3",
+                                            }}
+                                        >
+                                            <img
+                                                src={c.img}
+                                                alt={`Chantallow ${c.name} tallow skincare jar`}
+                                                style={{
+                                                    width: "100%",
+                                                    height: "100%",
+                                                    objectFit: c.fit || "cover",
+                                                    objectPosition: c.fit === "contain" ? "center bottom" : "center",
+                                                    padding: c.fit === "contain" ? "12% 8% 3%" : 0,
+                                                    // blends the photo's cream background into the backdrop
+                                                    mixBlendMode: c.fit === "contain" ? "multiply" : "normal",
+                                                    display: "block",
+                                                    transition: "transform .5s ease",
+                                                }}
+                                                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                                                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                                            />
+                                        </div>
+                                    )}
+                                    <div
                                         style={{
-                                            width: "100%",
-                                            height: "100%",
-                                            objectFit: c.fit || "cover",
-                                            objectPosition: c.fit === "contain" ? "center bottom" : "center",
-                                            padding: c.fit === "contain" ? "12% 8% 3%" : 0,
-                                            // blends the photo's cream background into the backdrop
-                                            mixBlendMode: c.fit === "contain" ? "multiply" : "normal",
-                                            display: "block",
-                                            transition: "transform .5s ease",
+                                            textAlign: "center",
+                                            fontFamily: "Lufga, sans-serif",
+                                            fontSize: 17,
+                                            fontWeight: 500,
+                                            color: "#1C1C1A",
                                         }}
-                                        onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                                        onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                                    />
-                                </div>
-                                <div
-                                    style={{
-                                        textAlign: "center",
-                                        fontFamily: "Lufga, sans-serif",
-                                        fontSize: 17,
-                                        fontWeight: 500,
-                                        color: "#1C1C1A",
-                                    }}
-                                >
-                                    {c.name}
-                                </div>
-                            </Link>
-                        ))}
+                                    >
+                                        {c.name}
+                                    </div>
+                                </Link>
+                            )
+                        )}
                     </div>
 
                     {/* Slider arrows + 01/02/03 numbers — commented out
@@ -1717,7 +1776,29 @@ function CarouselControls({ page, pageCount, onGo }) {
 
 /* --------------------------- Similar Profiles --------------------------- */
 
-function SimilarProfilesSection() {
+function SimilarProfilesSection({ home }) {
+    // Admin's two picks; undefined until loaded (an older saved copy may not have them yet).
+    const picks = home.data?.featured;
+    const waiting = picks === undefined && (home.status === "loading" || home.status === "stale");
+    const cards = picks?.length
+        ? picks.map((row) => {
+              const p = fromServerProduct(row);
+              // Products that also exist in the built-in catalogue keep their detail page.
+              const builtIn = CATALOGUE.find((x) => x.name.toLowerCase() === p.name.toLowerCase());
+              return {
+                  id: p.id,
+                  name: p.name,
+                  sale: row.home_label || "",
+                  price: formatPrice(p.price),
+                  was: p.compareAtPrice != null ? formatPrice(p.compareAtPrice) : null,
+                  img: p.cardImage,
+                  path: builtIn ? `/product/${builtIn.slug}` : "/shop-list",
+              };
+          })
+        : waiting
+        ? [{ id: "placeholder-1", placeholder: true }, { id: "placeholder-2", placeholder: true }]
+        : SIMILAR_PROFILES;
+
     return (
         <section className="ctw-similar" style={{ background: "#EDF8F3" }}>
             <div className="ctw-similar-grid">
@@ -1762,95 +1843,101 @@ function SimilarProfilesSection() {
                         */}
                     </div>
                     <div className="ctw-similar-cards">
-                        {SIMILAR_PROFILES.map((p) => (
-                            <div key={p.id} style={{ minWidth: 0 }}>
-                                {/* Image box: cream background, full jar visible */}
-                                <div
-                                    className="ctw-card-hover"
-                                    style={{
-                                        width: "100%",
-                                        aspectRatio: "443 / 478",
-                                        background: "#FFFDF0",
-                                        marginBottom: 22,
-                                        overflow: "hidden",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                    }}
-                                >
-                                    {p.img && (
-                                        <img
-                                            src={p.img}
-                                            alt={`Chantallow ${p.name} tallow skincare jar`}
-                                            style={{
-                                                width: "100%",
-                                                height: "100%",
-                                                objectFit: "contain",
-                                                display: "block",
-                                            }}
-                                        />
-                                    )}
+                        {cards.map((p) =>
+                            p.placeholder ? (
+                                <div key={p.id} style={{ minWidth: 0 }} aria-hidden="true">
+                                    <div className="ctw-similar-placeholder" />
                                 </div>
-
-                                {/* Info row: sale + name on the left, price on the right */}
-                                <div
-                                    style={{
-                                        display: "flex",
-                                        justifyContent: "space-between",
-                                        alignItems: "flex-start",
-                                        gap: 12,
-                                    }}
-                                >
-                                    <div style={{ textAlign: "left" }}>
-                                        <span
-                                            style={{
-                                                display: "block",
-                                                fontSize: 17,
-                                                fontFamily: "Lufga, sans-serif",
-                                                fontWeight: 500,
-                                                color: "#41705B",
-                                                marginBottom: 6,
-                                            }}
-                                        >
-                                            {p.sale}
-                                        </span>
-                                        <h6
-                                            className="ctw-similar-name"
-                                            style={{
-                                                fontFamily: "Marcellus, sans-serif",
-                                                fontWeight: 400,
-                                                color: "#2D2E2F",
-                                                margin: 0,
-                                            }}
-                                        >
-                                            {p.name}
-                                        </h6>
-                                    </div>
-                                    <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                                        <div
-                                            className="ctw-similar-price"
-                                            style={{
-                                                fontFamily: "Marcellus, sans-serif",
-                                                color: "#1C1C1A",
-                                            }}
-                                        >
-                                            {p.price}
-                                        </div>
-                                        {p.was && (
-                                            <del
+                            ) : (
+                                <SimilarCardLink key={p.id} path={p.path}>
+                                    {/* Image box: cream background, full jar visible */}
+                                    <div
+                                        className="ctw-card-hover"
+                                        style={{
+                                            width: "100%",
+                                            aspectRatio: "443 / 478",
+                                            background: "#FFFDF0",
+                                            marginBottom: 22,
+                                            overflow: "hidden",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
+                                        }}
+                                    >
+                                        {p.img && (
+                                            <img
+                                                src={p.img}
+                                                alt={`Chantallow ${p.name} tallow skincare jar`}
                                                 style={{
-                                                    fontSize: 20,
-                                                    fontFamily: "Marcellus, sans-serif",
-                                                    color: "#9A9A90",
+                                                    width: "100%",
+                                                    height: "100%",
+                                                    objectFit: "contain",
+                                                    display: "block",
                                                 }}
-                                            >
-                                                {p.was}
-                                            </del>
+                                            />
                                         )}
                                     </div>
-                                </div>
-                            </div>
-                        ))}
+
+                                    {/* Info row: sale + name on the left, price on the right */}
+                                    <div
+                                        style={{
+                                            display: "flex",
+                                            justifyContent: "space-between",
+                                            alignItems: "flex-start",
+                                            gap: 12,
+                                        }}
+                                    >
+                                        <div style={{ textAlign: "left" }}>
+                                            <span
+                                                style={{
+                                                    display: "block",
+                                                    fontSize: 17,
+                                                    fontFamily: "Lufga, sans-serif",
+                                                    fontWeight: 500,
+                                                    color: "#41705B",
+                                                    marginBottom: 6,
+                                                }}
+                                            >
+                                                {p.sale}
+                                            </span>
+                                            <h6
+                                                className="ctw-similar-name"
+                                                style={{
+                                                    fontFamily: "Marcellus, sans-serif",
+                                                    fontWeight: 400,
+                                                    color: "#2D2E2F",
+                                                    margin: 0,
+                                                }}
+                                            >
+                                                {p.name}
+                                            </h6>
+                                        </div>
+                                        <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
+                                            <div
+                                                className="ctw-similar-price"
+                                                style={{
+                                                    fontFamily: "Marcellus, sans-serif",
+                                                    color: "#1C1C1A",
+                                                }}
+                                            >
+                                                {p.price}
+                                            </div>
+                                            {p.was && (
+                                                <del
+                                                    style={{
+                                                        fontSize: 20,
+                                                        fontFamily: "Marcellus, sans-serif",
+                                                        color: "#9A9A90",
+                                                    }}
+                                                >
+                                                    {p.was}
+                                                </del>
+                                            )}
+                                        </div>
+                                    </div>
+                                </SimilarCardLink>
+                            )
+                        )}
                     </div>
                 </div>
 
@@ -1875,7 +1962,31 @@ function SimilarProfilesSection() {
 
 /* -------------------------------- Saving -------------------------------- */
 
-function SavingSection() {
+function SavingSection({ home }) {
+    // Admin's picks; undefined until loaded (an older saved copy may not have them yet).
+    const picks = home.data?.tattoo;
+    const waiting = picks === undefined && (home.status === "loading" || home.status === "stale");
+    const cards = picks?.length
+        ? picks.map((row) => {
+              const p = fromServerProduct(row);
+              // Products that also exist in the built-in catalogue keep their detail page.
+              const builtIn = CATALOGUE.find((x) => x.name.toLowerCase() === p.name.toLowerCase());
+              return {
+                  id: p.id,
+                  name: p.name,
+                  sub: p.subtitle,
+                  price: formatPrice(p.price),
+                  was: p.compareAtPrice != null ? formatPrice(p.compareAtPrice) : null,
+                  // a card photo set for this section wins over the product's own photo
+                  img: row.home_image ? mediaUrl(row.home_image) : p.cardImage,
+                  badge: row.home_label || null,
+                  path: builtIn ? `/product/${builtIn.slug}` : "/shop-list",
+              };
+          })
+        : waiting
+        ? [{ id: "placeholder-1", placeholder: true }, { id: "placeholder-2", placeholder: true }]
+        : SAVING_LEFT;
+
     return (
         <section className="ctw-saving" style={{ background: "#EDF8F3", overflowX: "clip" }}>
             <div className="ctw-saving-grid">
@@ -1908,8 +2019,10 @@ function SavingSection() {
                     </div>
 
                     <div className="ctw-saving-cards">
-                        {SAVING_LEFT.map((p) =>
-                            p.seeAll ? (
+                        {cards.map((p) =>
+                            p.placeholder ? (
+                                <div key={p.id} className="ctw-saving-placeholder" aria-hidden="true" />
+                            ) : p.seeAll ? (
                                 /* 4th cell: transparent, "See All" button centred vertically */
                                 <div
                                     key={p.id}
@@ -2230,11 +2343,12 @@ function SavingItem({ name, sub, price = "$00.00", was = "$00.00", badge, img, p
                 </Link>
                 <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
                     <div style={{ fontSize: 19, fontFamily: "Marcellus, sans-serif", color: "#1C1C1A", marginBottom: 4 }}>{price}</div>
-                    <del style={{ fontSize: 15, fontFamily: "Marcellus, sans-serif", color: "#9A9A90" }}>{was}</del>
+                    {was && <del style={{ fontSize: 15, fontFamily: "Marcellus, sans-serif", color: "#9A9A90" }}>{was}</del>}
                 </div>
             </div>
 
-            {/* Green star "00% Sale" badge, top-right corner */}
+            {/* Green star badge, top-right corner: `true` = the built-in "00% Sale",
+                or the text set in the admin (its last word goes on a second line) */}
             {badge && (
                 <span
                     className="ctw-sale-star"
@@ -2254,12 +2368,31 @@ function SavingItem({ name, sub, price = "$00.00", was = "$00.00", badge, img, p
                         zIndex: 2,
                     }}
                 >
-                    00%
-                    <br />
-                    Sale
+                    {badge === true ? (
+                        <>
+                            00%
+                            <br />
+                            Sale
+                        </>
+                    ) : (
+                        <StarBadgeText text={badge} />
+                    )}
                 </span>
             )}
         </div>
+    );
+}
+
+// "20% Sale" -> 20% / Sale on two lines, like the built-in badge.
+function StarBadgeText({ text }) {
+    const words = String(text).trim().split(/\s+/);
+    if (words.length < 2) return text;
+    return (
+        <>
+            {words.slice(0, -1).join(" ")}
+            <br />
+            {words[words.length - 1]}
+        </>
     );
 }
 
@@ -2954,6 +3087,7 @@ function Footer() {
                         { label: "Returns", path: "#" },
                         { label: "Terms & Conditions", path: "/terms-and-conditions" },
                         { label: "Privacy-Policy", path: "/privacy-policy" },
+                        { label: "FAQ", path: "/faq" },
                         { label: "Contact Us", path: "/contactus" },
                     ].map((l) => (
                         <Link

@@ -80,6 +80,83 @@
 }
 .ctw-duos-col--offset { margin-top: 48px; }
 
+/* Best sellers picked in the admin use ordinary product photos (jar on white).
+   This draws the arched scene the built-in photos have baked in: slate backdrop,
+   warm glow, floor and a stand. The photo is multiplied onto it, so its white
+   background disappears; the bright glow behind the jar keeps the label true. */
+.ctw-best-scene {
+  position: relative;
+  aspect-ratio: 1 / 1;
+  margin-bottom: 14px;
+  overflow: hidden;
+  border-radius: 150px 150px 0 0;
+  background:
+    radial-gradient(ellipse 37% 36% at 50% 48%, #ffffff 0%, #ffffff 59%, rgba(255, 255, 255, 0.9) 60%, rgba(255, 255, 255, 0) 100%),
+    radial-gradient(ellipse 80% 18% at 50% 68%, rgba(244, 222, 190, 0.85) 0%, rgba(244, 222, 190, 0) 70%),
+    linear-gradient(180deg, #2c4450 0%, #4b6673 28%, #97aab2 56%, #cdd8dc 70%, #b9c8ce 71%, #aebec4 100%);
+}
+.ctw-best-stand {
+  position: absolute;
+  left: 20%;
+  right: 20%;
+  top: 75%;
+  height: 8%;
+  border-radius: 2px;
+  /* lighter top face, then the front of the block */
+  background: linear-gradient(180deg, #c6d3d8 0%, #c6d3d8 22%, #a4b6bd 22%, #8297a0 100%);
+  box-shadow: 0 10px 18px rgba(30, 50, 60, 0.3);
+}
+.ctw-best-jar {
+  position: absolute;
+  left: 50%;
+  bottom: 18.5%; /* product photos leave white space under the jar; this lands it on the stand */
+  height: 72%;
+  width: auto;
+  max-width: 90%;
+  object-fit: contain;
+  mix-blend-mode: multiply;
+  transform: translateX(-50%);
+  transform-origin: center bottom;
+  transition: transform 0.5s ease;
+}
+.ctw-best-scene:hover .ctw-best-jar,
+a:focus-visible .ctw-best-jar {
+  transform: translateX(-50%) scale(1.05);
+}
+
+/* Holds a "Nourish Your Skin" card's space while the picks load. */
+.ctw-similar-placeholder {
+  aspect-ratio: 443 / 478;
+  margin-bottom: 86px; /* roughly the name + price row under a card */
+  background: linear-gradient(100deg, #f7f5ea 30%, #fffdf0 50%, #f7f5ea 70%) 0 0 / 300% 100%;
+  animation: ctwPlaceholder 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ctw-similar-placeholder { animation: none; }
+}
+
+/* Holds a "Pure Care for Every Tattoo" card's space while the picks load. */
+.ctw-saving-placeholder {
+  aspect-ratio: 1 / 1.05;
+  background: linear-gradient(100deg, #f4f8f5 30%, #ffffff 50%, #f4f8f5 70%) 0 0 / 300% 100%;
+  animation: ctwPlaceholder 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ctw-saving-placeholder { animation: none; }
+}
+
+/* Holds a best seller's space while the picks load (arched like the real ones). */
+.ctw-best-placeholder {
+  aspect-ratio: 1 / 1;
+  margin-bottom: 14px;
+  border-radius: 150px 150px 0 0;
+  background: linear-gradient(100deg, #f4f8f5 30%, #ffffff 50%, #f4f8f5 70%) 0 0 / 300% 100%;
+  animation: ctwPlaceholder 1.4s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .ctw-best-placeholder { animation: none; }
+}
+
 /* Holds a card's space while the combos load (same shape as a card). */
 .ctw-duos-placeholder {
   aspect-ratio: 4 / 5.4;

@@ -11,8 +11,11 @@
   },
   "dependencies": {
     "lucide-react": "^1.23.0",
+    "mammoth": "^1.13.0",
+    "quill-delta": "^5.1.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-quill-new": "^3.8.3",
     "react-router-dom": "^7.18.1",
     "recharts": "^3.10.1"
   },

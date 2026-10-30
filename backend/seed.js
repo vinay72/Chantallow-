@@ -1,5 +1,5 @@
-// One-time starter content for the home page: the 8 combo cards that used to
-// be hard-coded in Home.jsx, and some placeholder FAQs. Each seed runs once
+// One-time starter content: the 8 home page combo cards that used to be
+// hard-coded in Home.jsx, placeholder FAQs, and three sample blog posts. Each seed runs once
 // (remembered in site_settings), so anything the admin edits or deletes later
 // is never put back.
 
@@ -43,6 +43,46 @@ const FAQS = [
     'Once your return is approved and received, we issue the refund to your original payment method. It usually appears within 5–10 working days, depending on your bank.'],
 ];
 
+// Sample blog posts. Covers are the storefront's own photos (public/assets).
+const BLOG_POSTS = [
+  {
+    slug: 'why-tallow-is-good-for-your-skin',
+    title: 'Why Tallow Is So Good For Your Skin',
+    category: 'Skincare',
+    tags: ['Tallow', 'Skincare', 'Natural'],
+    cover: '/assets/blogpost-4/pic1.jpg',
+    excerpt: 'Grass-fed tallow is rich in the same fatty acids our skin makes. Here is why it works so well as a moisturiser.',
+    content:
+      '<p>Tallow is rendered fat from grass-fed, grass-finished cattle. Its fatty acids are very close to the ones in our own skin, so it absorbs well and helps restore a healthy, moisturised skin barrier.</p>' +
+      '<h2>What makes it different</h2><ul><li>Naturally rich in vitamins A, D, E and K</li><li>Close to the skin’s own oils, so it feels light once absorbed</li><li>No fillers or synthetic fragrance</li></ul>' +
+      '<p>A little goes a long way: warm a fingertip scoop between your hands and press it into clean skin.</p>',
+  },
+  {
+    slug: 'a-simple-evening-skincare-routine',
+    title: 'A Simple Evening Skincare Routine',
+    category: 'Routines',
+    tags: ['Routine', 'Skincare'],
+    cover: '/assets/blogpost-4/pic2.jpg',
+    excerpt: 'Three easy steps to wind down and wake up to softer, calmer skin.',
+    content:
+      '<p>Your skin does most of its repair work overnight. A short, consistent routine makes the most of it.</p>' +
+      '<ol><li><strong>Cleanse</strong> gently to remove the day.</li><li><strong>Hydrate</strong> with a mist or toner while skin is still damp.</li><li><strong>Seal</strong> with a thin layer of tallow balm.</li></ol>' +
+      '<p>Keep it simple and stick with it for a few weeks to see the difference.</p>',
+  },
+  {
+    slug: 'caring-for-new-tattoos-naturally',
+    title: 'Caring For New Tattoos, Naturally',
+    category: 'Tattoo Care',
+    tags: ['Tattoo', 'Aftercare'],
+    cover: '/assets/blogpost-4/pic3.jpg',
+    excerpt: 'How a nourishing tallow crème helps keep tattooed skin hydrated, supple and vibrant.',
+    content:
+      '<p>New tattoos need gentle care while the skin heals. Keeping the area clean and lightly moisturised helps colours stay crisp.</p>' +
+      '<p>Once your artist says it is time to moisturise, apply a very thin layer of a tallow crème such as Malachite Fusion two or three times a day.</p>' +
+      '<p><em>Always follow your tattoo artist’s aftercare advice.</em></p>',
+  },
+];
+
 // Runs `fn` once per `key`, remembering it in site_settings.
 async function once(key, fn) {
   const { rows } = await pool.query('SELECT 1 FROM site_settings WHERE key = $1', [key]);
@@ -54,13 +94,15 @@ async function once(key, fn) {
   );
 }
 
-function copyComboImage(file) {
-  const from = path.join(COMBO_IMAGE_DIR, file);
+// Copies a storefront photo into uploads (prefixed so it's clearly seed data).
+function copySeedImage(dir, file, prefix) {
+  const from = path.join(dir, file);
   if (!fs.existsSync(from)) return null;
-  const name = `seed-combo-${file}`;
+  const name = `${prefix}-${file}`;
   fs.copyFileSync(from, path.join(UPLOAD_DIR, name));
   return '/uploads/products/' + name;
 }
+const copyComboImage = (file) => copySeedImage(COMBO_IMAGE_DIR, file, 'seed-combo');
 
 async function seedHomeContent() {
   await once('seeded_combos', async () => {
@@ -83,6 +125,19 @@ async function seedHomeContent() {
       );
     }
     console.log(`Seeded ${COMBOS.length} home page combos.`);
+  });
+
+  await once('seeded_blog', async () => {
+    const { rows } = await pool.query('SELECT count(*)::int AS n FROM blog_posts');
+    if (rows[0].n > 0) return;
+    for (const [i, p] of BLOG_POSTS.entries()) {
+      await pool.query(
+        `INSERT INTO blog_posts (slug, title, category, tags, cover_image, excerpt, content, author_name, status, published_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, 'Chantallow', 'published', now() - ($8 || ' days')::interval)`,
+        [p.slug, p.title, p.category, JSON.stringify(p.tags), p.cover, p.excerpt, p.content, String(i * 7)]
+      );
+    }
+    console.log(`Seeded ${BLOG_POSTS.length} sample blog posts.`);
   });
 
   await once('seeded_faqs', async () => {

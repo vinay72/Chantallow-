@@ -6,6 +6,7 @@ const fs = require('fs');
 const { pool, testConnection, isConnectError } = require('./db');
 const { upload } = require('./upload');
 const { seedHomeContent } = require('./seed');
+const sanitizeHtml = require('sanitize-html');
 const {
   ROLES,
   publicUser,
@@ -213,19 +214,53 @@ async function withLastGood(key, load) {
 
 // ---------- home page settings ----------
 
-const MAX_NEW_LAUNCHES = 4;
+// Home page sections the admin fills by picking products. The API field name
+// is also the section's key; each is stored as a list of product ids.
+const HOME_PICKS = {
+  new_launches: { setting: 'home_new_launches', max: 4, label: 'new launch products' },
+  best_sellers: { setting: 'home_best_sellers', max: 8, label: 'best sellers' },
+  featured: { setting: 'home_featured', max: 2, label: 'featured products' }, // "Nourish Your Skin, Naturally"
+  tattoo: { setting: 'home_tattoo', max: 2, label: 'tattoo care products' }, // "Pure Care for Every Tattoo"
+};
 
-// The products picked as "new launches", in the admin's order. Products that
+// A stored pick is a product id, or an object with extras:
+//   { id, style: 'photo' }  the photo already has the home page backdrop baked in
+//                           (best sellers: shown as-is, no arched scene drawn)
+//   { id, label: '...' }    a short line shown with the card (e.g. "Up To 10% Off")
+//   { id, image: '/uploads/products/...' }  a photo used for this card instead of
+//                           the product's own (uploaded via POST /api/admin/home/image)
+const pickId = (v) => (v && typeof v === 'object' ? v.id : v);
+const pickStyle = (v) => (v && typeof v === 'object' && v.style === 'photo' ? 'photo' : 'scene');
+const pickLabel = (v) => (v && typeof v === 'object' ? clip(v.label, 60) : '');
+const pickImage = (v) =>
+  v && typeof v === 'object' && /^\/uploads\/products\/[\w.-]+$/.test(String(v.image || '')) ? v.image : '';
+
+// The products picked for one section, in the admin's order, each with its
+// `home_style` ('scene' | 'photo'), `home_label` and `home_image`. Products that
 // were deleted since are skipped.
-async function getNewLaunches() {
-  const { rows: setting } = await pool.query(`SELECT value FROM site_settings WHERE key = 'home_new_launches'`);
-  const ids = (setting[0]?.value || []).filter(isValidId).map(Number);
-  if (!ids.length) return [];
+async function getPickedProducts(section) {
+  const { rows: setting } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [
+    HOME_PICKS[section].setting,
+  ]);
+  const picks = (setting[0]?.value || []).filter((v) => isValidId(pickId(v)));
+  if (!picks.length) return [];
+  const ids = picks.map((v) => Number(pickId(v)));
+  const byId = new Map(picks.map((v) => [Number(pickId(v)), v]));
   const { rows } = await pool.query(
     'SELECT * FROM products WHERE id = ANY($1::int[]) ORDER BY array_position($1::int[], id)',
     [ids]
   );
-  return rows;
+  return rows.map((row) => {
+    const pick = byId.get(row.id);
+    return { ...row, home_style: pickStyle(pick), home_label: pickLabel(pick), home_image: pickImage(pick) || null };
+  });
+}
+
+// { new_launches: [...products], best_sellers: [...products] }
+async function getHomePicks() {
+  const sections = Object.keys(HOME_PICKS);
+  const lists = await Promise.all(sections.map(getPickedProducts));
+  return Object.fromEntries(sections.map((key, i) => [key, lists[i]]));
 }
 
 // ---------- combos & FAQs ----------
@@ -307,10 +342,79 @@ async function validateComboBody(body, { hasImage }) {
   };
 }
 
+// FAQ answers come from the admin's rich text editor as HTML and are shown on
+// the storefront, so only formatting is kept: no scripts, event handlers,
+// iframes or javascript: links. Styles are limited to what the editor sets.
+const CSS_COLOR = [/^#[0-9a-f]{3,8}$/i, /^rgba?\(\s*[\d.\s,%]+\)$/i];
+const RICH_TEXT = {
+  allowedTags: [
+    'p', 'br', 'strong', 'b', 'em', 'i', 'u', 's', 'strike', 'span', 'a', 'ol', 'ul', 'li',
+    'h1', 'h2', 'h3', 'h4', 'blockquote', 'pre', 'code', 'sub', 'sup', 'img', 'hr',
+  ],
+  allowedAttributes: {
+    a: ['href', 'target', 'rel'],
+    img: ['src', 'alt', 'width', 'height'],
+    '*': ['style'],
+  },
+  allowedStyles: {
+    '*': {
+      color: CSS_COLOR,
+      'background-color': CSS_COLOR,
+      'font-family': [/^[\w\s"',-]+$/],
+      'font-size': [/^\d+(\.\d+)?(px|em|rem|pt|%)$/],
+      'text-align': [/^(left|right|center|justify)$/],
+    },
+  },
+  // links: web, email and phone; images: web or our own /uploads (relative)
+  allowedSchemes: ['http', 'https', 'mailto', 'tel'],
+  allowedSchemesByTag: { img: ['http', 'https'] },
+  allowProtocolRelative: false,
+  // an image whose src was removed (data:, javascript:...) is dropped entirely
+  exclusiveFilter: (frame) => frame.tag === 'img' && !frame.attribs.src,
+  transformTags: {
+    a: (tagName, attribs) => {
+      // "www.example.com" typed as a link would open as a page on this site
+      const href = String(attribs.href || '').trim();
+      const fixed = href && !/^([a-z][a-z0-9+.-]*:|\/|#)/i.test(href) ? `https://${href}` : attribs.href;
+      return {
+        tagName,
+        attribs: {
+          ...attribs,
+          ...(fixed ? { href: fixed } : {}),
+          rel: 'noopener noreferrer',
+          ...(attribs.target ? { target: '_blank' } : {}),
+        },
+      };
+    },
+  },
+};
+// Empty lines left at the end of an answer are dropped.
+const cleanRichText = (html) =>
+  sanitizeHtml(String(html ?? '').slice(0, 200000), RICH_TEXT)
+    .trim()
+    .replace(/(<p[^>]*>\s*(<br\s*\/?>)?\s*<\/p>\s*)+$/i, '');
+// True when the HTML shows nothing (only empty paragraphs / spaces, no image).
+const isBlankRichText = (html) =>
+  !/<img\b/i.test(html) && !sanitizeHtml(html, { allowedTags: [], allowedAttributes: {} }).replace(/&nbsp;|\s/g, '');
+
+// FAQ answers are plain text (blank line = new paragraph). Anything sent as
+// HTML is turned into text, keeping its paragraphs and line breaks.
+const ENTITIES = { '&nbsp;': ' ', '&amp;': '&', '&lt;': '<', '&gt;': '>', '&quot;': '"', '&#39;': "'" };
+function toPlainText(value) {
+  const text = String(value ?? '');
+  if (!/<[a-z][\s\S]*>/i.test(text)) return text.replace(/\r\n/g, '\n').trim();
+  const withBreaks = text.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|h[1-6]|li|blockquote|div)>/gi, '\n\n');
+  return sanitizeHtml(withBreaks, { allowedTags: [], allowedAttributes: {} })
+    .replace(/&nbsp;|&amp;|&lt;|&gt;|&quot;|&#39;/g, (e) => ENTITIES[e])
+    .replace(/[ \t]+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+}
+
 function validateFaqBody(body) {
   const errors = [];
   const question = clip(body?.question, 500);
-  const answer = clip(body?.answer, 5000);
+  const answer = toPlainText(body?.answer).slice(0, 5000);
   if (!question) errors.push('Question is required.');
   if (!answer) errors.push('Answer is required.');
   return {
@@ -319,6 +423,73 @@ function validateFaqBody(body) {
       question, answer,
       category: clip(body?.category, 80) || null,
       is_published: asBool(body?.is_published, true),
+    },
+  };
+}
+
+// ---------- blog ----------
+
+const BLOG_STATUSES = ['draft', 'published'];
+// cover images: our own uploads or the storefront's bundled /assets photos
+const isLocalImage = (v) => /^\/(uploads\/products|assets)\/[\w./-]+$/.test(String(v || '')) && !String(v).includes('..');
+
+const slugify = (text) =>
+  String(text || '')
+    .toLowerCase()
+    .normalize('NFKD')
+    .replace(/[̀-ͯ]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80) || 'post';
+
+// A slug no other post uses: "my-post", "my-post-2", ...
+async function uniqueSlug(base, exceptId = null) {
+  const { rows } = await pool.query(
+    "SELECT slug FROM blog_posts WHERE (slug = $1 OR slug LIKE $1 || '-%') AND ($2::int IS NULL OR id <> $2)",
+    [base, exceptId]
+  );
+  const taken = new Set(rows.map((r) => r.slug));
+  if (!taken.has(base)) return base;
+  for (let n = 2; ; n++) if (!taken.has(`${base}-${n}`)) return `${base}-${n}`;
+}
+
+// The blog list doesn't need each post's full content.
+const blogSummary = (row) => {
+  const { content, ...rest } = row;
+  const words = String(content || '').replace(/<[^>]*>/g, ' ').split(/\s+/).filter(Boolean).length;
+  return { ...rest, reading_minutes: Math.max(1, Math.round(words / 200)) };
+};
+
+function validateBlogBody(body) {
+  const errors = [];
+  const title = clip(body?.title, 200);
+  if (!title) errors.push('Title is required.');
+  const status = BLOG_STATUSES.includes(body?.status) ? body.status : 'draft';
+  const content = cleanRichText(body?.content);
+  if (status === 'published' && isBlankRichText(content)) errors.push('Write the post before publishing it.');
+  const cover = clip(body?.cover_image, 300);
+  if (cover && !isLocalImage(cover)) errors.push('Upload the cover image again.');
+  const rawTags = Array.isArray(body?.tags) ? body.tags : String(body?.tags || '').split(',');
+  const tags = [...new Set(rawTags.map((t) => clip(t, 40)).filter(Boolean))].slice(0, 12);
+  let publishedAt = null;
+  if (body?.published_at) {
+    const d = new Date(body.published_at);
+    if (Number.isNaN(d.getTime())) errors.push('Publish date is not a valid date.');
+    else publishedAt = d.toISOString();
+  }
+  return {
+    errors,
+    values: {
+      title,
+      slug: slugify(clip(body?.slug, 120) || title),
+      excerpt: clip(body?.excerpt, 400) || null,
+      content,
+      cover_image: cover || null,
+      category: clip(body?.category, 60) || null,
+      tags,
+      author_name: clip(body?.author_name, 80) || null,
+      status,
+      published_at: publishedAt,
     },
   };
 }
@@ -465,7 +636,7 @@ api.get('/meta', (req, res) => {
 // --- GET /api/home --- (what the home page shows: new launch products)
 api.get('/home', async (req, res, next) => {
   try {
-    res.json({ success: true, new_launches: await withLastGood('home', getNewLaunches) });
+    res.json({ success: true, ...(await withLastGood('home', getHomePicks)) });
   } catch (err) {
     next(err);
   }
@@ -492,6 +663,79 @@ api.get('/combos/:id', async (req, res, next) => {
     });
     if (!combo) return res.status(404).json({ success: false, error: 'Combo not found' });
     res.json({ success: true, combo });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/blog --- published posts (newest first, without content), the
+// categories with their post counts, and all tags.
+api.get('/blog', async (req, res, next) => {
+  try {
+    const data = await withLastGood('blog', async () => {
+      const { rows } = await pool.query(
+        `SELECT * FROM blog_posts WHERE status = 'published' AND published_at <= now()
+         ORDER BY published_at DESC, id DESC`
+      );
+      const counts = new Map();
+      const tags = new Set();
+      for (const p of rows) {
+        if (p.category) counts.set(p.category, (counts.get(p.category) || 0) + 1);
+        (p.tags || []).forEach((t) => tags.add(t));
+      }
+      return {
+        posts: rows.map(blogSummary),
+        categories: [...counts].map(([name, count]) => ({ name, count })),
+        tags: [...tags],
+      };
+    });
+    res.json({ success: true, count: data.posts.length, ...data });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/blog/:slug --- one published post, with the posts before / after it
+api.get('/blog/:slug', async (req, res, next) => {
+  try {
+    const slug = String(req.params.slug);
+    const data = await withLastGood(`blog:${slug}`, async () => {
+      const { rows } = await pool.query(
+        "SELECT * FROM blog_posts WHERE slug = $1 AND status = 'published' AND published_at <= now()",
+        [slug]
+      );
+      if (!rows.length) return null;
+      const post = rows[0];
+      // Compared against the post's own row in SQL: a JS Date only keeps
+      // milliseconds, so passing published_at back would misplace the post.
+      const [prev, next, more] = await Promise.all([
+        pool.query(
+          `SELECT slug, title FROM blog_posts WHERE status = 'published' AND published_at <= now()
+             AND (published_at, id) < (SELECT published_at, id FROM blog_posts WHERE id = $1)
+           ORDER BY published_at DESC, id DESC LIMIT 1`,
+          [post.id]
+        ),
+        pool.query(
+          `SELECT slug, title FROM blog_posts WHERE status = 'published' AND published_at <= now()
+             AND (published_at, id) > (SELECT published_at, id FROM blog_posts WHERE id = $1)
+           ORDER BY published_at, id LIMIT 1`,
+          [post.id]
+        ),
+        pool.query(
+          `SELECT * FROM blog_posts WHERE status = 'published' AND published_at <= now() AND id <> $1
+           ORDER BY (category IS NOT DISTINCT FROM $2) DESC, published_at DESC LIMIT 3`,
+          [post.id, post.category]
+        ),
+      ]);
+      return {
+        post: { ...post, reading_minutes: blogSummary(post).reading_minutes },
+        previous: prev.rows[0] || null,
+        next: next.rows[0] || null,
+        more: more.rows.map(blogSummary),
+      };
+    });
+    if (!data) return res.status(404).json({ success: false, error: 'Post not found' });
+    res.json({ success: true, ...data });
   } catch (err) {
     next(err);
   }
@@ -805,8 +1049,95 @@ api.delete('/products/:id', adminOnly, async (req, res, next) => {
 // --- GET /api/admin/users ---
 api.get('/admin/users', adminOnly, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('SELECT * FROM users ORDER BY created_at DESC, id DESC');
-    res.json({ success: true, count: rows.length, users: rows.map(publicUser) });
+    // with each user's order count, spend (canceled orders excluded) and last order
+    const { rows } = await pool.query(`
+      SELECT u.*, coalesce(o.orders, 0)::int AS order_count, coalesce(o.spent, 0)::float AS total_spent, o.last_order_at
+      FROM users u
+      LEFT JOIN (
+        SELECT user_id, count(*) AS orders, sum(total) FILTER (WHERE status <> 'canceled') AS spent,
+               max(placed_at) AS last_order_at
+        FROM orders WHERE user_id IS NOT NULL GROUP BY user_id
+      ) o ON o.user_id = u.id
+      ORDER BY u.created_at DESC, u.id DESC`);
+    res.json({
+      success: true,
+      count: rows.length,
+      users: rows.map((r) => ({
+        ...publicUser(r),
+        order_count: r.order_count,
+        total_spent: money(r.total_spent),
+        last_order_at: r.last_order_at,
+      })),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/users/:id --- profile, order stats, addresses / phones
+// used at checkout, orders and return requests.
+api.get('/admin/users/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows: users } = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+    if (!users.length) return res.status(404).json({ success: false, error: 'User not found' });
+    const user = users[0];
+
+    const [stats, orders, returns] = await Promise.all([
+      pool.query(
+        `SELECT count(*)::int AS orders,
+                count(*) FILTER (WHERE status = 'delivered')::int AS delivered,
+                count(*) FILTER (WHERE status = 'canceled')::int AS canceled,
+                count(*) FILTER (WHERE status IN ('in-progress', 'delayed'))::int AS open,
+                coalesce(sum(total) FILTER (WHERE status <> 'canceled'), 0)::float AS spent,
+                coalesce(sum((SELECT sum((l->>'qty')::int) FROM jsonb_array_elements(items) l))
+                         FILTER (WHERE status <> 'canceled'), 0)::int AS items,
+                min(placed_at) AS first_order_at,
+                max(placed_at) AS last_order_at
+         FROM orders WHERE user_id = $1`,
+        [user.id]
+      ),
+      pool.query('SELECT * FROM orders WHERE user_id = $1 ORDER BY placed_at DESC LIMIT 100', [user.id]),
+      pool.query('SELECT * FROM order_returns WHERE user_id = $1 ORDER BY created_at DESC', [user.id]),
+    ]);
+
+    const st = stats.rows[0];
+    const kept = st.orders - st.canceled;
+    // Distinct addresses / phones from their orders, most recent first.
+    const addresses = [];
+    const seenAddress = new Set();
+    const phones = [];
+    for (const o of orders.rows) {
+      const key = o.address ? JSON.stringify(o.address) : '';
+      if (key && !seenAddress.has(key)) {
+        seenAddress.add(key);
+        addresses.push({ ...o.address, last_used_at: o.placed_at });
+      }
+      if (o.phone && !phones.includes(o.phone)) phones.push(o.phone);
+    }
+    const refunded = returns.rows.filter((r) => r.status === 'Refunded').reduce((n, r) => n + Number(r.amount), 0);
+
+    res.json({
+      success: true,
+      user: publicUser(user),
+      updated_at: user.updated_at,
+      stats: {
+        orders: st.orders,
+        delivered: st.delivered,
+        canceled: st.canceled,
+        open: st.open,
+        items: st.items,
+        total_spent: money(st.spent),
+        average_order: kept ? money(st.spent / kept) : 0,
+        first_order_at: st.first_order_at,
+        last_order_at: st.last_order_at,
+        returns: returns.rows.length,
+        refunded: money(refunded),
+      },
+      addresses: addresses.slice(0, 5),
+      phones,
+      orders: orders.rows.map(publicOrder),
+      returns: returns.rows.map(publicReturn),
+    });
   } catch (err) {
     next(err);
   }
@@ -835,31 +1166,80 @@ api.patch('/admin/users/:id', adminOnly, async (req, res, next) => {
   }
 });
 
-// --- PUT /api/admin/home --- body: { new_launches: [productId, ...] } (in display order)
+// --- PUT /api/admin/home --- body: { new_launches?: [pick, ...], best_sellers?: [...],
+//                                     expected?: { <section>: [ids the page loaded] } }
+// A pick is a product id or { id, style?: 'photo' | 'scene', label?: '...', image?: '/uploads/...' } (see pickId).
+// Each list is in display order; sections left out are not changed. With
+// `expected`, the save is refused (409) if someone changed that section since
+// the page loaded, so an old open tab can't silently overwrite newer picks.
 api.put('/admin/home', adminOnly, async (req, res, next) => {
   try {
-    const raw = req.body?.new_launches;
-    if (!Array.isArray(raw) || !raw.every(isValidId)) {
-      return res.status(400).json({ success: false, error: '`new_launches` must be a list of product ids.' });
-    }
-    const ids = [...new Set(raw.map(Number))];
-    if (ids.length > MAX_NEW_LAUNCHES) {
-      return res.status(400).json({ success: false, error: `Pick at most ${MAX_NEW_LAUNCHES} new launch products.` });
-    }
-    const { rows } = await pool.query('SELECT id FROM products WHERE id = ANY($1::int[])', [ids]);
-    if (rows.length !== ids.length) {
-      return res.status(400).json({ success: false, error: 'One of those products no longer exists.' });
+    const updates = Object.keys(HOME_PICKS).filter((section) => req.body?.[section] !== undefined);
+    if (!updates.length) {
+      return res.status(400).json({ success: false, error: `Send ${Object.keys(HOME_PICKS).join(' or ')}.` });
     }
 
-    await pool.query(
-      `INSERT INTO site_settings (key, value) VALUES ('home_new_launches', $1)
-       ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
-      [JSON.stringify(ids)]
-    );
-    res.json({ success: true, new_launches: await getNewLaunches() });
+    const lists = {};
+    for (const section of updates) {
+      const raw = req.body[section];
+      if (!Array.isArray(raw) || !raw.every((v) => isValidId(pickId(v)))) {
+        return res.status(400).json({ success: false, error: `\`${section}\` must be a list of product ids.` });
+      }
+      const ids = [...new Set(raw.map((v) => Number(pickId(v))))];
+      const { max, label } = HOME_PICKS[section];
+      if (ids.length > max) {
+        return res.status(400).json({ success: false, error: `Pick at most ${max} ${label}.` });
+      }
+      const { rows } = await pool.query('SELECT id FROM products WHERE id = ANY($1::int[])', [ids]);
+      if (rows.length !== ids.length) {
+        return res.status(400).json({ success: false, error: 'One of those products no longer exists.' });
+      }
+      // stored compactly: a plain id, or { id, style?, label? } when it has extras
+      const extras = new Map(raw.map((v) => [Number(pickId(v)), v]));
+      lists[section] = ids.map((id) => {
+        const v = extras.get(id);
+        const pick = { id };
+        if (pickStyle(v) === 'photo') pick.style = 'photo';
+        if (pickLabel(v)) pick.label = pickLabel(v);
+        if (pickImage(v)) pick.image = pickImage(v);
+        return Object.keys(pick).length > 1 ? pick : id;
+      });
+    }
+
+    const expected = req.body?.expected || {};
+    for (const section of updates) {
+      if (!Array.isArray(expected[section])) continue;
+      const current = (await getPickedProducts(section)).map((p) => p.id);
+      if (current.join(',') !== expected[section].map(Number).join(',')) {
+        return res.status(409).json({
+          success: false,
+          error: 'These picks were changed since you opened this page. Reload to see the latest, then make your change again.',
+        });
+      }
+    }
+
+    for (const section of updates) {
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [HOME_PICKS[section].setting, JSON.stringify(lists[section])]
+      );
+    }
+    res.json({ success: true, ...(await getHomePicks()) });
   } catch (err) {
     next(err);
   }
+});
+
+// --- POST /api/admin/home/image --- (multipart `image`) a card photo for a home
+// page pick; returns { url } to save as the pick's `image`.
+api.post('/admin/home/image', adminOnly, upload.single('image'), (req, res) => {
+  if (!req.file) return res.status(400).json({ success: false, error: 'Choose an image to upload.' });
+  if (!req.file.mimetype.startsWith('image/')) {
+    removeMediaFiles([{ url: '/uploads/products/' + req.file.filename }]);
+    return res.status(400).json({ success: false, error: 'The card photo must be an image file.' });
+  }
+  res.status(201).json({ success: true, url: '/uploads/products/' + req.file.filename });
 });
 
 // ---------------------------- admin: combos ----------------------------
@@ -1031,6 +1411,89 @@ api.delete('/admin/faqs/:id', adminOnly, async (req, res, next) => {
     const { rows } = await pool.query('DELETE FROM faqs WHERE id = $1 RETURNING id', [req.params.id]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'FAQ not found' });
     res.json({ success: true, deleted: rows[0].id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ------------------------------ admin: blog ------------------------------
+
+// --- GET /api/admin/blog --- every post (drafts too), newest first
+api.get('/admin/blog', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      'SELECT * FROM blog_posts ORDER BY coalesce(published_at, updated_at) DESC, id DESC'
+    );
+    res.json({ success: true, count: rows.length, posts: rows.map(blogSummary) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/blog/:id ---
+api.get('/admin/blog/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('SELECT * FROM blog_posts WHERE id = $1', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Post not found' });
+    res.json({ success: true, post: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/admin/blog --- (JSON; cover via POST /api/admin/home/image)
+api.post('/admin/blog', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, values: v } = validateBlogBody(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    const slug = await uniqueSlug(v.slug);
+    const publishedAt = v.status === 'published' ? v.published_at || new Date().toISOString() : v.published_at;
+    const { rows } = await pool.query(
+      `INSERT INTO blog_posts (title, slug, excerpt, content, cover_image, category, tags, author_name, status, published_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       RETURNING *`,
+      [v.title, slug, v.excerpt, v.content, v.cover_image, v.category, JSON.stringify(v.tags),
+       v.author_name || req.user.name, v.status, publishedAt]
+    );
+    res.status(201).json({ success: true, post: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/blog/:id ---
+api.put('/admin/blog/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows: existing } = await pool.query('SELECT * FROM blog_posts WHERE id = $1', [req.params.id]);
+    if (!existing.length) return res.status(404).json({ success: false, error: 'Post not found' });
+    const { errors, values: v } = validateBlogBody(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    const slug = await uniqueSlug(v.slug, existing[0].id);
+    // first publish gets "now" unless a date was chosen
+    const publishedAt =
+      v.published_at || (v.status === 'published' ? existing[0].published_at || new Date().toISOString() : existing[0].published_at);
+    const { rows } = await pool.query(
+      `UPDATE blog_posts
+       SET title = $1, slug = $2, excerpt = $3, content = $4, cover_image = $5, category = $6, tags = $7,
+           author_name = $8, status = $9, published_at = $10, updated_at = now()
+       WHERE id = $11
+       RETURNING *`,
+      [v.title, slug, v.excerpt, v.content, v.cover_image, v.category, JSON.stringify(v.tags),
+       v.author_name || existing[0].author_name, v.status, publishedAt, req.params.id]
+    );
+    res.json({ success: true, post: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- DELETE /api/admin/blog/:id ---
+api.delete('/admin/blog/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM blog_posts WHERE id = $1 RETURNING cover_image', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Post not found' });
+    if (rows[0].cover_image?.startsWith('/uploads/products/')) removeMediaFiles([{ url: rows[0].cover_image }]);
+    res.json({ success: true, deleted: Number(req.params.id) });
   } catch (err) {
     next(err);
   }
@@ -1251,6 +1714,8 @@ app.get('/', (req, res) => {
       'GET    /api/combos',
       'GET    /api/combos/:id',
       'GET    /api/faqs',
+      'GET    /api/blog',
+      'GET    /api/blog/:slug',
       'GET    /api/products',
       'GET    /api/products/:id',
       'POST   /api/products             (admin)',
@@ -1259,11 +1724,18 @@ app.get('/', (req, res) => {
       'GET    /api/admin/users          (admin)',
       'PATCH  /api/admin/users/:id      (admin)',
       'PUT    /api/admin/home           (admin)',
+      'POST   /api/admin/home/image     (admin, multipart)',
       'GET    /api/admin/combos         (admin)',
       'GET    /api/admin/combos/:id     (admin)',
       'POST   /api/admin/combos         (admin, multipart)',
       'PUT    /api/admin/combos/:id     (admin, multipart)',
       'DELETE /api/admin/combos/:id     (admin)',
+      'GET    /api/admin/users/:id      (admin)',
+      'GET    /api/admin/blog           (admin)',
+      'GET    /api/admin/blog/:id       (admin)',
+      'POST   /api/admin/blog           (admin)',
+      'PUT    /api/admin/blog/:id       (admin)',
+      'DELETE /api/admin/blog/:id       (admin)',
       'GET    /api/admin/faqs           (admin)',
       'POST   /api/admin/faqs           (admin)',
       'PUT    /api/admin/faqs/reorder   (admin)',

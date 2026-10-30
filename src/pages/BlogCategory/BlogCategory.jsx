@@ -1,5 +1,8 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import "./BlogCategory.css";
+import { useCachedApi } from "../../api/useCachedApi";
+import { mediaUrl } from "../../api/client";
 import footerImg from "../../assets/footer/footer.png";
 import logo from "../../assets/logo.png";
 import Header from "../../components/Header";
@@ -40,6 +43,8 @@ const ArrowUp = () => (
 
 /* --------------------------------- Data ----------------------------------- */
 
+// Built-in posts, shown until the posts from Admin → Blog load (and if the
+// server can't be reached). The sidebar lists below are their fallback too.
 /* Blog post images now point to the public/assets/blogpost-4 folder,
    using the 6 real Chantallow product photos (pic1.jpg – pic6.jpg). */
 const POSTS = [
@@ -66,6 +71,23 @@ const LATEST = [
 
 const TAGS = ["Mascara", "Cosmetic", "Serum", "Primer", "Makeup", "Contour", "Blush", "Highlighter"];
 
+// "2026-10-30T…" -> "30 Oct 2026"
+const formatPostDate = (iso) =>
+  new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+
+// A link to a post: real posts have their own page, the built-in ones don't.
+function PostLink({ slug, className, children, ...rest }) {
+  return slug ? (
+    <Link to={`/blog/${slug}`} className={className} {...rest}>
+      {children}
+    </Link>
+  ) : (
+    <a href="#post" className={className} {...rest}>
+      {children}
+    </a>
+  );
+}
+
 const RECENT_POSTS = [
   { title: "Hydrated Supple Skin", date: "July 23, 2023", img: "/assets/shop/product/small/1.png" },
   { title: "Glowing Radiant Skin", date: "July 23, 2023", img: "/assets/shop/product/small/2.png" },
@@ -74,13 +96,30 @@ const RECENT_POSTS = [
 
 /* -------------------------------- Sidebar --------------------------------- */
 
-function Sidebar() {
+function Sidebar({ categories, latest, tags, category, tag, onCategory, onTag, onSearch }) {
+  const [text, setText] = useState("");
   return (
     <aside className="side-bar">
       <div className="widget">
         <h5 className="widget-title">Search</h5>
-        <form className="search-bx" onSubmit={(e) => e.preventDefault()} role="search">
-          <input type="text" placeholder="Search Here" aria-label="Search blog" />
+        <form
+          className="search-bx"
+          onSubmit={(e) => {
+            e.preventDefault();
+            onSearch(text.trim());
+          }}
+          role="search"
+        >
+          <input
+            type="text"
+            placeholder="Search Here"
+            aria-label="Search blog"
+            value={text}
+            onChange={(e) => {
+              setText(e.target.value);
+              if (!e.target.value) onSearch("");
+            }}
+          />
           <button type="submit" aria-label="Search"><SearchIcon stroke="#fff" /></button>
         </form>
       </div>
@@ -88,9 +127,20 @@ function Sidebar() {
       <div className="widget widget-categories">
         <h5 className="widget-title">Category</h5>
         <ul>
-          {CATEGORIES.map((c) => (
+          {categories.map((c) => (
             <li key={c.name}>
-              <a href="#category">{c.name}</a> <span className="count">({c.count})</span>
+              <a
+                href="#category"
+                aria-current={category === c.name ? "true" : undefined}
+                style={category === c.name ? { color: "#2c7a55", fontWeight: 600 } : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onCategory(category === c.name ? "" : c.name);
+                }}
+              >
+                {c.name}
+              </a>{" "}
+              <span className="count">({String(c.count).padStart(2, "0")})</span>
             </li>
           ))}
         </ul>
@@ -99,15 +149,15 @@ function Sidebar() {
       <div className="widget recent-posts">
         <h5 className="widget-title">Latest Post</h5>
         <div className="widget-post-bx">
-          {LATEST.map((p) => (
-            <div className="widget-post" key={p.title}>
-              <a className="dz-media" href="#post">
+          {latest.map((p) => (
+            <div className="widget-post" key={p.slug || p.title}>
+              <PostLink slug={p.slug} className="dz-media">
                 <img src={p.img} alt={p.title} />
                 <span className="widget-post-btn"><ArrowUpRight size={15} /></span>
-              </a>
+              </PostLink>
               <div className="dz-info">
                 <span className="post-date">{p.date}</span>
-                <h6 className="title"><a href="#post">{p.title}</a></h6>
+                <h6 className="title"><PostLink slug={p.slug}>{p.title}</PostLink></h6>
               </div>
             </div>
           ))}
@@ -119,16 +169,31 @@ function Sidebar() {
         <div className="dz-info">
           <h4 className="title">Do you Want To Work With Us?</h4>
           <p className="text">Explore exciting opportunities with us. Join our team and be part of the beauty revolution!</p>
-          <a href="#contact" className="link">Contact Us <ArrowRight size={14} /></a>
+          <Link to="/contactus" className="link">Contact Us <ArrowRight size={14} /></Link>
         </div>
       </div>
 
-      <div className="widget widget-tags">
-        <h5 className="widget-title">Tags</h5>
-        <div className="tagcloud">
-          {TAGS.map((t) => <a href="#tag" key={t}>{t}</a>)}
+      {tags.length > 0 && (
+        <div className="widget widget-tags">
+          <h5 className="widget-title">Tags</h5>
+          <div className="tagcloud">
+            {tags.map((t) => (
+              <a
+                href="#tag"
+                key={t}
+                aria-current={tag === t ? "true" : undefined}
+                style={tag === t ? { background: "#2c7a55", color: "#fff", borderColor: "#2c7a55" } : undefined}
+                onClick={(e) => {
+                  e.preventDefault();
+                  onTag(tag === t ? "" : t);
+                }}
+              >
+                {t}
+              </a>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
     </aside>
   );
 }
@@ -141,6 +206,7 @@ const USEFUL_LINKS = [
   { label: "Returns", href: "#returns" },
   { label: "Terms & Conditions", href: "#terms" },
   { label: "Privacy-Policy", href: "#privacy" },
+  { label: "FAQ", href: "/faq" },
   { label: "Contact Us", href: "#contact" },
 ];
 
@@ -228,6 +294,45 @@ function Footer() {
 export default function BlogCategory() {
   const [scrolled, setScrolled] = useState(false);
   const [visibleCount, setVisibleCount] = useState(6);
+  const [category, setCategory] = useState("");
+  const [tag, setTag] = useState("");
+  const [search, setSearch] = useState("");
+
+  // Posts written in Admin → Blog (the last copy saved in this browser shows at once).
+  const { data } = useCachedApi("/blog");
+  const fromServer = Boolean(data?.posts?.length);
+  const allPosts = useMemo(
+    () =>
+      fromServer
+        ? data.posts.map((p) => ({
+            id: p.id,
+            slug: p.slug,
+            title: p.title,
+            excerpt: p.excerpt,
+            category: p.category,
+            tags: p.tags || [],
+            date: formatPostDate(p.published_at),
+            img: p.cover_image ? mediaUrl(p.cover_image) : "/assets/blogpost-4/pic1.jpg",
+          }))
+        : POSTS.map((p) => ({ ...p, tags: [] })),
+    [data, fromServer]
+  );
+  const sidebar = fromServer
+    ? { categories: data.categories, tags: data.tags, latest: allPosts.slice(0, 3) }
+    : { categories: CATEGORIES, tags: TAGS, latest: LATEST };
+
+  const filtered = useMemo(() => {
+    const q = search.toLowerCase();
+    return allPosts.filter(
+      (p) =>
+        (!category || p.category === category) &&
+        (!tag || p.tags.includes(tag)) &&
+        (!q || p.title.toLowerCase().includes(q) || (p.excerpt || "").toLowerCase().includes(q))
+    );
+  }, [allPosts, category, tag, search]);
+
+  // a new filter starts from the top of the list again
+  useEffect(() => setVisibleCount(6), [category, tag, search]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 400);
@@ -235,8 +340,10 @@ export default function BlogCategory() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const visiblePosts = POSTS.slice(0, visibleCount);
-  const hasMore = visibleCount < POSTS.length;
+  const visiblePosts = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+  const heading = category || (tag && `#${tag}`) || (search && `“${search}”`) || "All Posts";
+  const headingLabel = category ? "Category:" : tag ? "Tag:" : search ? "Search:" : "Showing:";
 
   return (
     <div className="page-wrapper">
@@ -246,11 +353,11 @@ export default function BlogCategory() {
         {/* Banner */}
         <section className="dz-banner">
           <div className="container banner-inner">
-            <h1>Blog Category</h1>
+            <h1>Blog</h1>
             <nav className="breadcrumb">
-              <a href="#index">Home</a>
+              <Link to="/">Home</Link>
               <span className="sep">◆</span>
-              <span>Blog Category</span>
+              <span>Blog</span>
             </nav>
           </div>
         </section>
@@ -262,26 +369,52 @@ export default function BlogCategory() {
             <div className="blog-main">
               <div className="search-info">
                 <div className="title">
-                  <p className="search-name">Category:</p>
-                  <h2 className="search-result">Serum</h2>
+                  <p className="search-name">{headingLabel}</p>
+                  <h2 className="search-result">{heading}</h2>
                 </div>
-                <p className="found-posts">Found {POSTS.length} Posts</p>
+                <p className="found-posts">
+                  Found {filtered.length} Post{filtered.length === 1 ? "" : "s"}
+                  {(category || tag || search) && (
+                    <>
+                      {" · "}
+                      <a
+                        href="#all"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setCategory("");
+                          setTag("");
+                          setSearch("");
+                        }}
+                      >
+                        Show all
+                      </a>
+                    </>
+                  )}
+                </p>
               </div>
 
               <div className="post-list">
                 {visiblePosts.map((post) => (
                   <article className="blog-half" key={post.id}>
-                    <a className="dz-media" href="#post">
+                    <PostLink slug={post.slug} className="dz-media">
                       <img src={post.img} alt={post.title} />
-                    </a>
+                    </PostLink>
                     <div className="dz-info">
-                      <span className="post-date">{post.date}</span>
-                      <h4 className="dz-title"><a href="#post">{post.title}</a></h4>
-                      <a href="#post" className="read-btn">Read More <ChevronRight size={15} /></a>
+                      <span className="post-date">
+                        {post.date}
+                        {post.category && ` · ${post.category}`}
+                      </span>
+                      <h4 className="dz-title"><PostLink slug={post.slug}>{post.title}</PostLink></h4>
+                      {post.excerpt && <p className="post-excerpt">{post.excerpt}</p>}
+                      <PostLink slug={post.slug} className="read-btn">Read More <ChevronRight size={15} /></PostLink>
                     </div>
                   </article>
                 ))}
               </div>
+
+              {visiblePosts.length === 0 && (
+                <p className="post-excerpt" style={{ padding: "24px 0" }}>No posts match. Try another category, tag or search.</p>
+              )}
 
               {hasMore && (
                 <div className="load-more-wrap">
@@ -293,7 +426,20 @@ export default function BlogCategory() {
             </div>
 
             {/* Sidebar */}
-            <Sidebar />
+            <Sidebar
+              {...sidebar}
+              category={category}
+              tag={tag}
+              onCategory={(c) => {
+                setCategory(c);
+                setTag("");
+              }}
+              onTag={(t) => {
+                setTag(t);
+                setCategory("");
+              }}
+              onSearch={setSearch}
+            />
           </div>
         </section>
       </main>

@@ -89,6 +89,7 @@ const USEFUL_LINKS = [
   { label: "Returns", href: "return-refund-policy.html" },
   { label: "Terms & Conditions", href: "terms-conditions.html" },
   { label: "Privacy-Policy", href: "privacy-policy.html" },
+  { label: "FAQ", href: "/faq" },
   { label: "Contact Us", href: "contact-us.html" },
 ];
 

@@ -1,15 +1,28 @@
 // src/admin/AdminFaqs.jsx
 // /admin/home/faqs — frequently asked questions: add, edit in place,
-// publish / unpublish, reorder with the arrows, delete.
+// publish / unpublish, reorder with the arrows, delete. Answers are plain text:
+// a blank line starts a new paragraph.
 
 import { useEffect, useId, useState } from 'react';
 import { ArrowDown, ArrowUp, ChevronDown, Pencil, Plus, Trash2 } from 'lucide-react';
 import { api } from './api';
 
+// An answer saved with formatting (from when FAQs had a rich text editor) as
+// plain text for the text box: paragraphs and line breaks are kept.
+function answerText(value) {
+  const text = String(value || '');
+  if (!/<[a-z][\s\S]*>/i.test(text)) return text;
+  const doc = new DOMParser().parseFromString(
+    text.replace(/<br\s*\/?>/gi, '\n').replace(/<\/(p|h[1-6]|li|blockquote|div)>/gi, '\n\n'),
+    'text/html'
+  );
+  return (doc.body.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+}
+
 const EMPTY = { question: '', answer: '', category: '', is_published: true };
 
 function FaqForm({ initial = EMPTY, categories, busy, onSave, onCancel, submitLabel }) {
-  const [faq, setFaq] = useState(initial);
+  const [faq, setFaq] = useState(() => ({ ...initial, answer: answerText(initial.answer) }));
   const set = (k, v) => setFaq((p) => ({ ...p, [k]: v }));
   const uid = useId();
   return (
@@ -27,8 +40,9 @@ function FaqForm({ initial = EMPTY, categories, busy, onSave, onCancel, submitLa
         <input id={`${uid}-q`} value={faq.question} onChange={(e) => set('question', e.target.value)} maxLength={500} required autoFocus />
       </div>
       <div className="field">
+        {/* the editor isn't a form control, so clicking the label focuses it by hand */}
         <label htmlFor={`${uid}-a`}>
-          Answer <span className="required">*</span>
+          Answer <span className="required">*</span> <span className="sub">a blank line starts a new paragraph</span>
         </label>
         <textarea id={`${uid}-a`} value={faq.answer} onChange={(e) => set('answer', e.target.value)} maxLength={5000} required />
       </div>
@@ -255,7 +269,7 @@ export default function AdminFaqs() {
                       </button>
                     </div>
                   </div>
-                  {openId === f.id && <p className="faq-a">{f.answer}</p>}
+                  {openId === f.id && <p className="faq-a">{answerText(f.answer)}</p>}
                 </>
               )}
             </li>
