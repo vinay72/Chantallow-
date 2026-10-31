@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ExternalLink, House, LayoutDashboard, LogOut, Menu, Newspaper, Package, ShoppingCart, Undo2, Users, X } from 'lucide-react';
+import { ChevronDown, ExternalLink, HelpCircle, House, Info, LayoutDashboard, LogOut, Menu, Newspaper, Package, ShoppingCart, Undo2, Users, X } from 'lucide-react';
 import { homeForRole, useAuth } from '../context/AuthContext';
 import './admin.css';
 
@@ -18,13 +18,18 @@ const NAV = [
     Icon: House,
     children: [
       { to: '/admin/home/launches', label: 'New Launches' },
+      { to: '/admin/home/bridge', label: 'We Bridge The Gap' },
+      { to: '/admin/home/combos', label: 'Combo Products' },
       { to: '/admin/home/best-sellers', label: 'Best Sellers' },
       { to: '/admin/home/featured', label: 'Nourish Your Skin' },
       { to: '/admin/home/tattoo', label: 'Pure Care for Every Tattoo' },
-      { to: '/admin/home/combos', label: 'Combo Products' },
-      { to: '/admin/home/faqs', label: 'FAQs' },
+      { to: '/admin/home/furkind', label: 'Furkind Pet Tallow' },
+      { to: '/admin/home/offers', label: 'Featured Offer For You' },
+      { to: '/admin/home/shortlist', label: 'Soothe Sore Muscles' },
     ],
   },
+  { to: '/admin/home/faqs', label: 'FAQs', Icon: HelpCircle },
+  { to: '/admin/about', label: 'About Us', Icon: Info },
   { to: '/admin/products', label: 'Products', Icon: Package },
   { to: '/admin/orders', label: 'Orders', Icon: ShoppingCart },
   { to: '/admin/returns', label: 'Returns', Icon: Undo2 },

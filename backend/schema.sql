@@ -107,6 +107,17 @@ CREATE TABLE IF NOT EXISTS combos (
   updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- "Illuminate Beauty" product highlights on the About Us page, managed from
+-- Admin -> About Us.
+CREATE TABLE IF NOT EXISTS about_highlights (
+  id SERIAL PRIMARY KEY,
+  name TEXT NOT NULL,
+  description TEXT NOT NULL,
+  position INTEGER NOT NULL DEFAULT 0,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
 -- Frequently asked questions, managed from Admin -> Home -> FAQs.
 CREATE TABLE IF NOT EXISTS faqs (
   id SERIAL PRIMARY KEY,
@@ -138,3 +149,17 @@ CREATE TABLE IF NOT EXISTS blog_posts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_blog_posts_published ON blog_posts (status, published_at DESC);
+
+-- Password-reset tokens (Forgot Password). The token itself is never stored —
+-- only its SHA-256 hash, so a leaked database row can't be used to reset an
+-- account. Each request invalidates earlier unused tokens for that user.
+CREATE TABLE IF NOT EXISTS password_resets (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash TEXT NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id);

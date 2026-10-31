@@ -4,7 +4,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { api, clearToken, getToken, setToken, UNAUTHORIZED_EVENT } from "../api/client";
-import { clearAccountOrders } from "../data/account";
+import { clearAccountOrders, setAccountUser } from "../data/account";
 
 const AuthContext = createContext(null);
 
@@ -29,6 +29,7 @@ export function AuthProvider({ children }) {
         const onUnauthorized = () => {
             setUser(null);
             clearAccountOrders();
+            setAccountUser(null);
         };
         window.addEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
         return () => window.removeEventListener(UNAUTHORIZED_EVENT, onUnauthorized);
@@ -52,11 +53,24 @@ export function AuthProvider({ children }) {
         clearToken();
         setUser(null);
         clearAccountOrders();
+        setAccountUser(null);
+    }, []);
+
+    // Always resolves with the same message whether or not the email exists
+    // (the server doesn't reveal that), so the page can show one neutral notice.
+    const forgotPassword = useCallback(async (email) => {
+        const data = await api("/auth/forgot-password", { method: "POST", body: { email } });
+        return data.message;
+    }, []);
+
+    const resetPassword = useCallback(async (token, password) => {
+        const data = await api("/auth/reset-password", { method: "POST", body: { token, password } });
+        return data.message;
     }, []);
 
     const value = useMemo(
-        () => ({ user, loading, isAdmin: user?.role === "admin", login, register, logout }),
-        [user, loading, login, register, logout]
+        () => ({ user, loading, isAdmin: user?.role === "admin", login, register, logout, forgotPassword, resetPassword }),
+        [user, loading, login, register, logout, forgotPassword, resetPassword]
     );
 
     return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -3,9 +3,11 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
+const crypto = require('crypto');
 const { pool, testConnection, isConnectError } = require('./db');
 const { upload } = require('./upload');
 const { seedHomeContent } = require('./seed');
+const { sendPasswordResetEmail } = require('./mailer');
 const sanitizeHtml = require('sanitize-html');
 const {
   ROLES,
@@ -221,6 +223,8 @@ const HOME_PICKS = {
   best_sellers: { setting: 'home_best_sellers', max: 8, label: 'best sellers' },
   featured: { setting: 'home_featured', max: 2, label: 'featured products' }, // "Nourish Your Skin, Naturally"
   tattoo: { setting: 'home_tattoo', max: 2, label: 'tattoo care products' }, // "Pure Care for Every Tattoo"
+  bridge: { setting: 'home_bridge', max: 8, label: 'bridge the gap products' }, // "We Bridge The Gap..."
+  shortlist: { setting: 'home_shortlist', max: 1, label: 'soothe sore muscles product' }, // "Soothe Sore Muscles, Naturally"
 };
 
 // A stored pick is a product id, or an object with extras:
@@ -229,15 +233,17 @@ const HOME_PICKS = {
 //   { id, label: '...' }    a short line shown with the card (e.g. "Up To 10% Off")
 //   { id, image: '/uploads/products/...' }  a photo used for this card instead of
 //                           the product's own (uploaded via POST /api/admin/home/image)
+//   { id, color: '#3B1941' }  the product name's text colour (bridge the gap circles)
 const pickId = (v) => (v && typeof v === 'object' ? v.id : v);
 const pickStyle = (v) => (v && typeof v === 'object' && v.style === 'photo' ? 'photo' : 'scene');
 const pickLabel = (v) => (v && typeof v === 'object' ? clip(v.label, 60) : '');
 const pickImage = (v) =>
   v && typeof v === 'object' && /^\/uploads\/products\/[\w.-]+$/.test(String(v.image || '')) ? v.image : '';
+const pickColor = (v) => (v && typeof v === 'object' && isHexColor(v.color) ? v.color : '');
 
 // The products picked for one section, in the admin's order, each with its
-// `home_style` ('scene' | 'photo'), `home_label` and `home_image`. Products that
-// were deleted since are skipped.
+// `home_style` ('scene' | 'photo'), `home_label`, `home_image` and `home_color`.
+// Products that were deleted since are skipped.
 async function getPickedProducts(section) {
   const { rows: setting } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [
     HOME_PICKS[section].setting,
@@ -252,7 +258,13 @@ async function getPickedProducts(section) {
   );
   return rows.map((row) => {
     const pick = byId.get(row.id);
-    return { ...row, home_style: pickStyle(pick), home_label: pickLabel(pick), home_image: pickImage(pick) || null };
+    return {
+      ...row,
+      home_style: pickStyle(pick),
+      home_label: pickLabel(pick),
+      home_image: pickImage(pick) || null,
+      home_color: pickColor(pick) || null,
+    };
   });
 }
 
@@ -261,6 +273,226 @@ async function getHomePicks() {
   const sections = Object.keys(HOME_PICKS);
   const lists = await Promise.all(sections.map(getPickedProducts));
   return Object.fromEntries(sections.map((key, i) => [key, lists[i]]));
+}
+
+// "Furkind Pet Tallow" home section — admin-editable heading + paragraph.
+// Falls back to the page's built-in copy until the admin saves their own.
+const FURKIND_TEXT_SETTING = 'home_furkind_text';
+const FURKIND_TEXT_DEFAULT = {
+  heading: 'Furkind Pet Tallow',
+  text:
+    "Our nutrient-rich Pet Balm combines the nourishing power of grass-fed, grass-finished beef tallow with organic raw unrefined coconut oil to help soothe, protect, and restore dry, rough, or irritated skin and paws. Beef tallow is a natural source of Vitamin A, which supports skin renewal and healthy tissue maintenance; Vitamin D, which helps support skin barrier function; Vitamin E, a powerful antioxidant that helps protect against environmental stressors and supports moisture retention; and Vitamin K, which contributes to overall skin health. The naturally occurring fatty acids in tallow closely resemble the oils found in healthy skin, making it highly absorbable and deeply moisturizing. Organic raw unrefined coconut oil provides additional hydration and contains lauric acid, caprylic acid, and capric acid, which help condition the skin and support a clean, healthy environment on your pet’s skin surface. Together, these ingredients help soften rough paws, reduce dryness and cracking, calm irritation, and create a protective moisture barrier to keep your pet's skin and paws healthy, smooth, and comfortable.",
+};
+
+async function getFurkindText() {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [FURKIND_TEXT_SETTING]);
+  const saved = rows[0]?.value;
+  return saved && typeof saved.heading === 'string' && typeof saved.text === 'string' ? saved : FURKIND_TEXT_DEFAULT;
+}
+
+// "Featured Offer For You" home carousel — admin-added banner images with
+// text, shown instead of the home page's own built-in banners once the admin
+// saves at least one. Empty means the home page keeps its defaults.
+const OFFERS_SETTING = 'home_offers';
+const MAX_OFFERS = 10;
+const isOfferImage = (v) => /^\/uploads\/products\/[\w.-]+$/.test(String(v || ''));
+
+async function getOffers() {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [OFFERS_SETTING]);
+  return Array.isArray(rows[0]?.value) ? rows[0].value : [];
+}
+
+// "Soothe Sore Muscles, Naturally" home banner — an admin-uploaded left-side
+// photo plus heading/subtitle, alongside the `shortlist` product pick above.
+const SHORTLIST_BANNER_SETTING = 'home_shortlist_banner';
+const SHORTLIST_TEXT_SETTING = 'home_shortlist_text';
+const SHORTLIST_TEXT_DEFAULT = {
+  heading: 'Soothe Sore Muscles,\nNaturally',
+  subtitle: 'Magnesium & arnica-infused tallow crème for targeted pain relief, muscle comfort, and skin nourishment.',
+};
+
+async function getShortlistBanner() {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [SHORTLIST_BANNER_SETTING]);
+  const v = rows[0]?.value;
+  return typeof v === 'string' && isOfferImage(v) ? v : null;
+}
+
+async function getShortlistText() {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [SHORTLIST_TEXT_SETTING]);
+  const saved = rows[0]?.value;
+  return saved && typeof saved.heading === 'string' && typeof saved.subtitle === 'string' ? saved : SHORTLIST_TEXT_DEFAULT;
+}
+
+// Generic helpers for a `{ heading, subtitle }` setting and an uploaded-image
+// setting, used by the "Nourish Your Skin" and "Pure Care for Every Tattoo"
+// sections below (same shape as the furkind/shortlist text & banner above).
+async function getTextSetting(key, fallback) {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [key]);
+  const saved = rows[0]?.value;
+  return saved && typeof saved.heading === 'string' && typeof saved.subtitle === 'string' ? saved : fallback;
+}
+async function getImageSetting(key) {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [key]);
+  const v = rows[0]?.value;
+  return typeof v === 'string' && isOfferImage(v) ? v : null;
+}
+async function saveSetting(key, value) {
+  await pool.query(
+    `INSERT INTO site_settings (key, value) VALUES ($1, $2)
+     ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+    [key, JSON.stringify(value)]
+  );
+}
+const isTextSettingValid = (v) =>
+  v && typeof v.heading === 'string' && typeof v.subtitle === 'string' && v.heading.trim() && v.subtitle.trim();
+
+// "Nourish Your Skin, Naturally" — the `featured` product picks above, plus
+// an admin-editable heading/subtitle and the right-side portrait photo.
+const FEATURED_TEXT_SETTING = 'home_featured_text';
+const FEATURED_BANNER_SETTING = 'home_featured_banner';
+const FEATURED_TEXT_DEFAULT = {
+  heading: 'Nourish Your Skin, Naturally',
+  subtitle: 'Discover your favorite tallow essentials and botanical blends, thoughtfully crafted to nourish, hydrate, and restore.',
+};
+
+// "Pure Care for Every Tattoo" — the `tattoo` product picks above, plus an
+// admin-editable heading/subtitle, the right-side photo, and the caption
+// (its own small heading/subtitle) shown over that photo.
+const TATTOO_TEXT_SETTING = 'home_tattoo_text';
+const TATTOO_BANNER_SETTING = 'home_tattoo_banner';
+const TATTOO_CAPTION_SETTING = 'home_tattoo_caption';
+const TATTOO_TEXT_DEFAULT = {
+  heading: 'Pure Care for Every Tattoo',
+  subtitle: 'Discover Chantallow’s tallow-based tattoo care crèmes, crafted to deeply moisturize, soothe, and keep your tattooed skin looking vibrant.',
+};
+const TATTOO_CAPTION_DEFAULT = {
+  heading: 'Moringa + Butterfly Pea Flowers',
+  subtitle: 'Protect against environmental stress while promoting soft, healthy-looking, and revitalized skin.',
+};
+
+// The hero banner at the very top of the home page — heading/subtitle and
+// the right-side portrait photo, above the `new_launches` mini product picks.
+const HERO_TEXT_SETTING = 'home_hero_text';
+const HERO_BANNER_SETTING = 'home_hero_banner';
+const HERO_TEXT_DEFAULT = {
+  heading: 'A New Generation Of\nNatural Tallow Skincare',
+  subtitle: 'Handcrafted wellness using Moringa, Butterfly Pea, and Zechstein Magnesium.',
+};
+
+// ---------- about page ----------
+
+// The whole About Us page content lives under this one setting (it's edited
+// on its own dedicated admin page, not alongside other sections), as
+// { founder: {...}, cta: {...}, illuminate: {...} }. Any image left null
+// falls back to the page's own built-in photo.
+const ABOUT_SETTING = 'about_page';
+
+const ABOUT_DEFAULT = {
+  founder: {
+    photo: null,
+    heading: 'Founder’s Vision: Illuminating Beauty at Chantallow',
+    paragraph1:
+      'At Chantallow, the vision is simple: true beauty begins with transparency. Our brand was born from a passion for cruelty-free, sustainable, and tallow-rich formulas that outperform synthetic alternatives. A deep dedication to sourcing the highest quality, grass-finished tallow resonates in every jar, providing the essential vitamins and fatty acids your skin craves.',
+    paragraph2:
+      'Chantallow is more than just skincare; it is a commitment to creating a line that is as ethical as it is effective. By focusing on simple, powerful, animal-based fats, we are helping a new generation rediscover the glow of ancestral skincare—inspiring confidence through visible, natural results.',
+    badge: null,
+    name: 'Chantelle Dieuvil',
+    role: 'Ceo and founder',
+  },
+  cta: {
+    heading: 'Questions ?',
+    text: 'Our experts will help find the gear that’s right for you',
+    buttonLabel: 'Get In Touch',
+  },
+  // `items` (the product highlights) live in their own `about_highlights`
+  // table — see getAboutHighlights() / the /admin/about/highlights routes —
+  // not in this settings blob, so they get real ids and their own CRUD.
+  illuminate: {
+    heading: 'Illuminate Beauty. Timeless Confidence.',
+    paragraph:
+      'At Chantallow, we believe in empowering your beauty journey through ancestral wisdom. Our curated collection of nutrient-dense, tallow-based products is designed to enhance your natural allure, fostering timeless confidence by nourishing your skin at a cellular level. Discover the glow within, effortlessly.',
+    mainImage: null,
+    tagImage: null,
+    tagEyebrow: 'Chantallow',
+    tagHeading: 'Non-Stop Skincare',
+    smallImage: null,
+  },
+};
+
+const cloneAboutDefault = () => JSON.parse(JSON.stringify(ABOUT_DEFAULT));
+
+// The highlights, in display order — { id, name, description, position }.
+async function getAboutHighlights() {
+  const { rows } = await pool.query('SELECT * FROM about_highlights ORDER BY position, id');
+  return rows;
+}
+
+async function getAbout() {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [ABOUT_SETTING]);
+  const saved = rows[0]?.value;
+  const base = cloneAboutDefault();
+  const text = !saved || typeof saved !== 'object' ? base : {
+    founder: { ...base.founder, ...(saved.founder || {}) },
+    cta: { ...base.cta, ...(saved.cta || {}) },
+    illuminate: { ...base.illuminate, ...(saved.illuminate || {}) },
+  };
+  const highlights = await getAboutHighlights();
+  return {
+    ...text,
+    illuminate: { ...text.illuminate, items: highlights.map((h) => ({ name: h.name, desc: h.description })) },
+  };
+}
+
+// Validates the whole About page body and returns the cleaned value, or a
+// list of problems. Every image is optional (null clears it back to the
+// built-in default); every other field is required.
+function sanitizeAbout(body) {
+  const errors = [];
+  const str = (v, max) => (typeof v === 'string' ? clip(v, max) : '');
+  const nonEmpty = (v, max, label) => {
+    const s = str(v, max);
+    if (!s.trim()) errors.push(`${label} is required.`);
+    return s;
+  };
+  const img = (v, label) => {
+    if (v == null) return null;
+    if (typeof v !== 'string' || !isOfferImage(v)) {
+      errors.push(`${label} must be an uploaded image, or left empty.`);
+      return null;
+    }
+    return v;
+  };
+
+  const f = body?.founder || {};
+  const founder = {
+    photo: img(f.photo, 'Founder photo'),
+    heading: nonEmpty(f.heading, 160, 'Founder heading'),
+    paragraph1: nonEmpty(f.paragraph1, 1200, 'Founder paragraph 1'),
+    paragraph2: nonEmpty(f.paragraph2, 1200, 'Founder paragraph 2'),
+    badge: img(f.badge, 'Founder badge'),
+    name: nonEmpty(f.name, 80, 'Founder name'),
+    role: nonEmpty(f.role, 80, 'Founder role'),
+  };
+
+  const c = body?.cta || {};
+  const cta = {
+    heading: nonEmpty(c.heading, 60, 'CTA heading'),
+    text: nonEmpty(c.text, 200, 'CTA text'),
+    buttonLabel: nonEmpty(c.buttonLabel, 40, 'CTA button label'),
+  };
+
+  const i = body?.illuminate || {};
+  const illuminate = {
+    heading: nonEmpty(i.heading, 100, 'Illuminate heading'),
+    paragraph: nonEmpty(i.paragraph, 600, 'Illuminate paragraph'),
+    mainImage: img(i.mainImage, 'Main collage image'),
+    tagImage: img(i.tagImage, 'Tag collage image'),
+    tagEyebrow: nonEmpty(i.tagEyebrow, 40, 'Tag eyebrow'),
+    tagHeading: nonEmpty(i.tagHeading, 60, 'Tag heading'),
+    smallImage: img(i.smallImage, 'Small collage image'),
+  };
+
+  return { errors, value: { founder, cta, illuminate } };
 }
 
 // ---------- combos & FAQs ----------
@@ -425,6 +657,16 @@ function validateFaqBody(body) {
       is_published: asBool(body?.is_published, true),
     },
   };
+}
+
+// An About Us product highlight — { name, desc } ("Malachite Fusion: Moringa & ...").
+function validateHighlightBody(body) {
+  const errors = [];
+  const name = clip(body?.name, 60);
+  const desc = clip(body?.desc, 160);
+  if (!name) errors.push('Name is required.');
+  if (!desc) errors.push('Description is required.');
+  return { errors, values: { name, desc } };
 }
 
 // ---------- blog ----------
@@ -626,6 +868,90 @@ api.post('/auth/login', async (req, res, next) => {
   }
 });
 
+const RESET_TOKEN_BYTES = 32;
+const RESET_TOKEN_TTL_MS = 60 * 60 * 1000; // 1 hour
+const hashResetToken = (token) => crypto.createHash('sha256').update(token).digest('hex');
+
+// --- POST /api/auth/forgot-password --- body: { email }
+// Always answers the same way whether or not the email exists, so a visitor
+// can't use this to discover who has an account. Only the token's hash is
+// stored, and it expires in 1 hour.
+api.post('/auth/forgot-password', async (req, res, next) => {
+  try {
+    const email = String(req.body?.email || '').trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ success: false, errors: ['Enter a valid email address.'] });
+    }
+
+    const { rows } = await pool.query('SELECT * FROM users WHERE lower(email) = $1', [email]);
+    if (rows.length) {
+      const user = rows[0];
+      const token = crypto.randomBytes(RESET_TOKEN_BYTES).toString('hex');
+      await pool.query(
+        'INSERT INTO password_resets (user_id, token_hash, expires_at) VALUES ($1, $2, now() + interval \'1 hour\')',
+        [user.id, hashResetToken(token)]
+      );
+      try {
+        await sendPasswordResetEmail(user, token);
+      } catch (mailErr) {
+        // Logged for the admin only — the HTTP response below must stay
+        // identical whether or not the email exists / the send succeeded,
+        // otherwise this endpoint could be used to find out who has an
+        // account (e.g. "existing email -> 503, unknown email -> 200").
+        console.error(`Couldn't send the password-reset email to ${user.email}:`, mailErr.message);
+      }
+    }
+
+    // Always the same response — see the comment above the `catch` block.
+    res.json({
+      success: true,
+      message: 'If an account exists for that email, a password reset link has been sent.',
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/auth/reset-password --- body: { token, password }
+api.post('/auth/reset-password', async (req, res, next) => {
+  try {
+    const token = String(req.body?.token || '');
+    const password = String(req.body?.password || '');
+    const errors = [];
+    if (!token) errors.push('Missing reset token.');
+    if (password.length < 8) errors.push('Password must be at least 8 characters.');
+    if (errors.length) return res.status(400).json({ success: false, errors });
+
+    const { rows } = await pool.query(
+      `SELECT pr.*, u.id AS uid FROM password_resets pr
+       JOIN users u ON u.id = pr.user_id
+       WHERE pr.token_hash = $1 AND pr.used_at IS NULL AND pr.expires_at > now()`,
+      [hashResetToken(token)]
+    );
+    if (!rows.length) {
+      return res.status(400).json({
+        success: false,
+        error: 'This reset link is invalid or has expired. Request a new one.',
+      });
+    }
+
+    const reset = rows[0];
+    await pool.query('UPDATE users SET password_hash = $1, updated_at = now() WHERE id = $2', [
+      await hashPassword(password),
+      reset.uid,
+    ]);
+    // This token, and any other unused ones for this account, can't be reused.
+    await pool.query(
+      'UPDATE password_resets SET used_at = now() WHERE user_id = $1 AND used_at IS NULL',
+      [reset.uid]
+    );
+
+    res.json({ success: true, message: 'Your password has been updated. You can now sign in.' });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // --------------------------- catalogue (public) --------------------------
 
 // --- GET /api/meta --- (dropdown options for the form)
@@ -636,7 +962,30 @@ api.get('/meta', (req, res) => {
 // --- GET /api/home --- (what the home page shows: new launch products)
 api.get('/home', async (req, res, next) => {
   try {
-    res.json({ success: true, ...(await withLastGood('home', getHomePicks)) });
+    res.json({
+      success: true,
+      ...(await withLastGood('home', getHomePicks)),
+      furkind_text: await withLastGood('home_furkind_text', getFurkindText),
+      offers: await withLastGood('home_offers', getOffers),
+      shortlist_banner: await withLastGood('home_shortlist_banner', getShortlistBanner),
+      shortlist_text: await withLastGood('home_shortlist_text', getShortlistText),
+      featured_text: await withLastGood('home_featured_text', () => getTextSetting(FEATURED_TEXT_SETTING, FEATURED_TEXT_DEFAULT)),
+      featured_banner: await withLastGood('home_featured_banner', () => getImageSetting(FEATURED_BANNER_SETTING)),
+      tattoo_text: await withLastGood('home_tattoo_text', () => getTextSetting(TATTOO_TEXT_SETTING, TATTOO_TEXT_DEFAULT)),
+      tattoo_banner: await withLastGood('home_tattoo_banner', () => getImageSetting(TATTOO_BANNER_SETTING)),
+      tattoo_caption: await withLastGood('home_tattoo_caption', () => getTextSetting(TATTOO_CAPTION_SETTING, TATTOO_CAPTION_DEFAULT)),
+      hero_text: await withLastGood('home_hero_text', () => getTextSetting(HERO_TEXT_SETTING, HERO_TEXT_DEFAULT)),
+      hero_banner: await withLastGood('home_hero_banner', () => getImageSetting(HERO_BANNER_SETTING)),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/about --- (About Us page content)
+api.get('/about', async (req, res, next) => {
+  try {
+    res.json({ success: true, about: await withLastGood('about', getAbout) });
   } catch (err) {
     next(err);
   }
@@ -1167,16 +1516,164 @@ api.patch('/admin/users/:id', adminOnly, async (req, res, next) => {
 });
 
 // --- PUT /api/admin/home --- body: { new_launches?: [pick, ...], best_sellers?: [...],
+//                                     furkind_text?: { heading, text },
+//                                     offers?: [{ image, label, title, year?, bgTitle?, lightText? }, ...],
+//                                     shortlist_text?: { heading, subtitle },
+//                                     shortlist_banner?: '/uploads/products/...' | null,
+//                                     featured_text?: { heading, subtitle },
+//                                     featured_banner?: '/uploads/products/...' | null,
+//                                     tattoo_text?: { heading, subtitle },
+//                                     tattoo_banner?: '/uploads/products/...' | null,
+//                                     tattoo_caption?: { heading, subtitle },
+//                                     hero_text?: { heading, subtitle },
+//                                     hero_banner?: '/uploads/products/...' | null,
 //                                     expected?: { <section>: [ids the page loaded] } }
-// A pick is a product id or { id, style?: 'photo' | 'scene', label?: '...', image?: '/uploads/...' } (see pickId).
+// A pick is a product id or { id, style?: 'photo' | 'scene', label?: '...', image?: '/uploads/...', color?: '#hex' } (see pickId).
 // Each list is in display order; sections left out are not changed. With
 // `expected`, the save is refused (409) if someone changed that section since
 // the page loaded, so an old open tab can't silently overwrite newer picks.
 api.put('/admin/home', adminOnly, async (req, res, next) => {
   try {
     const updates = Object.keys(HOME_PICKS).filter((section) => req.body?.[section] !== undefined);
+    const furkindText = req.body?.furkind_text;
+    const offers = req.body?.offers;
+    const shortlistText = req.body?.shortlist_text;
+    const shortlistBanner = req.body?.shortlist_banner;
+    const featuredText = req.body?.featured_text;
+    const featuredBanner = req.body?.featured_banner;
+    const tattooText = req.body?.tattoo_text;
+    const tattooBanner = req.body?.tattoo_banner;
+    const tattooCaption = req.body?.tattoo_caption;
+    const heroText = req.body?.hero_text;
+    const heroBanner = req.body?.hero_banner;
+
+    if (furkindText !== undefined) {
+      if (
+        !furkindText ||
+        typeof furkindText.heading !== 'string' ||
+        typeof furkindText.text !== 'string' ||
+        !furkindText.heading.trim() ||
+        !furkindText.text.trim()
+      ) {
+        return res.status(400).json({ success: false, error: '`furkind_text` needs a non-empty heading and text.' });
+      }
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [FURKIND_TEXT_SETTING, JSON.stringify({ heading: clip(furkindText.heading, 120), text: clip(furkindText.text, 2000) })]
+      );
+    }
+
+    if (offers !== undefined) {
+      if (!Array.isArray(offers) || offers.length > MAX_OFFERS) {
+        return res.status(400).json({ success: false, error: `Add at most ${MAX_OFFERS} banners.` });
+      }
+      const clean = [];
+      for (const o of offers) {
+        if (!o || !isOfferImage(o.image) || typeof o.label !== 'string' || !o.label.trim() || typeof o.title !== 'string' || !o.title.trim()) {
+          return res.status(400).json({ success: false, error: 'Each banner needs an image, a label and a title.' });
+        }
+        clean.push({
+          image: o.image,
+          label: clip(o.label, 60),
+          title: clip(o.title, 40),
+          year: o.year ? clip(String(o.year), 10) : '',
+          bgTitle: o.bgTitle ? clip(String(o.bgTitle), 20) : '',
+          lightText: o.lightText !== false,
+        });
+      }
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [OFFERS_SETTING, JSON.stringify(clean)]
+      );
+    }
+
+    if (shortlistText !== undefined) {
+      if (
+        !shortlistText ||
+        typeof shortlistText.heading !== 'string' ||
+        typeof shortlistText.subtitle !== 'string' ||
+        !shortlistText.heading.trim() ||
+        !shortlistText.subtitle.trim()
+      ) {
+        return res.status(400).json({ success: false, error: '`shortlist_text` needs a non-empty heading and subtitle.' });
+      }
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [SHORTLIST_TEXT_SETTING, JSON.stringify({ heading: clip(shortlistText.heading, 160), subtitle: clip(shortlistText.subtitle, 300) })]
+      );
+    }
+
+    if (shortlistBanner !== undefined) {
+      if (shortlistBanner !== null && !isOfferImage(shortlistBanner)) {
+        return res.status(400).json({ success: false, error: '`shortlist_banner` must be an uploaded image path, or null to clear it.' });
+      }
+      await pool.query(
+        `INSERT INTO site_settings (key, value) VALUES ($1, $2)
+         ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value, updated_at = now()`,
+        [SHORTLIST_BANNER_SETTING, JSON.stringify(shortlistBanner)]
+      );
+    }
+
+    const namedTextFields = [
+      ['featured_text', featuredText, FEATURED_TEXT_SETTING, 120, 300],
+      ['tattoo_text', tattooText, TATTOO_TEXT_SETTING, 120, 300],
+      ['tattoo_caption', tattooCaption, TATTOO_CAPTION_SETTING, 80, 200],
+      ['hero_text', heroText, HERO_TEXT_SETTING, 120, 200],
+    ];
+    for (const [name, value, setting, headingMax, subtitleMax] of namedTextFields) {
+      if (value === undefined) continue;
+      if (!isTextSettingValid(value)) {
+        return res.status(400).json({ success: false, error: `\`${name}\` needs a non-empty heading and subtitle.` });
+      }
+      await saveSetting(setting, { heading: clip(value.heading, headingMax), subtitle: clip(value.subtitle, subtitleMax) });
+    }
+
+    const namedImageFields = [
+      ['featured_banner', featuredBanner, FEATURED_BANNER_SETTING],
+      ['tattoo_banner', tattooBanner, TATTOO_BANNER_SETTING],
+      ['hero_banner', heroBanner, HERO_BANNER_SETTING],
+    ];
+    for (const [name, value, setting] of namedImageFields) {
+      if (value === undefined) continue;
+      if (value !== null && !isOfferImage(value)) {
+        return res.status(400).json({ success: false, error: `\`${name}\` must be an uploaded image path, or null to clear it.` });
+      }
+      await saveSetting(setting, value);
+    }
+
+    const anyExtra =
+      furkindText !== undefined ||
+      offers !== undefined ||
+      shortlistText !== undefined ||
+      shortlistBanner !== undefined ||
+      namedTextFields.some(([, value]) => value !== undefined) ||
+      namedImageFields.some(([, value]) => value !== undefined);
+
+    const extraFields = async () => ({
+      furkind_text: await getFurkindText(),
+      offers: await getOffers(),
+      shortlist_banner: await getShortlistBanner(),
+      shortlist_text: await getShortlistText(),
+      featured_text: await getTextSetting(FEATURED_TEXT_SETTING, FEATURED_TEXT_DEFAULT),
+      featured_banner: await getImageSetting(FEATURED_BANNER_SETTING),
+      tattoo_text: await getTextSetting(TATTOO_TEXT_SETTING, TATTOO_TEXT_DEFAULT),
+      tattoo_banner: await getImageSetting(TATTOO_BANNER_SETTING),
+      tattoo_caption: await getTextSetting(TATTOO_CAPTION_SETTING, TATTOO_CAPTION_DEFAULT),
+      hero_text: await getTextSetting(HERO_TEXT_SETTING, HERO_TEXT_DEFAULT),
+      hero_banner: await getImageSetting(HERO_BANNER_SETTING),
+    });
+
     if (!updates.length) {
-      return res.status(400).json({ success: false, error: `Send ${Object.keys(HOME_PICKS).join(' or ')}.` });
+      if (anyExtra) {
+        return res.json({ success: true, ...(await getHomePicks()), ...(await extraFields()) });
+      }
+      return res.status(400).json({
+        success: false,
+        error: `Send ${Object.keys(HOME_PICKS).join(' or ')}, furkind_text, offers, shortlist_text, shortlist_banner, featured_text, featured_banner, tattoo_text, tattoo_banner, tattoo_caption, hero_text or hero_banner.`,
+      });
     }
 
     const lists = {};
@@ -1202,6 +1699,7 @@ api.put('/admin/home', adminOnly, async (req, res, next) => {
         if (pickStyle(v) === 'photo') pick.style = 'photo';
         if (pickLabel(v)) pick.label = pickLabel(v);
         if (pickImage(v)) pick.image = pickImage(v);
+        if (pickColor(v)) pick.color = pickColor(v);
         return Object.keys(pick).length > 1 ? pick : id;
       });
     }
@@ -1225,7 +1723,7 @@ api.put('/admin/home', adminOnly, async (req, res, next) => {
         [HOME_PICKS[section].setting, JSON.stringify(lists[section])]
       );
     }
-    res.json({ success: true, ...(await getHomePicks()) });
+    res.json({ success: true, ...(await getHomePicks()), ...(await extraFields()) });
   } catch (err) {
     next(err);
   }
@@ -1240,6 +1738,94 @@ api.post('/admin/home/image', adminOnly, upload.single('image'), (req, res) => {
     return res.status(400).json({ success: false, error: 'The card photo must be an image file.' });
   }
   res.status(201).json({ success: true, url: '/uploads/products/' + req.file.filename });
+});
+
+// --- PUT /api/admin/about --- body: the whole About Us page (see ABOUT_DEFAULT's
+// shape: founder, cta, illuminate). Photos are uploaded first via the same
+// POST /api/admin/home/image endpoint, then saved here by path.
+api.put('/admin/about', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, value } = sanitizeAbout(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    await saveSetting(ABOUT_SETTING, value);
+    res.json({ success: true, about: await getAbout() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/about/highlights --- (the "Illuminate Beauty" product highlights)
+api.get('/admin/about/highlights', adminOnly, async (req, res, next) => {
+  try {
+    const highlights = await getAboutHighlights();
+    res.json({ success: true, count: highlights.length, highlights });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/about/highlights/reorder --- body: { ids: [id, ...] } in the new order
+// (declared before /:id so "reorder" isn't read as an id)
+api.put('/admin/about/highlights/reorder', adminOnly, async (req, res, next) => {
+  try {
+    const ids = req.body?.ids;
+    if (!Array.isArray(ids) || !ids.every(isValidId)) {
+      return res.status(400).json({ success: false, error: '`ids` must be a list of highlight ids.' });
+    }
+    await pool.query(
+      `UPDATE about_highlights SET position = o.pos, updated_at = now()
+       FROM unnest($1::int[]) WITH ORDINALITY AS o(id, pos)
+       WHERE about_highlights.id = o.id`,
+      [ids.map(Number)]
+    );
+    res.json({ success: true, highlights: await getAboutHighlights() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/admin/about/highlights --- (added at the end of the list)
+api.post('/admin/about/highlights', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, values: v } = validateHighlightBody(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    const { rows } = await pool.query(
+      `INSERT INTO about_highlights (name, description, position)
+       VALUES ($1, $2, (SELECT coalesce(max(position), 0) + 1 FROM about_highlights))
+       RETURNING *`,
+      [v.name, v.desc]
+    );
+    res.status(201).json({ success: true, highlight: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/about/highlights/:id ---
+api.put('/admin/about/highlights/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, values: v } = validateHighlightBody(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    const { rows } = await pool.query(
+      'UPDATE about_highlights SET name = $1, description = $2, updated_at = now() WHERE id = $3 RETURNING *',
+      [v.name, v.desc, req.params.id]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Highlight not found' });
+    res.json({ success: true, highlight: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- DELETE /api/admin/about/highlights/:id ---
+api.delete('/admin/about/highlights/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM about_highlights WHERE id = $1 RETURNING id', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Highlight not found' });
+    res.json({ success: true, deleted: rows[0].id });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // ---------------------------- admin: combos ----------------------------
@@ -1702,6 +2288,8 @@ app.get('/', (req, res) => {
     endpoints: [
       'POST   /api/auth/register',
       'POST   /api/auth/login',
+      'POST   /api/auth/forgot-password',
+      'POST   /api/auth/reset-password',
       'GET    /api/auth/me              (signed in)',
       'POST   /api/orders               (guest or signed in)',
       'GET    /api/orders/mine          (signed in)',
@@ -1711,6 +2299,7 @@ app.get('/', (req, res) => {
       'DELETE /api/returns/:returnId    (signed in, own pending request)',
       'GET    /api/meta',
       'GET    /api/home',
+      'GET    /api/about',
       'GET    /api/combos',
       'GET    /api/combos/:id',
       'GET    /api/faqs',
@@ -1725,6 +2314,12 @@ app.get('/', (req, res) => {
       'PATCH  /api/admin/users/:id      (admin)',
       'PUT    /api/admin/home           (admin)',
       'POST   /api/admin/home/image     (admin, multipart)',
+      'PUT    /api/admin/about          (admin)',
+      'GET    /api/admin/about/highlights          (admin)',
+      'POST   /api/admin/about/highlights          (admin)',
+      'PUT    /api/admin/about/highlights/reorder  (admin)',
+      'PUT    /api/admin/about/highlights/:id      (admin)',
+      'DELETE /api/admin/about/highlights/:id      (admin)',
       'GET    /api/admin/combos         (admin)',
       'GET    /api/admin/combos/:id     (admin)',
       'POST   /api/admin/combos         (admin, multipart)',

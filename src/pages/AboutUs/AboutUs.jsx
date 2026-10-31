@@ -12,6 +12,8 @@ import logoImg from "../../assets/logo.png";
 import womenImg from "../../assets/women.jpg";
 import founderLogo from "../../assets/logo2.jpg";
 import footerImg from "../../assets/footer/footer.png";
+import { useCachedApi } from "../../api/useCachedApi";
+import { mediaUrl } from "../../api/client";
 
 import pic3 from "../../assets/pic3.jpg";
 import pic4 from "../../assets/pic4.jpg";
@@ -30,17 +32,6 @@ const Linkedin = Icons.Linkedin || Icons.Briefcase;
 const Facebook = Icons.Facebook || Icons.Globe;
 const Twitter = Icons.Twitter || Icons.Share2;
 
-const CATEGORIES = [
-  { name: "Malachite Fusion", desc: "Moringa & Butterfly Pea For Deep Botanical Support." },
-  { name: "Jasper Revive", desc: "Colombian Coffee Infusion To Refresh And Hydrate." },
-  { name: "Amber Glow", desc: "Manuka Honey & Royal Jelly For Ultimate Skin Food." },
-  { name: "Amethyst Relief", desc: "Organic Lavender For A Soothing, Peaceful Aroma." },
-  { name: "Obsidian Infusion", desc: "Organic Cacao & Hazelnut For Comforting Moisture." },
-  { name: "Olivine Relief", desc: "Magnesium & Arnica For Restorative Muscle Care." },
-  { name: "Bare Whipped Tallow", desc: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil." },
-  { name: "Taluma Hair Care", desc: "Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil." },
-];
-
 const RECENT_POSTS = [
   { title: "Hydrated Supple Skin", date: "July 23, 2023", img: recentPost1 },
   { title: "Glowing Radiant Skin", date: "July 23, 2023", img: recentPost2 },
@@ -48,6 +39,46 @@ const RECENT_POSTS = [
 ];
 
 const USEFUL_LINKS = ["Home", "About Us", "Returns", "Terms & Conditions", "Privacy Policy", "Contact Us"];
+
+// Shown until Admin → About Us has its own content saved (or while it's loading).
+const ABOUT_DEFAULT = {
+  founder: {
+    photo: null,
+    heading: "Founder’s Vision: Illuminating Beauty at Chantallow",
+    paragraph1:
+      "At Chantallow, the vision is simple: true beauty begins with transparency. Our brand was born from a passion for cruelty-free, sustainable, and tallow-rich formulas that outperform synthetic alternatives. A deep dedication to sourcing the highest quality, grass-finished tallow resonates in every jar, providing the essential vitamins and fatty acids your skin craves.",
+    paragraph2:
+      "Chantallow is more than just skincare; it is a commitment to creating a line that is as ethical as it is effective. By focusing on simple, powerful, animal-based fats, we are helping a new generation rediscover the glow of ancestral skincare—inspiring confidence through visible, natural results.",
+    badge: null,
+    name: "Chantelle Dieuvil",
+    role: "Ceo and founder",
+  },
+  cta: {
+    heading: "Questions ?",
+    text: "Our experts will help find the gear that’s right for you",
+    buttonLabel: "Get In Touch",
+  },
+  illuminate: {
+    heading: "Illuminate Beauty. Timeless Confidence.",
+    paragraph:
+      "At Chantallow, we believe in empowering your beauty journey through ancestral wisdom. Our curated collection of nutrient-dense, tallow-based products is designed to enhance your natural allure, fostering timeless confidence by nourishing your skin at a cellular level. Discover the glow within, effortlessly.",
+    items: [
+      { name: "Malachite Fusion", desc: "Moringa & Butterfly Pea For Deep Botanical Support." },
+      { name: "Jasper Revive", desc: "Colombian Coffee Infusion To Refresh And Hydrate." },
+      { name: "Amber Glow", desc: "Manuka Honey & Royal Jelly For Ultimate Skin Food." },
+      { name: "Amethyst Relief", desc: "Organic Lavender For A Soothing, Peaceful Aroma." },
+      { name: "Obsidian Infusion", desc: "Organic Cacao & Hazelnut For Comforting Moisture." },
+      { name: "Olivine Relief", desc: "Magnesium & Arnica For Restorative Muscle Care." },
+      { name: "Bare Whipped Tallow", desc: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil." },
+      { name: "Taluma Hair Care", desc: "Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil." },
+    ],
+    mainImage: null,
+    tagImage: null,
+    tagEyebrow: "Chantallow",
+    tagHeading: "Non-Stop Skincare",
+    smallImage: null,
+  },
+};
 
 const SOCIALS = [
   { label: "Instagram", icon: Instagram },
@@ -58,6 +89,10 @@ const SOCIALS = [
 ];
 
 export default function AboutUs() {
+  const { data } = useCachedApi("/about");
+  const about = data?.about || ABOUT_DEFAULT;
+  const { founder, cta, illuminate } = about;
+
   return (
     <div className="ct-page">
 
@@ -77,27 +112,16 @@ export default function AboutUs() {
       <section className="ct-founder">
         <div className="ct-container ct-founder-grid">
           <div className="ct-founder-photo">
-            <img src={womenImg} alt="Chantelle Dieuvil, Chantallow founder" />
+            <img src={founder.photo ? mediaUrl(founder.photo) : womenImg} alt="Chantallow founder" />
           </div>
           <div className="ct-founder-content">
-            <h3 className="ct-title-marcellus">Founder&rsquo;s Vision: Illuminating Beauty at Chantallow</h3>
-            <p className="ct-founder-text">
-              At Chantallow, the vision is simple: true beauty begins with transparency. Our brand was
-              born from a passion for cruelty-free, sustainable, and tallow-rich formulas that outperform
-              synthetic alternatives. A deep dedication to sourcing the highest quality, grass-finished
-              tallow resonates in every jar, providing the essential vitamins and fatty acids your skin
-              craves.
-            </p>
-            <p className="ct-founder-text">
-              Chantallow is more than just skincare; it is a commitment to creating a line that is as
-              ethical as it is effective. By focusing on simple, powerful, animal-based fats, we are
-              helping a new generation rediscover the glow of ancestral skincare&mdash;inspiring confidence
-              through visible, natural results.
-            </p>
+            <h3 className="ct-title-marcellus">{founder.heading}</h3>
+            <p className="ct-founder-text">{founder.paragraph1}</p>
+            <p className="ct-founder-text">{founder.paragraph2}</p>
             <div className="ct-founder-avatar">
               <div className="ct-founder-avatar-badge">
                 <img
-                  src={founderLogo}
+                  src={founder.badge ? mediaUrl(founder.badge) : founderLogo}
                   alt="Founder Badge"
                   style={{
                     width: "48px",
@@ -107,8 +131,8 @@ export default function AboutUs() {
                 />
               </div>
               <div>
-                <div className="ct-founder-name">Chantelle Dieuvil</div>
-                <div className="ct-founder-role">Ceo and founder</div>
+                <div className="ct-founder-name">{founder.name}</div>
+                <div className="ct-founder-role">{founder.role}</div>
               </div>
             </div>
           </div>
@@ -118,26 +142,21 @@ export default function AboutUs() {
       {/* ============ GET IN TOUCH ============ */}
       <section className="ct-cta">
         <div className="ct-cta-text">
-          <h3>Questions ?</h3>
-          <p>Our experts will help find the gear that’s right for you</p>
+          <h3>{cta.heading}</h3>
+          <p>{cta.text}</p>
         </div>
 
-        <a href="#" className="ct-cta-btn">Get In Touch</a>
+        <a href="#" className="ct-cta-btn">{cta.buttonLabel}</a>
       </section>
 
       {/* ============ ILLUMINATE BEAUTY ============ */}
       <section className="ct-illuminate">
         <div className="ct-container ct-illuminate-grid">
           <div className="ct-illuminate-copy">
-            <h2 className="ct-title-marcellus">Illuminate Beauty. Timeless Confidence.</h2>
-            <p>
-              At Chantallow, we believe in empowering your beauty journey through ancestral wisdom. Our
-              curated collection of nutrient-dense, tallow-based products is designed to enhance your
-              natural allure, fostering timeless confidence by nourishing your skin at a cellular level.
-              Discover the glow within, effortlessly.
-            </p>
+            <h2 className="ct-title-marcellus">{illuminate.heading}</h2>
+            <p>{illuminate.paragraph}</p>
             <ul className="ct-illuminate-list">
-              {CATEGORIES.map((c) => (
+              {illuminate.items.map((c) => (
                 <li key={c.name}>
                   <Leaf size={16} />
                   <span><b>{c.name}</b>: {c.desc}</span>
@@ -148,20 +167,20 @@ export default function AboutUs() {
 
           <div className="ct-collage">
             <div className="ct-collage-main">
-              <img src={pic3} alt="Let your real beauty glow with our collection of skin & face products" />
+              <img src={illuminate.mainImage ? mediaUrl(illuminate.mainImage) : pic3} alt="Let your real beauty glow with our collection of skin & face products" />
             </div>
 
             <div className="ct-collage-row">
               <div className="ct-collage-small dark">
-                <img src={pic4} alt="Skin Care" />
+                <img src={illuminate.tagImage ? mediaUrl(illuminate.tagImage) : pic4} alt="Skin Care" />
                 <div className="tag">
-                  <div className="eyebrow">Chantallow</div>
-                  <h5>Non-Stop Skincare</h5>
+                  <div className="eyebrow">{illuminate.tagEyebrow}</div>
+                  <h5>{illuminate.tagHeading}</h5>
                 </div>
               </div>
 
               <div className="ct-collage-small">
-                <img src={pic5} alt="Product" />
+                <img src={illuminate.smallImage ? mediaUrl(illuminate.smallImage) : pic5} alt="Product" />
               </div>
             </div>
           </div>

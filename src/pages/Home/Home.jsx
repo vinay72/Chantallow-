@@ -239,16 +239,16 @@ export default function Home() {
 
             <main>
                 <Hero navigate={navigate} home={home} />
-                <MissionStrip />
+                <MissionStrip home={home} />
                 <CompleteCareBanner />
                 {/* <CategoryMarquee /> */}
                 <TallowCollection onQuickView={(card) => setQuickView(card)} />
                 <MoreCollections home={home} />
                 <SimilarProfilesSection home={home} />
                 <SavingSection home={home} />
-                <FurkindPetSection />
-                <FeaturedOffers />
-                <ShortlistSection />
+                <FurkindPetSection home={home} />
+                <FeaturedOffers home={home} />
+                <ShortlistSection home={home} />
             </main>
 
             <Footer />
@@ -397,8 +397,16 @@ function GlobalStyle() {
 
 /* --------------------------------- Hero --------------------------------- */
 
+const HERO_TEXT_DEFAULT = {
+    heading: "A New Generation Of\nNatural Tallow Skincare",
+    subtitle: "Handcrafted wellness using Moringa, Butterfly Pea, and Zechstein Magnesium.",
+};
+
 function Hero({ navigate, home }) {
     const { addToCart, showToast } = useShop();
+
+    const heroBannerUrl = home.data?.hero_banner ? mediaUrl(home.data.hero_banner) : IMAGES.heroPortrait;
+    const { heading: heroHeading, subtitle: heroSubtitle } = home.data?.hero_text || HERO_TEXT_DEFAULT;
 
     // New launch products picked in Admin → Home → New Launches.
     const launches = home.data ? home.data.new_launches.map(fromServerProduct) : null;
@@ -509,9 +517,12 @@ function Hero({ navigate, home }) {
                             fontFamily: "Marcellus, sans-serif",
                         }}
                     >
-                        A New Generation Of
-                        <br />
-                        Natural Tallow Skincare
+                        {heroHeading.split("\n").map((line, i, arr) => (
+                            <React.Fragment key={i}>
+                                {line}
+                                {i < arr.length - 1 && <br />}
+                            </React.Fragment>
+                        ))}
                     </h1>
                     {/* Moringa leaf — below heading, right of paragraph */}
                     <img
@@ -534,7 +545,7 @@ function Hero({ navigate, home }) {
                             fontFamily: "Marcellus, sans-serif",
                         }}
                     >
-                        Handcrafted wellness using Moringa, Butterfly Pea, and Zechstein Magnesium.
+                        {heroSubtitle}
                     </p>
 
                     <button
@@ -687,7 +698,7 @@ function Hero({ navigate, home }) {
                         }}
                     >
                         <img
-                            src={IMAGES.heroPortrait}
+                            src={heroBannerUrl}
                             alt="Woman holding Chantallow Jasper Revive tallow skincare jar"
                             style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                         />
@@ -765,8 +776,27 @@ function Hero({ navigate, home }) {
 
 /* ----------------------------- Mission Strip ----------------------------- */
 
-function MissionStrip() {
+function MissionStrip({ home }) {
     const navigate = useNavigate();
+
+    // Admin's picks (Admin → Home → We Bridge The Gap); undefined until loaded.
+    const picks = home.data?.bridge;
+    const waiting = picks === undefined && (home.status === "loading" || home.status === "stale");
+    const items = picks?.length
+        ? picks.map((row) => {
+              const p = fromServerProduct(row);
+              const builtIn = CATALOGUE.find((x) => x.name.toLowerCase() === p.name.toLowerCase());
+              return {
+                  id: p.id,
+                  slug: builtIn ? builtIn.slug : null,
+                  name: p.name,
+                  accent: row.home_color || "#2D2E2F",
+                  img: row.home_image ? mediaUrl(row.home_image) : p.cardImage,
+              };
+          })
+        : waiting
+        ? Array.from({ length: 8 }, (_, i) => ({ id: `placeholder-${i}`, placeholder: true }))
+        : PRODUCTS;
 
     return (
         <section className="ctw-mission" style={{ background: "#EDF8F3", position: "relative", overflow: "hidden" }}>
@@ -797,66 +827,81 @@ function MissionStrip() {
                 </h2>
 
                 <div className="ctw-mission-grid">
-                    {PRODUCTS.map((p) => (
-                        <a
-                            key={p.id}
-                            href="#shop"
-                            style={{ textDecoration: "none", textAlign: "center" }}
-                        >
-                            <div
-                                className="ctw-card-hover ctw-mission-circle"
-                                style={{
-                                    position: "relative",
-                                    width: "100%",
-                                    aspectRatio: "1 / 1",
-                                    borderRadius: "50%",
-                                    background: "#EDF8F3",
-                                    marginBottom: 12,
-                                    border: "1px solid #E6E0CC",
-                                    overflow: "hidden",
-                                    display: "flex",
-                                    alignItems: "center",
-                                    justifyContent: "center",
-                                }}
-                            >
-                                <img
-                                    src={p.img}
-                                    alt={`Chantallow ${p.name} tallow skincare jar`}
+                    {items.map((p) =>
+                        p.placeholder ? (
+                            <div key={p.id} aria-hidden="true">
+                                <div
                                     style={{
                                         width: "100%",
-                                        height: "100%",
-                                        objectFit: "cover",
-                                        display: "block",
-                                        objectPosition: "center",
-                                        // "--jar-scale": p.jarScale || 1,
+                                        aspectRatio: "1 / 1",
+                                        borderRadius: "50%",
+                                        background: "#EDF8F3",
+                                        marginBottom: 12,
+                                        border: "1px solid #E6E0CC",
                                     }}
                                 />
-                                <button
-                                    type="button"
-                                    className="ctw-buy-now"
-                                    aria-label={`Buy ${p.name} now`}
-                                    onClick={(e) => {
-                                        e.preventDefault();   // don't follow the card's #shop link
-                                        e.stopPropagation();
-                                        navigate(`/product/${p.slug}`);
+                            </div>
+                        ) : (
+                            <a
+                                key={p.id}
+                                href="#shop"
+                                style={{ textDecoration: "none", textAlign: "center" }}
+                            >
+                                <div
+                                    className="ctw-card-hover ctw-mission-circle"
+                                    style={{
+                                        position: "relative",
+                                        width: "100%",
+                                        aspectRatio: "1 / 1",
+                                        borderRadius: "50%",
+                                        background: "#EDF8F3",
+                                        marginBottom: 12,
+                                        border: "1px solid #E6E0CC",
+                                        overflow: "hidden",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
                                     }}
                                 >
-                                    Buy Now
-                                </button>
-                            </div>
-                            <h3
-                                className="ctw-mission-name"
-                                style={{
-                                    fontWeight: 500,
-                                    color: p.accent,
-                                    margin: 0,
-                                    fontFamily: "Marcellus",
-                                }}
-                            >
-                                {p.name}
-                            </h3>
-                        </a>
-                    ))}
+                                    <img
+                                        src={p.img}
+                                        alt={`Chantallow ${p.name} tallow skincare jar`}
+                                        style={{
+                                            width: "100%",
+                                            height: "100%",
+                                            objectFit: "cover",
+                                            display: "block",
+                                            objectPosition: "center",
+                                            // "--jar-scale": p.jarScale || 1,
+                                        }}
+                                    />
+                                    <button
+                                        type="button"
+                                        className="ctw-buy-now"
+                                        aria-label={`Buy ${p.name} now`}
+                                        onClick={(e) => {
+                                            e.preventDefault();   // don't follow the card's #shop link
+                                            e.stopPropagation();
+                                            navigate(p.slug ? `/product/${p.slug}` : "/shop-list");
+                                        }}
+                                    >
+                                        Buy Now
+                                    </button>
+                                </div>
+                                <h3
+                                    className="ctw-mission-name"
+                                    style={{
+                                        fontWeight: 500,
+                                        color: p.accent,
+                                        margin: 0,
+                                        fontFamily: "Marcellus",
+                                    }}
+                                >
+                                    {p.name}
+                                </h3>
+                            </a>
+                        )
+                    )}
                 </div>
             </div>
         </section>
@@ -1777,6 +1822,11 @@ function CarouselControls({ page, pageCount, onGo }) {
 
 /* --------------------------- Similar Profiles --------------------------- */
 
+const FEATURED_TEXT_DEFAULT = {
+    heading: "Nourish Your Skin, Naturally",
+    subtitle: "Discover your favorite tallow essentials and botanical blends, thoughtfully crafted to nourish, hydrate, and restore.",
+};
+
 function SimilarProfilesSection({ home }) {
     // Admin's two picks; undefined until loaded (an older saved copy may not have them yet).
     const picks = home.data?.featured;
@@ -1800,6 +1850,9 @@ function SimilarProfilesSection({ home }) {
         ? [{ id: "placeholder-1", placeholder: true }, { id: "placeholder-2", placeholder: true }]
         : SIMILAR_PROFILES;
 
+    const portraitUrl = home.data?.featured_banner ? mediaUrl(home.data.featured_banner) : similarPortrait;
+    const { heading, subtitle } = home.data?.featured_text || FEATURED_TEXT_DEFAULT;
+
     return (
         <section className="ctw-similar" style={{ background: "#EDF8F3" }}>
             <div className="ctw-similar-grid">
@@ -1821,7 +1874,7 @@ function SimilarProfilesSection({ home }) {
                                 fontWeight: 400,
                                 margin: "0 0 14px",
                             }}>
-                                Nourish Your Skin, Naturally
+                                {heading}
                             </h2>
                             <p style={{
                                 fontSize: 18,
@@ -1830,7 +1883,7 @@ function SimilarProfilesSection({ home }) {
                                 color: "#5A5A52",
                                 margin: 0,
                             }}>
-                                Discover your favorite tallow essentials and botanical blends, thoughtfully crafted to nourish, hydrate, and restore.
+                                {subtitle}
                             </p>
                         </div>
                         {/* "All Products →" link — commented out
@@ -1944,7 +1997,7 @@ function SimilarProfilesSection({ home }) {
 
                 <div className="ctw-similar-portrait">
                     <img
-                        src={similarPortrait}
+                        src={portraitUrl}
                         alt="Man holding a Chantallow tallow skincare jar"
                         style={{
                             width: "92%",
@@ -1962,6 +2015,15 @@ function SimilarProfilesSection({ home }) {
 }
 
 /* -------------------------------- Saving -------------------------------- */
+
+const TATTOO_TEXT_DEFAULT = {
+    heading: "Pure Care for Every Tattoo",
+    subtitle: "Discover Chantallow’s tallow-based tattoo care crèmes, crafted to deeply moisturize, soothe, and keep your tattooed skin looking vibrant.",
+};
+const TATTOO_CAPTION_DEFAULT = {
+    heading: "Moringa + Butterfly Pea Flowers",
+    subtitle: "Protect against environmental stress while promoting soft, healthy-looking, and revitalized skin.",
+};
 
 function SavingSection({ home }) {
     // Admin's picks; undefined until loaded (an older saved copy may not have them yet).
@@ -1988,6 +2050,10 @@ function SavingSection({ home }) {
         ? [{ id: "placeholder-1", placeholder: true }, { id: "placeholder-2", placeholder: true }]
         : SAVING_LEFT;
 
+    const bannerUrl = home.data?.tattoo_banner ? mediaUrl(home.data.tattoo_banner) : savingBanner;
+    const { heading, subtitle } = home.data?.tattoo_text || TATTOO_TEXT_DEFAULT;
+    const caption = home.data?.tattoo_caption || TATTOO_CAPTION_DEFAULT;
+
     return (
         <section className="ctw-saving" style={{ background: "#EDF8F3", overflowX: "clip" }}>
             <div className="ctw-saving-grid">
@@ -2004,7 +2070,7 @@ function SavingSection({ home }) {
                                 margin: "0 0 14px",
                             }}
                         >
-                            Pure Care for Every Tattoo
+                            {heading}
                         </h2>
                         <p
                             style={{
@@ -2015,7 +2081,7 @@ function SavingSection({ home }) {
                                 margin: 0,
                             }}
                         >
-                            Discover Chantallow’s tallow-based tattoo care crèmes, crafted to deeply moisturize, soothe, and keep your tattooed skin looking vibrant.
+                            {subtitle}
                         </p>
                     </div>
 
@@ -2066,7 +2132,7 @@ function SavingSection({ home }) {
                     column, so the image bottom lines up with the product cards */}
                 <div className="ctw-saving-banner" style={{ clipPath: "url(#waveLeft)" }}>
                     <img
-                        src={savingBanner}
+                        src={bannerUrl}
                         alt="Applying Chantallow tallow crème to tattooed skin"
                         style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", display: "block" }}
                     />
@@ -2099,7 +2165,7 @@ function SavingSection({ home }) {
                                 color: "#FFFFFF",
                             }}
                         >
-                            Moringa + Butterfly Pea Flowers
+                            {caption.heading}
                         </h3>
                         <p
                             style={{
@@ -2111,7 +2177,7 @@ function SavingSection({ home }) {
                                 color: "rgba(255,255,255,0.92)",
                             }}
                         >
-                            Protect against environmental stress while promoting soft, healthy-looking, and revitalized skin.
+                            {caption.subtitle}
                         </p>
                     </div>
                 </div>
@@ -2122,8 +2188,15 @@ function SavingSection({ home }) {
 
 /* ----------------------------- Furkind Pet Tallow ----------------------------- */
 
-function FurkindPetSection() {
+const FURKIND_TEXT_DEFAULT = {
+    heading: "Furkind Pet Tallow",
+    text:
+        "Our nutrient-rich Pet Balm combines the nourishing power of grass-fed, grass-finished beef tallow with organic raw unrefined coconut oil to help soothe, protect, and restore dry, rough, or irritated skin and paws. Beef tallow is a natural source of Vitamin A, which supports skin renewal and healthy tissue maintenance; Vitamin D, which helps support skin barrier function; Vitamin E, a powerful antioxidant that helps protect against environmental stressors and supports moisture retention; and Vitamin K, which contributes to overall skin health. The naturally occurring fatty acids in tallow closely resemble the oils found in healthy skin, making it highly absorbable and deeply moisturizing. Organic raw unrefined coconut oil provides additional hydration and contains lauric acid, caprylic acid, and capric acid, which help condition the skin and support a clean, healthy environment on your pet’s skin surface. Together, these ingredients help soften rough paws, reduce dryness and cracking, calm irritation, and create a protective moisture barrier to keep your pet's skin and paws healthy, smooth, and comfortable.",
+};
+
+function FurkindPetSection({ home }) {
     const navigate = useNavigate();
+    const { heading, text } = home?.furkind_text || FURKIND_TEXT_DEFAULT;
 
     return (
         <section
@@ -2229,7 +2302,7 @@ function FurkindPetSection() {
                                 margin: "0 0 24px",
                             }}
                         >
-                            Furkind Pet Tallow
+                            {heading}
                         </h2>
                     </a>
 
@@ -2243,24 +2316,10 @@ function FurkindPetSection() {
                             textAlign: "justify",      // straight edges on both sides
                             textAlignLast: "left",     // last line stays normal
                             hyphens: "auto",
+                            whiteSpace: "pre-line",
                         }}
                     >
-                        Our nutrient-rich Pet Balm combines the nourishing power of grass-fed,
-                        grass-finished beef tallow with organic raw unrefined coconut oil to help
-                        soothe, protect, and restore dry, rough, or irritated skin and paws. Beef
-                        tallow is a natural source of Vitamin A, which supports skin renewal and
-                        healthy tissue maintenance; Vitamin D, which helps support skin barrier
-                        function; Vitamin E, a powerful antioxidant that helps protect against
-                        environmental stressors and supports moisture retention; and Vitamin K,
-                        which contributes to overall skin health. The naturally occurring fatty
-                        acids in tallow closely resemble the oils found in healthy skin, making it
-                        highly absorbable and deeply moisturizing. Organic raw unrefined coconut
-                        oil provides additional hydration and contains lauric acid, caprylic acid,
-                        and capric acid, which help condition the skin and support a clean, healthy
-                        environment on your pet’s skin surface. Together, these ingredients help
-                        soften rough paws, reduce dryness and cracking, calm irritation, and create
-                        a protective moisture barrier to keep your pet's skin and paws healthy,
-                        smooth, and comfortable.
+                        {text}
                     </p>
 
                     <button
@@ -2471,8 +2530,20 @@ function ProductStripCard({ name, sub, price = "$00.00", was = "$00.00", badge }
 
 /* ----------------------------- Featured Offers ----------------------------- */
 
-function FeaturedOffers() {
-    const track = [...FEATURED_OFFERS, ...FEATURED_OFFERS];
+function FeaturedOffers({ home }) {
+    const adminOffers = home?.offers;
+    const offers =
+        adminOffers && adminOffers.length
+            ? adminOffers.map((o) => ({
+                  label: o.label,
+                  title: o.title,
+                  year: o.year || undefined,
+                  bgTitle: o.bgTitle || undefined,
+                  textColor: o.lightText === false ? "#1C1C1A" : "#fff",
+                  img: mediaUrl(o.image),
+              }))
+            : FEATURED_OFFERS;
+    const track = [...offers, ...offers];
 
     return (
         <section style={{ padding: "20px 0 80px", background: "#EDF8F3" }}>
@@ -2512,7 +2583,7 @@ function FeaturedOffers() {
                     {track.map((o, i) => (
                         <div
                             key={i}
-                            aria-hidden={i >= FEATURED_OFFERS.length}
+                            aria-hidden={i >= offers.length}
                             className="ctw-offer-card"
                             style={{
                                 aspectRatio: "3 / 2",
@@ -2628,8 +2699,38 @@ function FeaturedOffers() {
 
 /* ------------------------------- Shortlist ------------------------------- */
 
-function ShortlistSection() {
+const SHORTLIST_TEXT_DEFAULT = {
+    heading: "Soothe Sore Muscles,\nNaturally",
+    subtitle: "Magnesium & arnica-infused tallow crème for targeted pain relief, muscle comfort, and skin nourishment.",
+};
+
+function ShortlistSection({ home }) {
     const navigate = useNavigate();
+
+    // Admin's pick (Admin → Home → Soothe Sore Muscles); undefined until loaded.
+    const picks = home.data?.shortlist;
+    const waiting = picks === undefined && (home.status === "loading" || home.status === "stale");
+    const row = picks?.[0];
+    const product = row
+        ? (() => {
+              const p = fromServerProduct(row);
+              const builtIn = CATALOGUE.find((x) => x.name.toLowerCase() === p.name.toLowerCase());
+              return {
+                  name: p.name,
+                  sub: p.subtitle,
+                  price: formatPrice(p.price),
+                  was: p.compareAtPrice != null ? formatPrice(p.compareAtPrice) : null,
+                  img: row.home_image ? mediaUrl(row.home_image) : p.cardImage,
+                  path: builtIn ? `/product/${builtIn.slug}` : "/shop-list",
+              };
+          })()
+        : waiting
+        ? null
+        : { name: "Olivine Relief", sub: "Zechstein Magnesium + Arnica", price: "$00.00", was: "$00.00", img: painImg, path: "/product/olivine-relief" };
+
+    const bannerUrl = home.data?.shortlist_banner ? mediaUrl(home.data.shortlist_banner) : shortlistBanner;
+    const { heading, subtitle } = home.data?.shortlist_text || SHORTLIST_TEXT_DEFAULT;
+
     return (
         <section style={{ background: "#F7F4EC", padding: "0", position: "relative" }}>
             <div className="ctw-shortlist-grid">
@@ -2645,9 +2746,8 @@ function ShortlistSection() {
                         overflow: "hidden",
                     }}
                 >
-                    {/* ⚠ match this var to your man/pain banner import */}
                     <img
-                        src={shortlistBanner}
+                        src={bannerUrl}
                         alt=""
                         aria-hidden="true"
                         style={{
@@ -2679,9 +2779,12 @@ function ShortlistSection() {
                                 color: "#1C1C1A",
                             }}
                         >
-                            Soothe Sore Muscles,
-                            <br />
-                            Naturally
+                            {heading.split("\n").map((line, i, arr) => (
+                                <React.Fragment key={i}>
+                                    {line}
+                                    {i < arr.length - 1 && <br />}
+                                </React.Fragment>
+                            ))}
                         </h2>
                         <p
                             style={{
@@ -2695,8 +2798,7 @@ function ShortlistSection() {
                                 textShadow: "0 1px 8px rgba(0, 0, 0, 0.45)",
                             }}
                         >
-                            Magnesium &amp; arnica-infused tallow crème for targeted pain relief, muscle comfort, and skin
-                            nourishment.
+                            {subtitle}
                         </p>
                         <Link
                             to="/shop-list"
@@ -2762,11 +2864,11 @@ function ShortlistSection() {
 
                 {/* RIGHT — single large product */}
                 <div className="ctw-shortlist-product">
+                    {product && (
                     <div style={{ maxWidth: 480, margin: "0 auto" }}>
-                        {/* ⚠ match this var to your pain.png (olive-board) import */}
                         <img
-                            src={painImg}
-                            alt="Chantallow Olivine Relief tallow on olive wood board"
+                            src={product.img}
+                            alt={`Chantallow ${product.name} tallow on olive wood board`}
                             style={{
                                 width: "100%",
                                 maxWidth: 480,
@@ -2794,26 +2896,28 @@ function ShortlistSection() {
                                         fontFamily: "Marcellus, sans-serif",
                                     }}
                                 >
-                                    Olivine Relief
+                                    {product.name}
                                 </h6>
-                                <span
-                                    className="ctw-serif"
-                                    style={{ fontSize: 18, color: "#41705B" }}
-                                >
-                                    Zechstein Magnesium + Arnica
-                                </span>
+                                {product.sub && (
+                                    <span
+                                        className="ctw-serif"
+                                        style={{ fontSize: 18, color: "#41705B" }}
+                                    >
+                                        {product.sub}
+                                    </span>
+                                )}
                             </div>
                             <div style={{ textAlign: "right", whiteSpace: "nowrap" }}>
-                                <div className="ctw-serif" style={{ fontSize: 22, fontWeight: 700 }}>$00.00</div>
-                                <del className="ctw-serif" style={{ fontSize: 22, color: "#B4B4A8" }}>$00.00</del>
+                                <div className="ctw-serif" style={{ fontSize: 22, fontWeight: 700 }}>{product.price}</div>
+                                {product.was && <del className="ctw-serif" style={{ fontSize: 22, color: "#B4B4A8" }}>{product.was}</del>}
                             </div>
                         </div>
 
-                        {/* Buy Now — opens the Olivine Relief product page */}
+                        {/* Buy Now — opens the product's page */}
                         <div style={{ padding: "0 8px", marginTop: 20 }}>
                             <button
                                 type="button"
-                                onClick={() => navigate("/product/olivine-relief")}
+                                onClick={() => navigate(product.path)}
                                 style={{
                                     display: "inline-block",
                                     background: "#FFFFFF",
@@ -2834,6 +2938,7 @@ function ShortlistSection() {
                             </button>
                         </div>
                     </div>
+                    )}
                 </div>
             </div>
         </section>

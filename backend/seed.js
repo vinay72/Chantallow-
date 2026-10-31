@@ -43,6 +43,18 @@ const FAQS = [
     'Once your return is approved and received, we issue the refund to your original payment method. It usually appears within 5–10 working days, depending on your bank.'],
 ];
 
+// "Illuminate Beauty" product highlights on the About Us page.
+const ABOUT_HIGHLIGHTS = [
+  ['Malachite Fusion', 'Moringa & Butterfly Pea For Deep Botanical Support.'],
+  ['Jasper Revive', 'Colombian Coffee Infusion To Refresh And Hydrate.'],
+  ['Amber Glow', 'Manuka Honey & Royal Jelly For Ultimate Skin Food.'],
+  ['Amethyst Relief', 'Organic Lavender For A Soothing, Peaceful Aroma.'],
+  ['Obsidian Infusion', 'Organic Cacao & Hazelnut For Comforting Moisture.'],
+  ['Olivine Relief', 'Magnesium & Arnica For Restorative Muscle Care.'],
+  ['Bare Whipped Tallow', 'Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil.'],
+  ['Taluma Hair Care', 'Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil.'],
+];
+
 // Sample blog posts. Covers are the storefront's own photos (public/assets).
 const BLOG_POSTS = [
   {
@@ -149,6 +161,17 @@ async function seedHomeContent() {
       ]);
     }
     console.log(`Seeded ${FAQS.length} placeholder FAQs.`);
+  });
+
+  await once('seeded_about_highlights', async () => {
+    const { rows } = await pool.query('SELECT count(*)::int AS n FROM about_highlights');
+    if (rows[0].n > 0) return;
+    for (const [i, [name, description]] of ABOUT_HIGHLIGHTS.entries()) {
+      await pool.query('INSERT INTO about_highlights (name, description, position) VALUES ($1, $2, $3)', [
+        name, description, i + 1,
+      ]);
+    }
+    console.log(`Seeded ${ABOUT_HIGHLIGHTS.length} About Us product highlights.`);
   });
 }
 

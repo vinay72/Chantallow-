@@ -166,9 +166,9 @@ function SignInSection() {
                                 <input type="checkbox" checked={remember} onChange={(e) => setRemember(e.target.checked)} />
                                 Remember Me
                             </label>
-                            <a href="#forgot" className="ctw-underline-link ctw-forgot-link">
+                            <Link to="/forgot-password" className="ctw-underline-link ctw-forgot-link">
                                 Forgot Password
-                            </a>
+                            </Link>
                         </div>
 
                         <button type="submit" className="ctw-btn ctw-signin-btn" disabled={submitting}>

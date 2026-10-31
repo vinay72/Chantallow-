@@ -4,6 +4,7 @@
 //   /admin/home/best-sellers  <AdminHome section="best_sellers" />  "Our Best Sellers" row
 //   /admin/home/featured      <AdminHome section="featured" />      "Nourish Your Skin, Naturally" pair
 //   /admin/home/tattoo        <AdminHome section="tattoo" />        "Pure Care for Every Tattoo" pair
+//   /admin/home/bridge        <AdminHome section="bridge" />        "We Bridge The Gap..." circles
 // Pick products, order them, and save. With none picked the home page shows its
 // built-in products. A brand-new product is created under Products first.
 
@@ -12,6 +13,8 @@ import { Link } from 'react-router-dom';
 import { ArrowDown, ArrowUp, Award, Droplet, Leaf, Plus, Sparkles, Trash2 } from 'lucide-react';
 import { api, mediaUrl } from './api';
 import { money } from './orderMeta';
+
+const HEX_COLOR = /^#[0-9a-f]{6}$/i;
 
 // One entry per section; `key` is the field name in GET/PUT /api/home.
 const SECTIONS = {
@@ -24,6 +27,10 @@ const SECTIONS = {
     empty: 'No new launches picked. The home page shows its default products (Amber Glow and Amethyst Relief).',
     saved: 'Home page updated. The new launches are live.',
     addHint: 'Launching something new? Create it first, then add it here.',
+    // the hero heading/subtitle + right-side portrait, above these picks
+    textKey: 'hero_text',
+    bannerKey: 'hero_banner',
+    bannerLabel: 'Portrait photo',
   },
   best_sellers: {
     key: 'best_sellers',
@@ -45,6 +52,10 @@ const SECTIONS = {
     empty: 'No products picked. The home page shows its default pair (Jasper Revive and Obsidian Infusion).',
     saved: 'Home page updated. The Nourish Your Skin cards are live.',
     addHint: 'Edit a product’s photo, name or price under Products; it updates here too.',
+    // the heading/subtitle + right-side portrait, above the product picks
+    textKey: 'featured_text',
+    bannerKey: 'featured_banner',
+    bannerLabel: 'Portrait photo',
   },
   tattoo: {
     key: 'tattoo',
@@ -55,6 +66,22 @@ const SECTIONS = {
     empty: 'No products picked. The home page shows its default pair (Malachite Fusion and Amethyst Relief).',
     saved: 'Home page updated. The tattoo care cards are live.',
     addHint: 'Name, subtitle and prices come from the product (edit them under Products).',
+    // the heading/subtitle + right-side photo (with its own caption), above the product picks
+    textKey: 'tattoo_text',
+    bannerKey: 'tattoo_banner',
+    bannerLabel: 'Banner photo',
+    captionKey: 'tattoo_caption',
+  },
+  bridge: {
+    key: 'bridge',
+    title: 'We Bridge The Gap',
+    Icon: Sparkles,
+    max: 8,
+    help:
+      'The circular product photos in “We Bridge The Gap Between Ancient Wisdom And Modern Skincare” on the home page. Each name can have its own colour.',
+    empty: 'No products picked. The home page shows its default 8 products.',
+    saved: 'Home page updated. The circles are live.',
+    addHint: 'Pick up to 8 products to show as circles.',
   },
 };
 
@@ -144,6 +171,19 @@ function BestSellerPreview({ product, style }) {
   );
 }
 
+// How a "We Bridge The Gap" circle will look: round photo + name below in its colour.
+function BridgePreview({ product, color }) {
+  const url = coverOf(product);
+  return (
+    <div className="bridge-preview-card">
+      <div className="bridge-preview-img">{url ? <img src={mediaUrl(url)} alt="" /> : <span className="muted">No image</span>}</div>
+      <div className="bridge-preview-name" style={{ color: color || '#2D2E2F' }}>
+        {product.name}
+      </div>
+    </div>
+  );
+}
+
 // How the card will look in the home page hero.
 function PreviewCard({ product }) {
   const compare = product.compare_at_price != null ? Number(product.compare_at_price) : null;
@@ -167,6 +207,188 @@ function PreviewCard({ product }) {
   );
 }
 
+// Self-contained panel for a section's heading/subtitle, right-side banner
+// photo, and (tattoo only) the caption shown over that photo. Loads and
+// saves independently of the product picks below it.
+function SectionTextPanel({ cfg }) {
+  const [saved, setSaved] = useState({ heading: '', subtitle: '' });
+  const [heading, setHeading] = useState('');
+  const [subtitle, setSubtitle] = useState('');
+  const [savedBanner, setSavedBanner] = useState(null);
+  const [banner, setBanner] = useState(null);
+  const [savedCaption, setSavedCaption] = useState({ heading: '', subtitle: '' });
+  const [captionHeading, setCaptionHeading] = useState('');
+  const [captionSubtitle, setCaptionSubtitle] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [flash, setFlash] = useState(null);
+
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(null);
+    return api
+      .getHome()
+      .then((home) => {
+        const text = home[cfg.textKey];
+        setSaved(text);
+        setHeading(text.heading);
+        setSubtitle(text.subtitle);
+        setSavedBanner(home[cfg.bannerKey] || null);
+        setBanner(home[cfg.bannerKey] || null);
+        if (cfg.captionKey) {
+          const caption = home[cfg.captionKey];
+          setSavedCaption(caption);
+          setCaptionHeading(caption.heading);
+          setCaptionSubtitle(caption.subtitle);
+        }
+      })
+      .catch((err) => setError(err.message))
+      .finally(() => setLoading(false));
+  }, [cfg.textKey, cfg.bannerKey, cfg.captionKey]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const dirty =
+    heading.trim() !== saved.heading.trim() ||
+    subtitle.trim() !== saved.subtitle.trim() ||
+    banner !== savedBanner ||
+    (cfg.captionKey && (captionHeading.trim() !== savedCaption.heading.trim() || captionSubtitle.trim() !== savedCaption.subtitle.trim()));
+
+  const uploadBanner = async (file) => {
+    setUploading(true);
+    setError(null);
+    try {
+      const { url } = await api.uploadHomeImage(file);
+      setBanner(url);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const save = async () => {
+    setSaving(true);
+    setError(null);
+    setFlash(null);
+    try {
+      const body = {
+        [cfg.textKey]: { heading: heading.trim(), subtitle: subtitle.trim() },
+        [cfg.bannerKey]: banner,
+      };
+      if (cfg.captionKey) body[cfg.captionKey] = { heading: captionHeading.trim(), subtitle: captionSubtitle.trim() };
+      const res = await api.saveHome(body);
+      const text = res[cfg.textKey];
+      setSaved(text);
+      setHeading(text.heading);
+      setSubtitle(text.subtitle);
+      setSavedBanner(res[cfg.bannerKey] || null);
+      setBanner(res[cfg.bannerKey] || null);
+      if (cfg.captionKey) {
+        const caption = res[cfg.captionKey];
+        setSavedCaption(caption);
+        setCaptionHeading(caption.heading);
+        setCaptionSubtitle(caption.subtitle);
+      }
+      setFlash('Home page updated.');
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const discard = () => {
+    setHeading(saved.heading);
+    setSubtitle(saved.subtitle);
+    setBanner(savedBanner);
+    setCaptionHeading(savedCaption.heading);
+    setCaptionSubtitle(savedCaption.subtitle);
+  };
+
+  if (loading) return null;
+
+  return (
+    <section className="panel">
+      <div className="panel-head">
+        <div>
+          <h2>Heading &amp; banner</h2>
+          <p className="muted">The heading, subtitle and right-side photo shown above the picks below.</p>
+        </div>
+      </div>
+
+      {flash && <div className="flash">{flash}</div>}
+      {error && (
+        <div className="errors">
+          <strong>Couldn't save:</strong>
+          <ul>
+            <li>{error}</li>
+          </ul>
+        </div>
+      )}
+
+      <label className="field">
+        <span>Heading{cfg.textKey === 'hero_text' && ' (a line break starts a new line)'}</span>
+        <textarea rows={2} value={heading} maxLength={120} onChange={(e) => setHeading(e.target.value)} />
+      </label>
+      <label className="field">
+        <span>Subtitle</span>
+        <textarea rows={2} value={subtitle} maxLength={300} onChange={(e) => setSubtitle(e.target.value)} />
+      </label>
+
+      <div className="card-photo" style={{ marginBottom: 16 }}>
+        <span className="card-photo-thumb">{banner && <img src={mediaUrl(banner)} alt="" />}</span>
+        <label className={uploading ? 'btn btn-outline btn-sm is-busy' : 'btn btn-outline btn-sm'}>
+          {uploading ? 'Uploading…' : banner ? `Replace ${cfg.bannerLabel.toLowerCase()}` : `Upload ${cfg.bannerLabel.toLowerCase()}`}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            hidden
+            disabled={uploading}
+            onChange={(e) => {
+              if (e.target.files[0]) uploadBanner(e.target.files[0]);
+              e.target.value = '';
+            }}
+          />
+        </label>
+        {banner && (
+          <button type="button" className="link-btn" onClick={() => setBanner(null)}>
+            Remove
+          </button>
+        )}
+      </div>
+
+      {cfg.captionKey && (
+        <>
+          <label className="field">
+            <span>Caption heading (shown over the photo)</span>
+            <input type="text" value={captionHeading} maxLength={80} onChange={(e) => setCaptionHeading(e.target.value)} />
+          </label>
+          <label className="field">
+            <span>Caption subtitle</span>
+            <textarea rows={2} value={captionSubtitle} maxLength={200} onChange={(e) => setCaptionSubtitle(e.target.value)} />
+          </label>
+        </>
+      )}
+
+      <div className="launch-save">
+        <button type="button" className="btn" disabled={!dirty || saving} onClick={save}>
+          {saving ? 'Saving…' : 'Save changes'}
+        </button>
+        {dirty && (
+          <button type="button" className="btn btn-outline" disabled={saving} onClick={discard}>
+            Discard
+          </button>
+        )}
+      </div>
+    </section>
+  );
+}
+
 export default function AdminHome({ section = 'new_launches' }) {
   const cfg = SECTIONS[section];
   const MAX = cfg.max;
@@ -182,6 +404,9 @@ export default function AdminHome({ section = 'new_launches' }) {
   // Tattoo care only: id -> card photo used instead of the product's own
   const [savedImages, setSavedImages] = useState({});
   const [images, setImages] = useState({});
+  // Bridge the gap only: id -> the product name's text colour
+  const [savedColors, setSavedColors] = useState({});
+  const [colors, setColors] = useState({});
   const [uploadingId, setUploadingId] = useState(null);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -202,6 +427,7 @@ export default function AdminHome({ section = 'new_launches' }) {
         const loadedStyles = Object.fromEntries(home[cfg.key].map((p) => [p.id, p.home_style || 'scene']));
         const loadedLabels = Object.fromEntries(home[cfg.key].map((p) => [p.id, p.home_label || '']));
         const loadedImages = Object.fromEntries(home[cfg.key].map((p) => [p.id, p.home_image || '']));
+        const loadedColors = Object.fromEntries(home[cfg.key].map((p) => [p.id, p.home_color || '']));
         setSaved(ids);
         setPicked(ids);
         setSavedStyles(loadedStyles);
@@ -210,6 +436,8 @@ export default function AdminHome({ section = 'new_launches' }) {
         setLabels(loadedLabels);
         setSavedImages(loadedImages);
         setImages(loadedImages);
+        setSavedColors(loadedColors);
+        setColors(loadedColors);
         setProducts(list.products);
       })
       .catch((err) => {
@@ -227,11 +455,13 @@ export default function AdminHome({ section = 'new_launches' }) {
   const pickedProducts = picked.map((id) => byId.get(id)).filter(Boolean);
   const styleOf = (id) => (styles[id] === 'photo' ? 'photo' : 'scene');
   const labelOf = (id) => (labels[id] || '').trim();
+  const colorOf = (id) => (HEX_COLOR.test(colors[id] || '') ? colors[id] : '');
   const dirty =
     picked.join(',') !== saved.join(',') ||
     picked.some((id) => styleOf(id) !== (savedStyles[id] === 'photo' ? 'photo' : 'scene')) ||
     picked.some((id) => labelOf(id) !== (savedLabels[id] || '').trim()) ||
-    picked.some((id) => (images[id] || '') !== (savedImages[id] || ''));
+    picked.some((id) => (images[id] || '') !== (savedImages[id] || '')) ||
+    picked.some((id) => colorOf(id) !== (savedColors[id] || ''));
   const full = picked.length >= MAX;
 
   const available = useMemo(() => {
@@ -279,6 +509,7 @@ export default function AdminHome({ section = 'new_launches' }) {
         if (styleOf(id) === 'photo') pick.style = 'photo';
         if (labelOf(id)) pick.label = labelOf(id);
         if (images[id]) pick.image = images[id];
+        if (colorOf(id)) pick.color = colorOf(id);
         return Object.keys(pick).length > 1 ? pick : id;
       });
       const res = await api.saveHome({ [cfg.key]: picks, expected: { [cfg.key]: saved } });
@@ -286,6 +517,7 @@ export default function AdminHome({ section = 'new_launches' }) {
       const savedNow = Object.fromEntries(res[cfg.key].map((p) => [p.id, p.home_style || 'scene']));
       const savedLabelsNow = Object.fromEntries(res[cfg.key].map((p) => [p.id, p.home_label || '']));
       const savedImagesNow = Object.fromEntries(res[cfg.key].map((p) => [p.id, p.home_image || '']));
+      const savedColorsNow = Object.fromEntries(res[cfg.key].map((p) => [p.id, p.home_color || '']));
       setSaved(ids);
       setPicked(ids);
       setSavedStyles(savedNow);
@@ -294,6 +526,8 @@ export default function AdminHome({ section = 'new_launches' }) {
       setLabels(savedLabelsNow);
       setSavedImages(savedImagesNow);
       setImages(savedImagesNow);
+      setSavedColors(savedColorsNow);
+      setColors(savedColorsNow);
       setFlash(cfg.saved);
     } catch (err) {
       setError(err.message);
@@ -331,6 +565,8 @@ export default function AdminHome({ section = 'new_launches' }) {
           </div>
         </div>
       )}
+
+      {cfg.textKey && <SectionTextPanel cfg={cfg} />}
 
       {loadFailed ? null : (
         <div className="home-grid">
@@ -424,6 +660,17 @@ export default function AdminHome({ section = 'new_launches' }) {
                           onChange={(e) => setLabels((m) => ({ ...m, [p.id]: e.target.value }))}
                         />
                       )}
+                      {section === 'bridge' && (
+                        <label className="color-pick">
+                          Name colour
+                          <input
+                            type="color"
+                            value={HEX_COLOR.test(colors[p.id] || '') ? colors[p.id] : '#2D2E2F'}
+                            aria-label={`Name colour for ${p.name}`}
+                            onChange={(e) => setColors((m) => ({ ...m, [p.id]: e.target.value }))}
+                          />
+                        </label>
+                      )}
                     </div>
                     <div className="launch-actions">
                       <button type="button" className="icon-btn" aria-label={`Move ${p.name} up`} disabled={i === 0} onClick={() => move(i, -1)}>
@@ -461,6 +708,7 @@ export default function AdminHome({ section = 'new_launches' }) {
                     setStyles(savedStyles);
                     setLabels(savedLabels);
                     setImages(savedImages);
+                    setColors(savedColors);
                   }}
                 >
                   Discard
@@ -477,6 +725,8 @@ export default function AdminHome({ section = 'new_launches' }) {
                       ? 'launch-preview best-preview'
                       : section === 'featured' || section === 'tattoo'
                       ? 'launch-preview featured-preview'
+                      : section === 'bridge'
+                      ? 'launch-preview bridge-preview'
                       : 'launch-preview'
                   }
                 >
@@ -487,6 +737,8 @@ export default function AdminHome({ section = 'new_launches' }) {
                       <FeaturedPreview key={p.id} product={p} label={labelOf(p.id)} />
                     ) : section === 'tattoo' ? (
                       <TattooPreview key={p.id} product={p} label={labelOf(p.id)} image={images[p.id]} />
+                    ) : section === 'bridge' ? (
+                      <BridgePreview key={p.id} product={p} color={colorOf(p.id)} />
                     ) : (
                       <PreviewCard key={p.id} product={p} />
                     )

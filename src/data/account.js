@@ -7,13 +7,19 @@
 //
 // Orders and return requests live on the server (they are what the admin
 // panel works with) and are loaded with loadAccountOrders(). Profile,
-// addresses, payment method and reviews are saved in localStorage.
+// addresses, payment method and reviews don't have a server home yet, so
+// they're saved in localStorage — one slot per signed-in account (see
+// setAccountUser), so logging in as a different user on the same browser
+// never shows the previous account's name, address, etc.
 // ------------------------------------------------------------------
 import { useSyncExternalStore } from "react";
 import { api } from "../api/client";
 import { getProductById } from "./products";
 
-const STORAGE_KEY = "chantallow_account_v2"; // v2: new demo totals
+const STORAGE_PREFIX = "chantallow_account_v2"; // v2: new demo totals
+// Before setAccountUser(user) has run (e.g. this module is first imported),
+// there's nowhere real to save to yet — this neutral slot holds that briefly.
+const GUEST_KEY = `${STORAGE_PREFIX}:guest`;
 
 /* ------------------------------ statuses ------------------------------ */
 export const ORDER_STATUS = {
@@ -100,21 +106,24 @@ function buildHistory(events = []) {
 }
 
 /* ------------------------------ defaults ------------------------------ */
-// Placeholder profile email; replaced with the signed-in user's on first visit.
-export const DEMO_EMAIL = "info@example.com";
-
 const DEMO_ADDRESS = {
-  firstName: "Username",
+  firstName: "",
   lastName: "",
   company: "",
   country: "United Kingdom",
-  street1: "451 Wall Street",
+  street1: "",
   street2: "",
-  state: "London",
-  city: "London",
+  state: "",
+  city: "",
   cityOther: "",
-  zip: "EC1A 1BB",
+  zip: "",
 };
+
+// "Vinay Sagar" -> { firstName: "Vinay", lastName: "Sagar" }
+function splitName(name) {
+  const [firstName = "", ...rest] = String(name || "").trim().split(/\s+/);
+  return { firstName, lastName: rest.join(" ") };
+}
 
 const COURIERS = [
   { service: "UPS", agent: "R. Gosling" },
@@ -171,20 +180,24 @@ const fromServerReturn = (r) => ({
   createdAt: r.created_at,
 });
 
-function initialState() {
+// `user` is the signed-in account (from AuthContext), or null before one is
+// known yet. Profile name/email start out as the real account's, not a
+// placeholder — there's nothing to "replace on first visit" any more.
+function initialState(user) {
+  const { firstName, lastName } = splitName(user?.name);
   return {
     profile: {
-      firstName: "Username",
-      lastName: "",
-      email: DEMO_EMAIL,
+      firstName,
+      lastName,
+      email: user?.email || "",
       phone: "",
       gender: "",
       birthday: "",
       avatar: "", // data URL of the uploaded photo
     },
     addresses: {
-      billing: { ...DEMO_ADDRESS },
-      shipping: { ...DEMO_ADDRESS },
+      billing: { ...DEMO_ADDRESS, firstName, lastName },
+      shipping: { ...DEMO_ADDRESS, firstName, lastName },
     },
     orders: [], // loaded from the server
     returns: [], // loaded from the server
@@ -197,21 +210,27 @@ function initialState() {
 }
 
 /* ------------------------------ the store ------------------------------ */
-function load() {
+// Which localStorage slot is "active" right now — switched by setAccountUser()
+// whenever a different account signs in, so each account's profile/addresses/
+// payment method/reviews stay in their own slot on a shared browser.
+let activeKey = GUEST_KEY;
+let activeUserId = null;
+
+function load(key, user) {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key);
     if (raw) {
       // eslint-disable-next-line no-unused-vars
       const { orders, returns, ordersStatus, ordersUserId, ...saved } = JSON.parse(raw);
-      return { ...initialState(), ...saved };
+      return { ...initialState(user), ...saved };
     }
   } catch (e) {
     /* storage blocked or corrupt — fall back to defaults */
   }
-  return initialState();
+  return initialState(user);
 }
 
-let state = typeof window === "undefined" ? initialState() : load();
+let state = typeof window === "undefined" ? initialState() : load(activeKey);
 const listeners = new Set();
 
 function setState(updater) {
@@ -219,10 +238,26 @@ function setState(updater) {
   try {
     // eslint-disable-next-line no-unused-vars
     const { orders, returns, ordersStatus, ordersUserId, ...local } = state;
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(local));
+    localStorage.setItem(activeKey, JSON.stringify(local));
   } catch (e) {
     /* ignore quota / private mode */
   }
+  listeners.forEach((l) => l());
+}
+
+/**
+ * Switches the active storage slot to match whoever is actually signed in.
+ * Call with the AuthContext user on login/app-load, and with null on logout.
+ * Loads that user's own saved profile/address/etc if this browser already has
+ * one, or starts fresh from their name/email otherwise — never the previous
+ * account's leftovers.
+ */
+export function setAccountUser(user) {
+  const nextId = user?.id ?? null;
+  if (nextId === activeUserId) return;
+  activeUserId = nextId;
+  activeKey = user ? `${STORAGE_PREFIX}:user:${user.id}` : GUEST_KEY;
+  state = load(activeKey, user);
   listeners.forEach((l) => l());
 }
 

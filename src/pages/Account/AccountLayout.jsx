@@ -4,7 +4,7 @@ import "./Account.css";
 import accountBanner from "../../assets/background/bg1.jpg";
 import SiteFooter from "../../components/SiteFooter";
 import { useAuth } from "../../context/AuthContext";
-import { DEMO_EMAIL, loadAccountOrders, saveProfile, useAccount } from "../../data/account";
+import { loadAccountOrders, setAccountUser, useAccount } from "../../data/account";
 import Header from "../../components/Header";
 
 /**
@@ -53,12 +53,11 @@ export default function AccountLayout({ crumb, children }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const location = useLocation();
 
-  // First visit: replace the demo name/email with the signed-in user's
+  // Switch to this account's own storage slot — never shows a previous
+  // account's name/address/etc on a shared browser.
   useEffect(() => {
-    if (!user || profile.email !== DEMO_EMAIL) return;
-    const [firstName = "", ...rest] = (user.name || "").trim().split(/\s+/);
-    saveProfile({ firstName: firstName || profile.firstName, lastName: rest.join(" "), email: user.email });
-  }, [user, profile.email, profile.firstName]);
+    setAccountUser(user || null);
+  }, [user]);
 
   // Orders and return requests come from the server. Each account page mounts
   // its own layout, so this refreshes them on every visit (status changes made

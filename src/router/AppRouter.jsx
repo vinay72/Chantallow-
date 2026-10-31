@@ -8,6 +8,8 @@ import BlogCategory from "../pages/BlogCategory/BlogCategory";
 import ContactUs from "../pages/ContactUs/ContactUs";
 import Login from "../pages/Login/Login";
 import SignUpSection from "../pages/SignUp/SignUp";
+import ForgotPassword from "../pages/ForgotPassword/ForgotPassword";
+import ResetPassword from "../pages/ResetPassword/ResetPassword";
 import ProductDetail from "../pages/ShopList/ProductDetail";
 import ComboDetail from "../pages/Combo/ComboDetail";
 import Faq from "../pages/Faq/Faq";
@@ -43,6 +45,10 @@ import AdminOrders from "../admin/AdminOrders";
 import AdminOrderDetail from "../admin/AdminOrderDetail";
 import AdminReturns from "../admin/AdminReturns";
 import AdminHome from "../admin/AdminHome";
+import AdminHomeFurkind from "../admin/AdminHomeFurkind";
+import AdminHomeOffers from "../admin/AdminHomeOffers";
+import AdminHomeShortlist from "../admin/AdminHomeShortlist";
+import AdminAboutUs from "../admin/AdminAboutUs";
 import AdminCombos from "../admin/AdminCombos";
 import AdminComboForm from "../admin/AdminComboForm";
 import AdminComboDetail from "../admin/AdminComboDetail";
@@ -107,6 +113,8 @@ function AppRouter() {
         {/* Auth — one login page for both roles; admins are sent on to /admin */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<SignUpSection />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         {/* Headers across the site link to /registration */}
         <Route path="/registration" element={<Navigate to="/login" replace />} />
         {/* <Route path="/register" element={<Register />} /> */}
@@ -127,11 +135,16 @@ function AppRouter() {
           <Route path="home/best-sellers" element={<AdminHome key="best_sellers" section="best_sellers" />} />
           <Route path="home/featured" element={<AdminHome key="featured" section="featured" />} />
           <Route path="home/tattoo" element={<AdminHome key="tattoo" section="tattoo" />} />
+          <Route path="home/bridge" element={<AdminHome key="bridge" section="bridge" />} />
+          <Route path="home/furkind" element={<AdminHomeFurkind />} />
+          <Route path="home/offers" element={<AdminHomeOffers />} />
+          <Route path="home/shortlist" element={<AdminHomeShortlist />} />
           <Route path="home/combos" element={<AdminCombos />} />
           <Route path="home/combos/new" element={<AdminComboForm mode="create" />} />
           <Route path="home/combos/:id" element={<AdminComboDetail />} />
           <Route path="home/combos/:id/edit" element={<AdminComboForm mode="edit" />} />
           <Route path="home/faqs" element={<Suspense fallback={<div className="empty-state">Loading FAQs…</div>}><AdminFaqs /></Suspense>} />
+          <Route path="about" element={<AdminAboutUs />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="orders/:orderId" element={<AdminOrderDetail />} />
           <Route path="returns" element={<AdminReturns />} />

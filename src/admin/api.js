@@ -37,6 +37,17 @@ export const api = {
     return request('/admin/home/image', { method: 'POST', body: fd });
   },
 
+  getAbout: () => request('/about'),
+  // body: the whole About Us page — { founder, cta, illuminate } (no `items`; see below)
+  saveAbout: (about) => request('/admin/about', { method: 'PUT', body: about }),
+
+  // "Illuminate Beauty" product highlights — each its own row, not part of saveAbout
+  listHighlights: () => request('/admin/about/highlights'),
+  createHighlight: (highlight) => request('/admin/about/highlights', { method: 'POST', body: highlight }),
+  updateHighlight: (id, highlight) => request(`/admin/about/highlights/${id}`, { method: 'PUT', body: highlight }),
+  deleteHighlight: (id) => request(`/admin/about/highlights/${id}`, { method: 'DELETE' }),
+  reorderHighlights: (ids) => request('/admin/about/highlights/reorder', { method: 'PUT', body: { ids } }),
+
   listCombos: () => request('/admin/combos'),
   getCombo: (id) => request(`/admin/combos/${id}`),
   createCombo: (formData) => request('/admin/combos', { method: 'POST', body: formData }),
