@@ -495,6 +495,137 @@ function sanitizeAbout(body) {
   return { errors, value: { founder, cta, illuminate } };
 }
 
+// ---------- terms & conditions page ----------
+
+// The whole Terms & Conditions page — an intro paragraph plus a fixed list of
+// named sections (General, Product Information, ...). Sections are edited by
+// id, not added/removed/reordered, since they're legal copy with a fixed shape.
+const TERMS_SETTING = 'terms_page';
+
+const TERMS_DEFAULT = {
+  intro:
+    'Welcome to Chantallow. By accessing or purchasing from our website, you agree to the following Terms & Conditions. Please read them carefully before using our services.',
+  sections: [
+    {
+      id: 'general',
+      title: 'General',
+      text:
+        'These Terms & Conditions govern the use of our website and products. By placing an order, you confirm that you are at least 18 years of age or are using the website under parental/guardian supervision. We reserve the right to update or modify these terms at any time without prior notice.',
+    },
+    {
+      id: 'product-information',
+      title: 'Product Information',
+      text:
+        'Our skincare and wellness products are handcrafted using natural ingredients. Variations in texture, color, or fragrance may occur naturally and do not indicate defects. Product descriptions and images are provided for informational purposes only. Actual products may slightly differ due to packaging or ingredient sourcing updates.',
+    },
+    {
+      id: 'usage-disclaimer',
+      title: 'Usage Disclaimer',
+      text:
+        'Our products are intended for external use only unless specifically stated otherwise. Please perform a patch test before use. Discontinue use if irritation occurs and consult a healthcare professional if necessary. Our products are not intended to diagnose, treat, cure, or prevent any medical condition.',
+    },
+    {
+      id: 'orders-payments',
+      title: 'Orders & Payments',
+      text:
+        'All orders are subject to availability and acceptance. Prices are listed in USD and may change without prior notice. Payments must be completed through approved payment methods available on the website.',
+    },
+    {
+      id: 'shipping',
+      title: 'Shipping',
+      text:
+        'Delivery timelines are estimates and may vary depending on location, courier delays, or unforeseen circumstances. Once an order is shipped, tracking details will be shared via email/SMS.',
+    },
+    {
+      id: 'intellectual-property',
+      title: 'Intellectual Property',
+      text:
+        'All content on this website, including logos, product names, images, text, and designs, is the property of Chantallow and may not be copied or used without written permission.',
+    },
+    {
+      id: 'limitation-of-liability',
+      title: 'Limitation of Liability',
+      text:
+        'Chantallow shall not be held liable for any indirect, incidental, or consequential damages arising from the use of our products or website.',
+    },
+  ],
+};
+
+async function getTerms() {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [TERMS_SETTING]);
+  const saved = rows[0]?.value;
+  if (!saved || typeof saved !== 'object' || !Array.isArray(saved.sections)) return TERMS_DEFAULT;
+  const savedById = new Map(saved.sections.map((s) => [s.id, s]));
+  return {
+    intro: typeof saved.intro === 'string' ? saved.intro : TERMS_DEFAULT.intro,
+    sections: TERMS_DEFAULT.sections.map((def) => {
+      const s = savedById.get(def.id);
+      return {
+        id: def.id,
+        title: typeof s?.title === 'string' && s.title.trim() ? s.title : def.title,
+        text: typeof s?.text === 'string' && s.text.trim() ? s.text : def.text,
+      };
+    }),
+  };
+}
+
+// Validates the Terms page body and returns the cleaned value, or a list of
+// problems. The section ids/order are fixed (TERMS_DEFAULT's), only title/text
+// are editable.
+function sanitizeTerms(body) {
+  const errors = [];
+  const intro = typeof body?.intro === 'string' ? clip(body.intro, 600) : '';
+  if (!intro.trim()) errors.push('Intro paragraph is required.');
+
+  const byId = new Map((Array.isArray(body?.sections) ? body.sections : []).map((s) => [s?.id, s]));
+  const sections = TERMS_DEFAULT.sections.map((def) => {
+    const s = byId.get(def.id) || {};
+    const title = typeof s.title === 'string' ? clip(s.title, 100) : '';
+    const text = typeof s.text === 'string' ? clip(s.text, 2000) : '';
+    if (!title.trim()) errors.push(`"${def.title}" section title is required.`);
+    if (!text.trim()) errors.push(`"${def.title}" section text is required.`);
+    return { id: def.id, title, text };
+  });
+
+  return { errors, value: { intro, sections } };
+}
+
+// ---------- privacy policy page ----------
+
+// The whole Privacy Policy page — a banner intro plus the policy text itself,
+// shown on the page as one flowing paragraph and edited here as one textarea.
+const PRIVACY_SETTING = 'privacy_page';
+
+const PRIVACY_DEFAULT = {
+  intro:
+    'At Chantallow, your privacy is important to us. This Privacy Policy explains how we collect, use, and protect your information.',
+  body:
+    'We may collect your name, email address, phone number, shipping and billing address, and payment details (processed securely through third-party payment providers), along with website usage data gathered through cookies and analytics tools. Your information may be used to communicate order updates and provide customer support, to improve website functionality and the overall customer experience, and to send promotional offers or newsletters (only if you have subscribed). We implement reasonable security measures to protect your personal information. Payment information is processed securely and is not stored on our servers. Our website may use cookies to enhance user experience, analyze traffic, and improve website performance. You may disable cookies through your browser settings. We may share necessary information with trusted third-party partners such as payment gateways, courier services, and analytics providers solely for order fulfillment and website operations. You may request access, correction, or deletion of your personal data by contacting us at [your email]. We reserve the right to update this Privacy Policy at any time. Changes will be reflected on this page.',
+};
+
+async function getPrivacy() {
+  const { rows } = await pool.query('SELECT value FROM site_settings WHERE key = $1', [PRIVACY_SETTING]);
+  const saved = rows[0]?.value;
+  if (!saved || typeof saved !== 'object') return PRIVACY_DEFAULT;
+  return {
+    intro: typeof saved.intro === 'string' && saved.intro.trim() ? saved.intro : PRIVACY_DEFAULT.intro,
+    body: typeof saved.body === 'string' && saved.body.trim() ? saved.body : PRIVACY_DEFAULT.body,
+  };
+}
+
+// Validates the Privacy Policy page body and returns the cleaned value, or a
+// list of problems.
+function sanitizePrivacy(reqBody) {
+  const errors = [];
+  const intro = typeof reqBody?.intro === 'string' ? clip(reqBody.intro, 600) : '';
+  if (!intro.trim()) errors.push('Intro paragraph is required.');
+
+  const body = typeof reqBody?.body === 'string' ? clip(reqBody.body, 6000) : '';
+  if (!body.trim()) errors.push('Policy text is required.');
+
+  return { errors, value: { intro, body } };
+}
+
 // ---------- combos & FAQs ----------
 
 const COMBO_SIZES = ['2 oz', '4 oz', '8 oz', '16 oz'];
@@ -760,7 +891,43 @@ function cleanAddress(a) {
 }
 
 // One timeline entry, ready to append with `history || $n::jsonb`.
-const historyEntry = (type, by) => JSON.stringify([{ type, at: new Date().toISOString(), by }]);
+const historyEntry = (type, by, details) =>
+  JSON.stringify([{ type, at: new Date().toISOString(), by, ...(details ? { details } : {}) }]);
+
+// Delivery steps the admin records on an order's timeline. They don't change
+// the order's status (that stays in-progress until it's marked delivered).
+const FULFILLMENT_STEPS = ['packaging', 'shipped', 'out-for-delivery'];
+
+// Body of POST /api/admin/orders/:orderId/events. A shipment needs a courier
+// and tracking number; warehouse, estimated delivery date and link are optional.
+function validateOrderEvent(body) {
+  const errors = [];
+  const type = String(body?.type || '');
+  if (!FULFILLMENT_STEPS.includes(type)) {
+    errors.push(`Step must be one of: ${FULFILLMENT_STEPS.join(', ')}.`);
+    return { errors };
+  }
+  if (type !== 'shipped') return { errors, type, details: null };
+
+  const courier = clip(body.courier, 80);
+  const trackingNumber = clip(body.trackingNumber, 80);
+  const warehouse = clip(body.warehouse, 120);
+  const eta = clip(body.eta, 10);
+  const trackingUrl = clip(body.trackingUrl, 500);
+  if (!courier) errors.push('Courier service is required.');
+  if (!trackingNumber) errors.push('Tracking number is required.');
+  if (eta && (!/^\d{4}-\d{2}-\d{2}$/.test(eta) || Number.isNaN(Date.parse(eta)))) {
+    errors.push('Estimated delivery date must be a valid date.');
+  }
+  if (trackingUrl && !/^https?:\/\/[^\s]+$/i.test(trackingUrl)) {
+    errors.push('Tracking link must start with http:// or https://.');
+  }
+  const details = { courier, trackingNumber };
+  if (warehouse) details.warehouse = warehouse;
+  if (eta) details.eta = eta;
+  if (trackingUrl) details.trackingUrl = trackingUrl;
+  return { errors, type, details };
+}
 
 // pg returns NUMERIC columns as strings; the API sends numbers.
 const publicOrder = (row) => ({
@@ -986,6 +1153,24 @@ api.get('/home', async (req, res, next) => {
 api.get('/about', async (req, res, next) => {
   try {
     res.json({ success: true, about: await withLastGood('about', getAbout) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/terms --- (Terms & Conditions page content)
+api.get('/terms', async (req, res, next) => {
+  try {
+    res.json({ success: true, terms: await withLastGood('terms', getTerms) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/privacy --- (Privacy Policy page content)
+api.get('/privacy', async (req, res, next) => {
+  try {
+    res.json({ success: true, privacy: await withLastGood('privacy', getPrivacy) });
   } catch (err) {
     next(err);
   }
@@ -1754,6 +1939,32 @@ api.put('/admin/about', adminOnly, async (req, res, next) => {
   }
 });
 
+// --- PUT /api/admin/terms --- body: { intro, sections: [{ id, title, text }] }
+// (see TERMS_DEFAULT for the fixed section ids/order)
+api.put('/admin/terms', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, value } = sanitizeTerms(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    await saveSetting(TERMS_SETTING, value);
+    res.json({ success: true, terms: await getTerms() });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/privacy --- body: { intro, sections: [{ id, title, text }] }
+// (see PRIVACY_DEFAULT for the fixed section ids/order)
+api.put('/admin/privacy', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, value } = sanitizePrivacy(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+    await saveSetting(PRIVACY_SETTING, value);
+    res.json({ success: true, privacy: await getPrivacy() });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // --- GET /api/admin/about/highlights --- (the "Illuminate Beauty" product highlights)
 api.get('/admin/about/highlights', adminOnly, async (req, res, next) => {
   try {
@@ -2231,6 +2442,33 @@ api.patch('/admin/orders/:orderId', adminOnly, async (req, res, next) => {
   }
 });
 
+// --- POST /api/admin/orders/:orderId/events --- body: { type, courier?, trackingNumber?, warehouse?, eta?, trackingUrl? }
+// Adds a delivery step (packaging / shipped / out-for-delivery) to the order's
+// timeline; a shipment also becomes the order's current `shipment`.
+api.post('/admin/orders/:orderId/events', adminOnly, async (req, res, next) => {
+  try {
+    const { errors, type, details } = validateOrderEvent(req.body);
+    if (errors.length) return res.status(400).json({ success: false, errors });
+
+    const { rows } = await pool.query(
+      `UPDATE orders
+         SET history = history || $2::jsonb,
+             shipment = COALESCE($3::jsonb, shipment),
+             updated_at = now()
+       WHERE id = $1 AND status NOT IN ('delivered', 'canceled')
+       RETURNING *`,
+      [req.params.orderId, historyEntry(type, 'admin', details), details && JSON.stringify(details)]
+    );
+    if (rows.length) return res.json({ success: true, order: publicOrder(rows[0]) });
+
+    const { rows: found } = await pool.query('SELECT status FROM orders WHERE id = $1', [req.params.orderId]);
+    if (!found.length) return res.status(404).json({ success: false, error: 'Order not found' });
+    res.status(409).json({ success: false, error: `This order is already ${found[0].status}, so it can't be updated.` });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // --- GET /api/admin/returns?status= --- (newest first)
 api.get('/admin/returns', adminOnly, async (req, res, next) => {
   try {
@@ -2300,6 +2538,8 @@ app.get('/', (req, res) => {
       'GET    /api/meta',
       'GET    /api/home',
       'GET    /api/about',
+      'GET    /api/terms',
+      'GET    /api/privacy',
       'GET    /api/combos',
       'GET    /api/combos/:id',
       'GET    /api/faqs',
@@ -2315,6 +2555,8 @@ app.get('/', (req, res) => {
       'PUT    /api/admin/home           (admin)',
       'POST   /api/admin/home/image     (admin, multipart)',
       'PUT    /api/admin/about          (admin)',
+      'PUT    /api/admin/terms          (admin)',
+      'PUT    /api/admin/privacy        (admin)',
       'GET    /api/admin/about/highlights          (admin)',
       'POST   /api/admin/about/highlights          (admin)',
       'PUT    /api/admin/about/highlights/reorder  (admin)',
@@ -2340,6 +2582,7 @@ app.get('/', (req, res) => {
       'GET    /api/admin/orders?status=&search= (admin)',
       'GET    /api/admin/orders/:orderId (admin)',
       'PATCH  /api/admin/orders/:orderId (admin)',
+      'POST   /api/admin/orders/:orderId/events (admin)',
       'GET    /api/admin/returns?status= (admin)',
       'PATCH  /api/admin/returns/:returnId (admin)',
     ],

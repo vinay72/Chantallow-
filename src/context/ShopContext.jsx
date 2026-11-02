@@ -4,6 +4,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { getProductById, isServerProductId } from "../data/products";
+import { useAuth } from "./AuthContext";
 
 const ShopContext = createContext(null);
 
@@ -56,19 +57,42 @@ export function ShopProvider({ children }) {
 
     useEffect(() => () => clearTimeout(toastTimer.current), []);
 
+    /* ---------------- Login gate ---------------- */
+    // Adding to the cart or wishlist needs an account. Each gated action
+    // returns false (and opens the "Login First" modal) when nobody is signed in,
+    // so callers skip their "added" toast. While a stored token is still being
+    // checked (`loading`), the shopper is treated as signed in.
+    const { user, loading } = useAuth();
+    const signedIn = Boolean(user) || loading;
+    const [loginPrompt, setLoginPrompt] = useState(null); // "cart" | "wishlist" | null
+    const needLogin = useCallback(
+        (reason) => {
+            if (signedIn) return false;
+            setLoginPrompt(reason);
+            return true;
+        },
+        [signedIn]
+    );
+    const closeLoginPrompt = useCallback(() => setLoginPrompt(null), []);
+
     /* ---------------- Cart ---------------- */
     // `product` is only needed for admin-added products (see fromServerProduct).
-    const addToCart = useCallback((productId, qty = 1, size = "2oz", product = null) => {
-        const id = normId(productId);
-        const key = `${id}-${size}`;
-        setCart((prev) => {
-            const existing = prev.find((line) => line.key === key);
-            if (existing) {
-                return prev.map((line) => (line.key === key ? { ...line, qty: line.qty + qty } : line));
-            }
-            return [...prev, { key, productId: id, size, qty, ...(isServerProductId(id) && product ? { product } : {}) }];
-        });
-    }, []);
+    const addToCart = useCallback(
+        (productId, qty = 1, size = "2oz", product = null) => {
+            if (needLogin("cart")) return false;
+            const id = normId(productId);
+            const key = `${id}-${size}`;
+            setCart((prev) => {
+                const existing = prev.find((line) => line.key === key);
+                if (existing) {
+                    return prev.map((line) => (line.key === key ? { ...line, qty: line.qty + qty } : line));
+                }
+                return [...prev, { key, productId: id, size, qty, ...(isServerProductId(id) && product ? { product } : {}) }];
+            });
+            return true;
+        },
+        [needLogin]
+    );
 
     const updateQty = useCallback((key, delta) => {
         setCart((prev) =>
@@ -90,11 +114,13 @@ export function ShopProvider({ children }) {
 
     const addToWishlist = useCallback(
         (productId, product = null) => {
+            if (needLogin("wishlist")) return false;
             const id = normId(productId);
             rememberCopy(id, product);
             setWishlist((prev) => (prev.includes(id) ? prev : [...prev, id]));
+            return true;
         },
-        [rememberCopy]
+        [needLogin, rememberCopy]
     );
 
     const removeFromWishlist = useCallback((productId) => {
@@ -104,11 +130,13 @@ export function ShopProvider({ children }) {
 
     const toggleWishlist = useCallback(
         (productId, product = null) => {
+            if (needLogin("wishlist")) return false;
             const id = normId(productId);
             rememberCopy(id, product);
             setWishlist((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
+            return true;
         },
-        [rememberCopy]
+        [needLogin, rememberCopy]
     );
 
     const isInWishlist = useCallback((productId) => wishlist.includes(normId(productId)), [wishlist]);
@@ -118,8 +146,9 @@ export function ShopProvider({ children }) {
             const id = normId(productId);
             const copy = wishlistCopies[id];
             // a combo is one fixed set, so it has no size to pick
-            addToCart(id, 1, copy?.items ? "Combo" : "2oz", copy || null);
+            if (!addToCart(id, 1, copy?.items ? "Combo" : "2oz", copy || null)) return false;
             removeFromWishlist(id);
+            return true;
         },
         [addToCart, removeFromWishlist, wishlistCopies]
     );
@@ -163,6 +192,7 @@ export function ShopProvider({ children }) {
     return (
         <ShopContext.Provider value={value}>
             {children}
+            {loginPrompt && <LoginFirstModal reason={loginPrompt} onClose={closeLoginPrompt} />}
             {toast && (
                 <div
                     key={toast.id}
@@ -196,6 +226,110 @@ export function ShopProvider({ children }) {
                 </div>
             )}
         </ShopContext.Provider>
+    );
+}
+
+// Shown when a signed-out shopper tries to add to the cart or wishlist.
+// ShopProvider sits outside the router, so these are plain links; the cart
+// lives in localStorage, so a full page load loses nothing.
+function LoginFirstModal({ reason, onClose }) {
+    const loginRef = useRef(null);
+    const here = window.location.pathname + window.location.search;
+    const redirect = `?redirect=${encodeURIComponent(here)}`;
+
+    useEffect(() => {
+        loginRef.current?.focus();
+        const onKey = (e) => e.key === "Escape" && onClose();
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, [onClose]);
+
+    const btn = {
+        display: "block",
+        width: "100%",
+        padding: "13px 18px",
+        borderRadius: 30,
+        fontSize: 14,
+        fontWeight: 700,
+        letterSpacing: "0.04em",
+        textTransform: "uppercase",
+        textDecoration: "none",
+        textAlign: "center",
+        boxSizing: "border-box",
+        cursor: "pointer",
+    };
+
+    return (
+        <div
+            onClick={onClose}
+            style={{
+                position: "fixed",
+                inset: 0,
+                zIndex: 300,
+                background: "rgba(20, 24, 22, 0.55)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                padding: 16,
+            }}
+        >
+            <div
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="login-first-title"
+                onClick={(e) => e.stopPropagation()}
+                style={{
+                    position: "relative",
+                    width: "100%",
+                    maxWidth: 400,
+                    background: "#fff",
+                    borderRadius: 18,
+                    padding: "36px 28px 28px",
+                    textAlign: "center",
+                    fontFamily: "'DM Sans', sans-serif",
+                    color: "#2D2E2F",
+                    boxShadow: "0 24px 60px rgba(0,0,0,0.25)",
+                }}
+            >
+                <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Close"
+                    style={{
+                        position: "absolute",
+                        top: 12,
+                        right: 14,
+                        background: "none",
+                        border: "none",
+                        fontSize: 24,
+                        lineHeight: 1,
+                        color: "#8A8A80",
+                        cursor: "pointer",
+                    }}
+                >
+                    ×
+                </button>
+                <h2 id="login-first-title" style={{ margin: "0 0 10px", fontFamily: "Marcellus, serif", fontWeight: 400, fontSize: 28, color: "#2D2E2F" }}>
+                    Login First
+                </h2>
+                <p style={{ margin: "0 0 24px", fontSize: 15, lineHeight: 1.6, color: "#5A5A52" }}>
+                    Please log in to add products to your {reason === "wishlist" ? "wishlist" : "cart"}.
+                </p>
+                <a ref={loginRef} href={`/login${redirect}`} style={{ ...btn, background: "#1B4D3E", color: "#fff", border: "1px solid #1B4D3E" }}>
+                    Login
+                </a>
+                <a href="/register" style={{ ...btn, marginTop: 10, background: "#fff", color: "#1B4D3E", border: "1px solid #1B4D3E" }}>
+                    Create An Account
+                </a>
+                <button
+                    type="button"
+                    onClick={onClose}
+                    style={{ marginTop: 14, background: "none", border: "none", color: "#8A8A80", fontSize: 14, cursor: "pointer" }}
+                >
+                    Continue browsing
+                </button>
+            </div>
+        </div>
     );
 }
 

@@ -16,27 +16,6 @@ import logo from "../../assets/logo.png";
 // Page banner background — commented out for now, uncomment once the asset is in place.
 // import bannerBg from "../../assets/background/bg2.jpg";
 
-// 4 oz jar photography (white background, 480 x 518) — the same front photos
-// the product detail pages use
-import amberGlowJar from "../../assets/productdetailimages/Amber Tallow/front 4oz.png";
-import amethystReliefJar from "../../assets/productdetailimages/Amethyst Relief/front 4oz.png";
-import jasperReviveJar from "../../assets/productdetailimages/Jasper Revive/front 4oz.png";
-import malachiteFusionJar from "../../assets/productdetailimages/Malachite Fusion/front 4oz.png";
-import olivineReliefJar from "../../assets/productdetailimages/Olivine Relief/front 4oz.png";
-import obsidianInfusionJar from "../../assets/productdetailimages/Obsidian Infusion/front 4oz.png";
-import talumaHairCareJar from "../../assets/productdetailimages/Taluma Hair care/front 4oz.png";
-import bareWhippedTallowJar from "../../assets/productdetailimages/Bare/front 4oz.png";
-import furkindPetJar from "../../assets/productdetailimages/Furkind/front 4oz.png";
-// 2 oz jar photography, shown when the 2 oz size is picked
-import amberGlow2oz from "../../assets/shop/2oz/amber-glow.jpg";
-import amethystRelief2oz from "../../assets/shop/2oz/amethyst-relief.jpg";
-import jasperRevive2oz from "../../assets/shop/2oz/jasper-revive.jpg";
-import malachiteFusion2oz from "../../assets/shop/2oz/malachite-fusion.jpg";
-import olivineRelief2oz from "../../assets/shop/2oz/olivine-relief.jpg";
-import obsidianInfusion2oz from "../../assets/shop/2oz/obsidian-infusion.jpg";
-import talumaHairCare2oz from "../../assets/shop/2oz/taluma-hair-care.jpg";
-import bareWhippedTallow2oz from "../../assets/shop/2oz/bare-whipped-tallow.jpg";
-import furkindPet2oz from "../../assets/shop/2oz/furkind-pet-tallow.jpg";
 // the whole range side by side, shown at the end of the page
 import collectionLineup from "../../assets/shop/collection-lineup.jpg";
 
@@ -45,6 +24,9 @@ import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
 import Header from "../../components/Header";
+import { api } from "../../api/client";
+import { useShop } from "../../context/ShopContext";
+import { formatPrice, fromServerProduct, sizeKey } from "../../data/products";
 
 // Size filter: value is what the cards use ("" = all sizes).
 const SIZES = [
@@ -53,149 +35,13 @@ const SIZES = [
     { value: "", label: "all" },
 ];
 
-// Card size toggle: each product shows its 4 oz photo (`img`) or 2 oz photo (`img2oz`).
-const JAR_SIZES = [
-    { value: "2oz", label: "2 oz" },
-    { value: "4oz", label: "4 oz" },
-];
-
-const PRODUCTS = [
-    {
-        id: 1,
-        name: "Malachite Fusion",
-        tag: "Moringa + Butterfly Pea Infused Tallow",
-        path: "/product/malachite-fusion",
-        rating: 3,
-        reviews: 370,
-        description:
-            "A rich, nourishing tallow crème made with grass-fed, grass-finished beef tallow and infused with botanical herbs to deeply moisturize and support soft, healthy-looking skin naturally.",
-        price: "$66",
-        was: "$89",
-        img: malachiteFusionJar,
-        img2oz: malachiteFusion2oz,
-    },
-    {
-        id: 2,
-        name: "Bare Whipped Tallow",
-        tag: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil",
-        path: "/product/bare-whipped-tallow",
-        rating: 3,
-        reviews: 255,
-        description:
-            "Grass-fed beef tallow is naturally rich in Vitamins A, D, E, and K, as well as essential fatty acids that closely resemble the lipids found in healthy human skin. Vitamin A helps support skin renewal and promotes a smoother, healthier complexion. Vitamin D supports skin barrier function and overall skin resilience.",
-        price: "$00",
-        was: "$00",
-        img: bareWhippedTallowJar,
-        img2oz: bareWhippedTallow2oz,
-    },
-    {
-        id: 3,
-        name: "Taluma Hair Care",
-        tag: "Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil",
-        path: "/product/taluma-hair-care",
-        rating: 3,
-        reviews: 255,
-        description:
-            "Taluma Hair Care is a deeply nourishing blend crafted with grass-fed grass-finished beef tallow, raw Honduran Batana oil, rosemary, argan oil, castor oil, black seed oil, and black cumin seed oil to help restore moisture, strengthen hair, and promote a healthier-looking scalp. Grass-Fed Beef Tallow is naturally rich in Vitamins A, D, E & K, essential fatty acids, and skin-compatible lipids that deeply condition the scalp, help reduce dryness, support healthy follicles, and improve softness and shine.",
-        price: "$00",
-        was: "$00",
-        img: talumaHairCareJar,
-        img2oz: talumaHairCare2oz,
-    },
-    {
-        id: 4,
-        name: "Jasper Revive",
-        tag: "Coffee Infused Tallow",
-        path: "/product/jasper-revive",
-        rating: 3,
-        reviews: 255,
-        description:
-            "A rich and moisturizing tallow crème infused with organic whole bean Colombian coffee to help soften, hydrate, and refresh the skin naturally. This handcrafted blend delivers deep nourishment with a smooth feel and warm coffee essence for everyday skincare.",
-        price: "$00",
-        was: "$00",
-        img: jasperReviveJar,
-        img2oz: jasperRevive2oz,
-    },
-    {
-        id: 5,
-        name: "Amber Glow",
-        tag: "1122+ MGO Manuka + Lavender Infused Tallow",
-        path: "/product/amber-glow",
-        rating: 5,
-        reviews: 455,
-        description:
-            "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English.",
-        price: "$80",
-        was: "$89",
-        img: amberGlowJar,
-        img2oz: amberGlow2oz,
-    },
-    {
-        id: 6,
-        name: "Amethyst Relief",
-        tag: "Lavender Infused & Whipped Tallow",
-        path: "/product/amethyst-relief",
-        rating: 5,
-        reviews: 370,
-        description:
-            "Our Lavender Infused Tallow is a rich, handcrafted moisturizer designed to soften and refresh your skin naturally. By combining the deep nourishment of grass-fed tallow with the soothing essence of organic lavender, this crème provides a smooth feel and a peaceful aroma for your everyday skincare routine.",
-        price: "$00",
-        was: "$00",
-        img: amethystReliefJar,
-        img2oz: amethystRelief2oz,
-    },
-    {
-        id: 7,
-        name: "Obsidian Infusion",
-        tag: "Cacao Infused Tallow",
-        path: "/product/obsidian-infusion",
-        rating: 5,
-        reviews: 370,
-        description:
-            "A rich and moisturizing tallow crème infused with organic cacao and hazelnut coffee to help soften, hydrate, and refresh the skin naturally. This handcrafted blend delivers deep nourishment with a smooth feel and a warm, comforting scent for everyday skincare.",
-        price: "$00",
-        was: "$00",
-        img: obsidianInfusionJar,
-        img2oz: obsidianInfusion2oz,
-    },
-    {
-        id: 8,
-        name: "Olivine Relief",
-        tag: "Zechstein Magnesium + Arnica",
-        path: "/product/olivine-relief",
-        rating: 5,
-        reviews: 370,
-        description:
-            "A powerful and restorative tallow balm designed to soothe sore muscles, calm the skin, and provide natural anti-inflammatory relief. Handcrafted with magnesium, arnica, and willow bark, this deeply nourishing crème helps reduce swelling and bruising while leaving your skin feeling hydrated and refreshed.",
-        price: "$00",
-        was: "$00",
-        img: olivineReliefJar,
-        img2oz: olivineRelief2oz,
-    },
-    {
-        id: 9,
-        name: "Furkind Pet Tallow",
-        tag: "Grass-Fed/Grass-Finished Beef Tallow, Organic Raw Unrefined Coconut Oil",
-        path: "/furkind-pet-tallow",
-        rating: 5,
-        reviews: 370,
-        description:
-            "Our nutrient-rich Pet Balm combines the nourishing power of grass-fed, grass-finished beef tallow with organic raw unrefined coconut oil to help soothe, protect, and restore dry, rough, or irritated skin and paws. Beef tallow is a natural source of Vitamin A, which supports skin renewal and healthy tissue maintenance; Vitamin D, which helps support skin barrier function; Vitamin E, a powerful antioxidant that helps protect against environmental stressors and supports moisture retention; and Vitamin K, which contributes to overall skin health.",
-        price: "$00",
-        was: "$00",
-        img: furkindPetJar,
-        img2oz: furkindPet2oz,
-    },
-];
-
-// "$66" -> 66 ("$00" placeholders count as 0)
-const priceOf = (p) => Number(String(p.price).replace(/[^0-9.]/g, "")) || 0;
-// Sizes a product is sold in: every jar has a 4 oz photo; a 2 oz photo means it comes in 2 oz too.
-const sizesOf = (p) => (p.img2oz ? ["2oz", "4oz"] : ["4oz"]);
-
-// The price slider spans the products' real prices.
-const PRICE_MIN = Math.floor(Math.min(...PRODUCTS.map(priceOf)));
-const PRICE_MAX = Math.max(PRICE_MIN + 1, Math.ceil(Math.max(...PRODUCTS.map(priceOf))));
+// Price slider bounds for a product list (whole dollars, never a zero-width range).
+const priceBounds = (products) => {
+    if (!products.length) return { min: 0, max: 1 };
+    const prices = products.map((p) => p.price);
+    const min = Math.floor(Math.min(...prices));
+    return { min, max: Math.max(min + 1, Math.ceil(Math.max(...prices))) };
+};
 
 export default function ShopList() {
     return (
@@ -269,10 +115,31 @@ function ShopSection() {
             { replace: true }
         );
 
+    // every product managed in Admin → Products
+    const [products, setProducts] = useState(null);
+    const [loadError, setLoadError] = useState(null);
+    useEffect(() => {
+        let cancelled = false;
+        api("/products")
+            .then((res) => !cancelled && setProducts(res.products.map(fromServerProduct)))
+            .catch((err) => !cancelled && setLoadError(err.message));
+        return () => {
+            cancelled = true;
+        };
+    }, []);
+
+    const { min: PRICE_MIN, max: PRICE_MAX } = useMemo(() => priceBounds(products || []), [products]);
+
     const [sizes, setSizes] = useState([]); // [] = all sizes
-    const [minPrice, setMinPrice] = useState(PRICE_MIN);
-    const [maxPrice, setMaxPrice] = useState(PRICE_MAX);
+    const [minPrice, setMinPrice] = useState(0);
+    const [maxPrice, setMaxPrice] = useState(1);
     const [panelOpen, setPanelOpen] = useState(false); // filter panel on phones / tablets
+
+    // once the products arrive, open the slider to their full price range
+    useEffect(() => {
+        setMinPrice(PRICE_MIN);
+        setMaxPrice(PRICE_MAX);
+    }, [PRICE_MIN, PRICE_MAX]);
 
     // ticking both sizes is the same as "all"
     const toggleSize = (value) => {
@@ -283,22 +150,18 @@ function ShopSection() {
         });
     };
 
-    // one size picked -> every card shows that size's photo
-    const filterSize = sizes.length === 1 ? sizes[0] : null;
     const priceFiltered = minPrice > PRICE_MIN || maxPrice < PRICE_MAX;
 
     const visible = useMemo(() => {
         const q = query.trim().toLowerCase();
-        return PRODUCTS.filter((p) => {
-            const price = priceOf(p);
-            return (
-                (!q || [p.name, p.tag, p.description].some((t) => String(t).toLowerCase().includes(q))) &&
-                (!sizes.length || sizes.some((size) => sizesOf(p).includes(size))) &&
-                price >= minPrice &&
-                price <= maxPrice
-            );
-        });
-    }, [query, sizes, minPrice, maxPrice]);
+        return (products || []).filter(
+            (p) =>
+                (!q || [p.name, p.subtitle, p.description, p.category].some((t) => String(t).toLowerCase().includes(q))) &&
+                (!sizes.length || sizes.includes(sizeKey(p.size))) &&
+                p.price >= minPrice &&
+                p.price <= maxPrice
+        );
+    }, [products, query, sizes, minPrice, maxPrice]);
 
     const resetFilters = () => {
         setQuery("");
@@ -380,6 +243,8 @@ function ShopSection() {
                     <div className="ctw-widget">
                         <h6 className="ctw-widget-title">Price</h6>
                         <PriceRange
+                            lo={PRICE_MIN}
+                            hi={PRICE_MAX}
                             min={minPrice}
                             max={maxPrice}
                             onMinChange={setMinPrice}
@@ -401,7 +266,7 @@ function ShopSection() {
                     <div className="ctw-filter-wrapper">
                         <div className="ctw-filter-left">
                             <span className="ctw-results-count" aria-live="polite">
-                                Showing {visible.length} Of {PRODUCTS.length} Results
+                                {products ? `Showing ${visible.length} Of ${products.length} Results` : "Loading products…"}
                             </span>
                             {chips.length > 0 && (
                                 <ul className="ctw-filter-tags">
@@ -442,7 +307,21 @@ function ShopSection() {
                         </button>
                     </div>
 
-                    {visible.length === 0 ? (
+                    {loadError ? (
+                        <div className="ctw-no-results">
+                            <h4>Couldn't load products</h4>
+                            <p>{loadError}</p>
+                        </div>
+                    ) : !products ? (
+                        <div className="ctw-no-results">
+                            <p>Loading products…</p>
+                        </div>
+                    ) : products.length === 0 ? (
+                        <div className="ctw-no-results">
+                            <h4>No products yet</h4>
+                            <p>Check back soon.</p>
+                        </div>
+                    ) : visible.length === 0 ? (
                         <div className="ctw-no-results">
                             <h4>No products match</h4>
                             <p>Try a different search, size or price range.</p>
@@ -453,7 +332,7 @@ function ShopSection() {
                     ) : (
                         <div className="ctw-product-list">
                             {visible.map((p) => (
-                                <ProductCard key={p.id} {...p} filterSize={filterSize} />
+                                <ProductCard key={p.id} product={p} />
                             ))}
                         </div>
                     )}
@@ -465,10 +344,10 @@ function ShopSection() {
 
 /* ------------------------------ Price Range ------------------------------ */
 
-function PriceRange({ min, max, onMinChange, onMaxChange }) {
-    const range = PRICE_MAX - PRICE_MIN;
-    const leftPct = ((min - PRICE_MIN) / range) * 100;
-    const rightPct = ((max - PRICE_MIN) / range) * 100;
+function PriceRange({ lo, hi, min, max, onMinChange, onMaxChange }) {
+    const range = hi - lo;
+    const leftPct = ((min - lo) / range) * 100;
+    const rightPct = ((max - lo) / range) * 100;
 
     return (
         <div className="ctw-range-wrap">
@@ -480,8 +359,8 @@ function PriceRange({ min, max, onMinChange, onMaxChange }) {
             <input
                 type="range"
                 className="ctw-range-input"
-                min={PRICE_MIN}
-                max={PRICE_MAX}
+                min={lo}
+                max={hi}
                 value={min}
                 aria-label="Minimum price"
                 onChange={(e) => onMinChange(Math.min(Number(e.target.value), max - 1))}
@@ -489,8 +368,8 @@ function PriceRange({ min, max, onMinChange, onMaxChange }) {
             <input
                 type="range"
                 className="ctw-range-input"
-                min={PRICE_MIN}
-                max={PRICE_MAX}
+                min={lo}
+                max={hi}
                 value={max}
                 aria-label="Maximum price"
                 onChange={(e) => onMaxChange(Math.max(Number(e.target.value), min + 1))}
@@ -501,21 +380,26 @@ function PriceRange({ min, max, onMinChange, onMaxChange }) {
 
 /* ------------------------------ Product Card ------------------------------ */
 
-function ProductCard({ name, tag, path, rating, reviews, description, price, was, img, img2oz, filterSize }) {
-    const [saved, setSaved] = useState(false);
-    // which jar is shown: 4 oz by default; the sidebar size filter overrides it
-    const [size, setSize] = useState("4oz");
-    useEffect(() => {
-        if (filterSize) setSize(filterSize);
-    }, [filterSize]);
-    const photo = size === "2oz" && img2oz ? img2oz : img;
-    const sizeLabel = size === "2oz" ? "2 oz" : "4 oz";
+function ProductCard({ product }) {
+    const { addToCart, toggleWishlist, isInWishlist, showToast } = useShop();
+    const { id, name, subtitle, path, description, price, compareAtPrice, cardImage, size, inStock } = product;
+    const liked = isInWishlist(id);
+
+    const handleCart = () => {
+        if (addToCart(id, 1, sizeKey(size), product)) showToast(`${name} added to cart`);
+    };
+
+    const handleWishlist = () => {
+        if (!toggleWishlist(id, product)) return;
+        showToast(liked ? `${name} removed from favourites` : `${name} added to favourites ♥`);
+    };
 
     return (
         <article className="ctw-product-card">
             <div className="ctw-product-media">
-                {/* key: the new photo fades in when the size changes */}
-                <img key={photo} className="ctw-product-photo" src={photo} alt={`Chantallow ${name} tallow skincare jar, ${sizeLabel}`} />
+                <Link to={path}>
+                    <img className="ctw-product-photo" src={cardImage} alt={`Chantallow ${name}${size ? `, ${size}` : ""}`} />
+                </Link>
             </div>
 
             <div>
@@ -524,82 +408,49 @@ function ProductCard({ name, tag, path, rating, reviews, description, price, was
                         <h4 className="ctw-product-title">
                             <Link to={path}>{name}</Link>
                         </h4>
-                        <ul className="ctw-product-tags">
-                            <li>
-                                <a href="#tag">{tag}</a>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div className="ctw-review-num">
-                        <ul className="ctw-rating">
-                            {Array.from({ length: 5 }, (_, i) => (
-                                <li key={i}>
-                                    <StarIcon filled={i < rating} />
+                        {subtitle && (
+                            <ul className="ctw-product-tags">
+                                <li>
+                                    <span>{subtitle}</span>
                                 </li>
-                            ))}
-                        </ul>
-                        <span className="ctw-review-count">
-                            <a href="#reviews">{reviews} Review</a>
-                        </span>
+                            </ul>
+                        )}
                     </div>
                 </div>
 
-                <p className="ctw-product-desc">
-                    <strong>Description:</strong> {description}
-                </p>
+                {description && (
+                    <p className="ctw-product-desc">
+                        <strong>Description:</strong> {description}
+                    </p>
+                )}
 
                 <div className="ctw-product-price">
-                    {price}
-                    <del>{was}</del>
+                    {formatPrice(price)}
+                    {compareAtPrice != null && <del>{formatPrice(compareAtPrice)}</del>}
                 </div>
 
-                {img2oz && (
-                    <div className="ctw-jar-sizes" role="radiogroup" aria-label={`${name} size`}>
-                        {JAR_SIZES.map((s) => (
-                            <button
-                                key={s.value}
-                                type="button"
-                                role="radio"
-                                aria-checked={size === s.value}
-                                className={size === s.value ? "ctw-jar-size is-active" : "ctw-jar-size"}
-                                onClick={() => setSize(s.value)}
-                            >
-                                {s.label}
-                            </button>
-                        ))}
+                {size && (
+                    <div className="ctw-jar-sizes">
+                        <span className="ctw-jar-size is-active">{size}</span>
                     </div>
                 )}
 
                 <div className="ctw-product-actions">
-                    <Link to="/shopcart" className="ctw-cart-btn">
-                        Add To Cart
-                    </Link>
+                    <button type="button" className="ctw-cart-btn" onClick={handleCart} disabled={!inStock}>
+                        {inStock ? "Add To Cart" : "Out Of Stock"}
+                    </button>
                     <button
                         type="button"
-                        className={saved ? "ctw-bookmark-btn is-active" : "ctw-bookmark-btn"}
-                        onClick={() => setSaved((v) => !v)}
-                        aria-pressed={saved}
-                        aria-label={saved ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
+                        className={liked ? "ctw-bookmark-btn is-active" : "ctw-bookmark-btn"}
+                        onClick={handleWishlist}
+                        aria-pressed={liked}
+                        aria-label={liked ? `Remove ${name} from wishlist` : `Add ${name} to wishlist`}
                     >
-                        <Heart size={18} strokeWidth={1.6} fill={saved ? "currentColor" : "none"} />
+                        <Heart size={18} strokeWidth={1.6} fill={liked ? "currentColor" : "none"} />
                     </button>
                 </div>
             </div>
         </article>
-    );
-}
-
-/* --------------------------------- Icons --------------------------------- */
-
-function StarIcon({ filled }) {
-    return (
-        <svg width="15" height="15" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path
-                d="M7.24805 0.734375L9.22301 5.01608L13.9054 5.57126L10.4436 8.77267L11.3625 13.3975L7.24805 11.0944L3.13355 13.3975L4.0525 8.77267L0.590651 5.57126L5.27309 5.01608L7.24805 0.734375Z"
-                fill={filled ? "#1C1C1A" : "#D4D2C6"}
-            />
-        </svg>
     );
 }
 

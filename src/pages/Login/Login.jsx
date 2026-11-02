@@ -64,13 +64,17 @@ function SignInSection() {
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
-    // Page they were bounced from (e.g. /admin/products), if any.
-    const from = location.state?.from;
+    // Page they were bounced from (e.g. /admin/products), or ?redirect=/product/11
+    // from the "Login First" modal. Only same-site paths are accepted.
+    const redirectParam = new URLSearchParams(location.search).get("redirect");
+    const safeRedirect = redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//") ? redirectParam : null;
+    const from = location.state?.from || safeRedirect;
 
     // Admins land in /admin/dashboard, users in /account/orders (or back where they were).
     const destination = (role) => {
-        // Only return them there if their role may see it (e.g. a user never lands on /admin).
-        if (from && roleForPath(from) === role) return from;
+        // Only return them there if their role may see it (e.g. a user never lands on
+        // /admin); public pages like /shop-list are fine for anyone.
+        if (from && (roleForPath(from) === role || roleForPath(from) === null)) return from;
         return homeForRole(role);
     };
 

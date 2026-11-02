@@ -41,6 +41,14 @@ export const api = {
   // body: the whole About Us page — { founder, cta, illuminate } (no `items`; see below)
   saveAbout: (about) => request('/admin/about', { method: 'PUT', body: about }),
 
+  getTerms: () => request('/terms'),
+  // body: { intro, sections: [{ id, title, text }] } — section ids/order are fixed
+  saveTerms: (terms) => request('/admin/terms', { method: 'PUT', body: terms }),
+
+  getPrivacy: () => request('/privacy'),
+  // body: { intro, sections: [{ id, title, text }] } — section ids/order are fixed
+  savePrivacy: (privacy) => request('/admin/privacy', { method: 'PUT', body: privacy }),
+
   // "Illuminate Beauty" product highlights — each its own row, not part of saveAbout
   listHighlights: () => request('/admin/about/highlights'),
   createHighlight: (highlight) => request('/admin/about/highlights', { method: 'POST', body: highlight }),
@@ -85,6 +93,10 @@ export const api = {
 
   setOrderStatus: (orderId, status) =>
     request(`/admin/orders/${encodeURIComponent(orderId)}`, { method: 'PATCH', body: { status } }),
+
+  // event: { type: 'packaging' | 'shipped' | 'out-for-delivery', courier?, trackingNumber?, warehouse?, eta?, trackingUrl? }
+  addOrderEvent: (orderId, event) =>
+    request(`/admin/orders/${encodeURIComponent(orderId)}/events`, { method: 'POST', body: event }),
 
   listReturns: (status) => request('/admin/returns' + (status ? `?status=${encodeURIComponent(status)}` : '')),
 

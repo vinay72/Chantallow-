@@ -77,8 +77,9 @@ export default function AccountOrderDetails() {
   const canCancel = CANCELLABLE.includes(order.status);
 
   const onExport = () => {
-    downloadOrderFile(order, "order-details");
-    showToast && showToast(`Order #${order.id} details downloaded`);
+    downloadOrderFile(order, "order-details")
+      .then(() => showToast && showToast(`Order #${order.id} details downloaded`))
+      .catch(() => showToast && showToast("Couldn't create the file. Please try again."));
   };
 
   const onConfirm = () => {
@@ -123,7 +124,7 @@ export default function AccountOrderDetails() {
           </div>
           <div>
             <span>Courier</span>
-            <h6>{order.courier.service}</h6>
+            <h6>{order.courier ? order.courier.service : "Not shipped yet"}</h6>
           </div>
           <div>
             <span>Start Time</span>
@@ -266,7 +267,27 @@ export default function AccountOrderDetails() {
           {/* Courier */}
           {tab === "courier" && (
             <div className="ua-courier">
-              <p>{order.courier.note}</p>
+              {order.courier ? (
+                <>
+                  {order.courier.details.map(([k, v]) => (
+                    <p key={k}>
+                      <strong>{k} : </strong>
+                      {v}
+                    </p>
+                  ))}
+                  {order.courier.trackingUrl && (
+                    <p>
+                      <a href={order.courier.trackingUrl} target="_blank" rel="noopener noreferrer" className="ua-link">
+                        Track your parcel with {order.courier.service} ›
+                      </a>
+                    </p>
+                  )}
+                </>
+              ) : order.status === "canceled" ? (
+                <p>This order was canceled, so it won't be shipped.</p>
+              ) : (
+                <p>Your order hasn't shipped yet. The courier and tracking number will appear here as soon as it's on its way.</p>
+              )}
             </div>
           )}
 

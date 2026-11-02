@@ -7,23 +7,12 @@ import sealNatural from "../../assets/b.png";
 import sealMadeWithLove from "../../assets/c.png";
 import SiteFooter from "../../components/SiteFooter";
 import { useShop } from "../../context/ShopContext";
-import {
-  PRODUCTS,
-  getProductBySlug,
-  getProductById,
-  formatPrice,
-  DEFAULT_DIRECTIONS,
-  DEFAULT_DIRECTIONS_NOTE,
-  getProductViews,
-  getProductCover,
-} from "../../data/products";
+import { formatPrice, fromServerProduct, sizeKey, DEFAULT_DIRECTIONS, DEFAULT_DIRECTIONS_NOTE } from "../../data/products";
+import { api } from "../../api/client";
 import Header from "../../components/Header";
 
-// Same sizes as the Home page hero cards (value is what's saved in the cart)
-const SIZES = [
-  { value: "2oz", label: "2 .Oz" },
-  { value: "4oz", label: "4 .Oz" },
-];
+// "Bare Whipped Tallow" -> "bare-whipped-tallow", so older /product/<name> links still find the product
+const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
 /* ---- Brand look (matches the original design) ---- */
 const BRAND_GREEN = "#1B4D3E";
@@ -202,40 +191,10 @@ const sb = {
 };
 
 /**
- * Chantallow — Product Detail Page (dynamic)
- * Route: /product/:slug   e.g. /product/malachite-fusion
- * The product is looked up from src/data/products.js by its slug.
+ * Chantallow — Product Detail Page
+ * Route: /product/:slug   e.g. /product/11, or /product/bare-whipped-tallow
+ * The product comes from Admin → Products (GET /api/products).
  */
-
-/* Star rating that supports decimals: 4.7 -> 4 full stars + a 70%-filled 5th star */
-function StarRating({ rating = 4.7, outOf = 5 }) {
-  const uid = React.useId().replace(/:/g, "");
-  const STAR =
-    "M6.74805 0.234375L8.72301 4.51608L13.4054 5.07126L9.9436 8.27267L10.8625 12.8975L6.74805 10.5944L2.63355 12.8975L3.5525 8.27267L0.090651 5.07126L4.77309 4.51608L6.74805 0.234375Z";
-
-  return (
-    <ul className="dz-rating" aria-label={`${rating} out of ${outOf} stars`}>
-      {Array.from({ length: outOf }).map((_, i) => {
-        // how much of this star is filled: 1 = full, 0.7 = 70%, 0 = empty
-        const fill = Math.max(0, Math.min(1, rating - i));
-        const gradId = `star-${uid}-${i}`;
-        return (
-          <li key={i} className={fill > 0 ? "star-fill" : ""}>
-            <svg width="14" height="13" viewBox="0 0 14 13" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <defs>
-                <linearGradient id={gradId}>
-                  <stop offset={`${fill * 100}%`} stopColor="#FF8A00" />
-                  <stop offset={`${fill * 100}%`} stopColor="#D4D6DB" />
-                </linearGradient>
-              </defs>
-              <path d={STAR} fill={`url(#${gradId})`} />
-            </svg>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}
 
 function ScrollTopButton() {
   const [visible, setVisible] = useState(false);
@@ -267,9 +226,24 @@ function ScrollTopButton() {
 export default function ProductDetail() {
   const { slug } = useParams();
   const navigate = useNavigate();
-  // Works with /product/taluma-hair-care and with old-style /shop-list/7
-  const product = getProductBySlug(slug) || getProductById(slug);
   const { addToCart, addToWishlist, isInWishlist } = useShop();
+
+  // The whole catalogue: the product itself (by id, or by name for older
+  // /product/<name> links) plus the related products below it.
+  const [catalogue, setCatalogue] = useState(null);
+  const [loadError, setLoadError] = useState(null);
+  useEffect(() => {
+    let cancelled = false;
+    api("/products")
+      .then((res) => !cancelled && setCatalogue(res.products.map(fromServerProduct)))
+      .catch((err) => !cancelled && setLoadError(err.message));
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+  const product =
+    catalogue &&
+    (catalogue.find((p) => String(p.dbId) === String(slug)) || catalogue.find((p) => slugify(p.name) === slug));
 
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("4oz");
@@ -281,10 +255,14 @@ export default function ProductDetail() {
   // Reset selections and jump to top whenever a different product is opened
   useEffect(() => {
     setActiveImage(0);
-    setSelectedSize("4oz");
     setQuantity(1);
     window.scrollTo({ top: 0, behavior: "instant" });
   }, [slug]);
+
+  // the cart's size is the product's own size from the admin panel
+  useEffect(() => {
+    if (product) setSelectedSize(sizeKey(product.size));
+  }, [product]);
 
   useEffect(() => {
     const prev = document.documentElement.style.scrollBehavior;
@@ -352,15 +330,21 @@ export default function ProductDetail() {
     };
   }, [slug]);
 
-  /* -------- Unknown slug -------- */
+  /* -------- Loading / unknown product -------- */
   if (!product) {
     return (
       <div className="ct-page">
         <Header />
         <main className="ct-container" style={{ padding: "120px 24px", textAlign: "center" }}>
-          <h2>Product not found</h2>
-          <p>We couldn't find that product.</p>
-          <Link to="/shop-list" className="ct-btn ct-btn--primary">Back to shop</Link>
+          {!catalogue && !loadError ? (
+            <p>Loading product…</p>
+          ) : (
+            <>
+              <h2>{loadError ? "Couldn't load this product" : "Product not found"}</h2>
+              <p>{loadError || "We couldn't find that product."}</p>
+              <Link to="/shop-list" className="ct-btn ct-btn--primary">Back to shop</Link>
+            </>
+          )}
         </main>
         <SiteFooter />
       </div>
@@ -368,27 +352,24 @@ export default function ProductDetail() {
   }
 
   const liked = isInWishlist(product.id);
-  const descriptionParas = Array.isArray(product.description) ? product.description : [product.description];
+  const descriptionParas = String(product.description || "").split(/\n\s*\n/).filter(Boolean);
   const directions = product.directions || DEFAULT_DIRECTIONS;
-  const directionsNote = product.directions ? product.directionsNote : DEFAULT_DIRECTIONS_NOTE;
-  // front (cover) -> ingredients -> description -> 360°  (combo photos are no longer used here)
-  // the cover follows the size picker: 2 oz / 4 oz jar photo
-  const views = getProductViews(product, selectedSize);
-  const cover = getProductCover(product, selectedSize);
-  const safeIndex = Math.min(activeImage, views.length - 1);
-  const current = views[safeIndex];
-  const related = PRODUCTS.filter((p) => p.id !== product.id).slice(0, 4);
+  const directionsNote = product.directions ? null : DEFAULT_DIRECTIONS_NOTE;
+  // every photo uploaded for this product in the admin panel, cover first
+  const views = product.gallery.map((src, i) => ({ role: `photo-${i}`, label: `Photo ${i + 1}`, type: "image", src }));
+  const cover = product.cardImage;
+  const safeIndex = Math.min(activeImage, Math.max(0, views.length - 1));
+  const current = views[safeIndex] || { role: "photo-0", label: "Photo", type: "image", src: cover };
+  const related = (catalogue || []).filter((p) => p.id !== product.id).slice(0, 4);
   const lineTotal = product.price * quantity;
-  const lineSavings = Math.max(0, product.oldPrice - product.price) * quantity;
+  const lineSavings = Math.max(0, (product.oldPrice || product.price) - product.price) * quantity;
 
   const handleAddToCart = () => {
-    addToCart(product.id, quantity, selectedSize);
-    navigate("/cart");
+    if (addToCart(product.id, quantity, selectedSize, product)) navigate("/cart");
   };
 
   const handleWishlist = () => {
-    addToWishlist(product.id);
-    navigate("/wishlist");
+    if (addToWishlist(product.id, product)) navigate("/wishlist");
   };
 
   return (
@@ -452,25 +433,23 @@ export default function ProductDetail() {
         <section className="ct-info" aria-label="Product information">
           {product.badge && <span className="ct-badge">{product.badge}</span>}
           <h2 className="ct-info__title">{product.name}</h2>
-          <p className="ct-info__subtitle">{product.subtitle}</p>
+          {product.subtitle && <p className="ct-info__subtitle">{product.subtitle}</p>}
 
-          <div className="ct-review-row">
-            <StarRating rating={product.rating ?? 4.7} />
-            <span className="ct-review-row__rating">{(product.rating ?? 4.7).toFixed(1)} Rating</span>
-            <a href="#reviews" className="ct-review-row__count">(5 customer reviews)</a>
-          </div>
+          {descriptionParas.length > 0 && (
+            <div className="ct-copy-block">
+              <h3>Description:</h3>
+              {descriptionParas.map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          )}
 
-          <div className="ct-copy-block">
-            <h3>Description:</h3>
-            {descriptionParas.map((para, i) => (
-              <p key={i}>{para}</p>
-            ))}
-          </div>
-
-          <div className="ct-copy-block">
-            <h3>Ingredients:</h3>
-            <p>{product.ingredients}</p>
-          </div>
+          {product.ingredients && (
+            <div className="ct-copy-block">
+              <h3>Ingredients:</h3>
+              <p>{product.ingredients}</p>
+            </div>
+          )}
 
           <div className="ct-copy-block">
             <h3>Directions:</h3>
@@ -489,31 +468,23 @@ export default function ProductDetail() {
 
           <hr className="ct-divider" />
 
-          <fieldset className="ct-size">
-            <legend className="ct-label">Select Size</legend>
-            <div className="ct-size__options">
-              {SIZES.map((s) => (
-                <label key={s.value} className={`ct-size__option ${selectedSize === s.value ? "is-selected" : ""}`}>
-                  <input
-                    type="radio"
-                    name="size"
-                    value={s.value}
-                    checked={selectedSize === s.value}
-                    onChange={() => setSelectedSize(s.value)}
-                  />
-                  {s.label}
-                </label>
-              ))}
-            </div>
-          </fieldset>
+          {product.size && (
+            <fieldset className="ct-size">
+              <legend className="ct-label">Size</legend>
+              <div className="ct-size__options">
+                <span className="ct-size__option is-selected">{product.size}</span>
+              </div>
+            </fieldset>
+          )}
 
           <div className="ct-price-row">
             <span className="ct-label">Price</span>
             <div className="ct-price">
               <span className="ct-price__current">{formatPrice(product.price)}</span>
-              <del className="ct-price__old">{formatPrice(product.oldPrice)}</del>
+              {product.oldPrice != null && <del className="ct-price__old">{formatPrice(product.oldPrice)}</del>}
             </div>
           </div>
+          {!product.inStock && <p className="ct-copy-note">Out of stock</p>}
 
           <div className="ct-qty-row">
             <span className="ct-label">Quantity</span>
@@ -525,7 +496,7 @@ export default function ProductDetail() {
           </div>
 
           <div className="ct-cta-row">
-            <button type="button" className="ct-btn ct-btn--primary" onClick={handleAddToCart}>
+            <button type="button" className="ct-btn ct-btn--primary" onClick={handleAddToCart} disabled={!product.inStock}>
               ADD TO CART
             </button>
             <button type="button" className="ct-btn ct-btn--outline" onClick={handleWishlist}>
@@ -536,7 +507,7 @@ export default function ProductDetail() {
           <hr className="ct-divider" />
 
           <div className="ct-meta-row">
-            <strong>SKU:</strong> <span>CT-{String(product.id).padStart(4, "0")}</span>
+            <strong>SKU:</strong> <span>CT-{String(product.dbId).padStart(4, "0")}</span>
           </div>
 
           <div className="ct-meta-row ct-share">
@@ -593,7 +564,7 @@ export default function ProductDetail() {
           <button type="button" style={sb.outlineBtn} onClick={handleWishlist}>
             <HeartIcon small filled={liked} /> {liked ? "In Your Wishlist" : "Add To Wishlist"}
           </button>
-          <button type="button" style={sb.primaryBtn} onClick={handleAddToCart}>
+          <button type="button" style={sb.primaryBtn} onClick={handleAddToCart} disabled={!product.inStock}>
             Add To Cart
           </button>
         </aside>
@@ -766,18 +737,17 @@ function RelatedCard({ product }) {
     <div className="ct-product-card">
       <div
         className="ct-product-card__media"
-        onClick={() => navigate(`/product/${product.slug}`)}
+        onClick={() => navigate(product.path)}
         style={{ cursor: "pointer" }}
       >
-        <img className="ct-jar-photo ct-jar-photo--compact" src={getProductCover(product)} alt={product.name} />
+        <img className="ct-jar-photo ct-jar-photo--compact" src={product.cardImage} alt={product.name} />
         <button
           type="button"
           className="ct-product-card__wish"
           aria-label={`Add ${product.name} to wishlist`}
           onClick={(e) => {
             e.stopPropagation();
-            addToWishlist(product.id);
-            navigate("/wishlist");
+            if (addToWishlist(product.id, product)) navigate("/wishlist");
           }}
         >
           <HeartIcon small filled={liked} />
@@ -785,21 +755,21 @@ function RelatedCard({ product }) {
       </div>
       <div className="ct-product-card__body">
         <h3>
-          <Link to={`/product/${product.slug}`} style={{ color: "inherit", textDecoration: "none" }}>
+          <Link to={product.path} style={{ color: "inherit", textDecoration: "none" }}>
             {product.name}
           </Link>
         </h3>
         <div className="ct-product-card__footer">
           <span className="ct-product-card__price">
-            {formatPrice(product.price)} <del>{formatPrice(product.oldPrice)}</del>
+            {formatPrice(product.price)} {product.oldPrice != null && <del>{formatPrice(product.oldPrice)}</del>}
           </span>
           <button
             type="button"
             className="ct-product-card__cart"
             aria-label={`Add ${product.name} to cart`}
+            disabled={!product.inStock}
             onClick={() => {
-              addToCart(product.id, 1);
-              navigate("/cart");
+              if (addToCart(product.id, 1, sizeKey(product.size), product)) navigate("/cart");
             }}
           >
             <CartIcon small />

@@ -260,21 +260,36 @@ export function fromServerCombo(row) {
 // header drawer and checkout read), so it can be added to the cart.
 export function fromServerProduct(row) {
     const img = mediaUrl(row.main_image || row.images?.find((m) => m.type === "image")?.url || "");
+    const photos = (row.images || []).filter((m) => m.type !== "video").map((m) => mediaUrl(m.url));
+    const gallery = [...new Set([img, ...photos].filter(Boolean))];
+    const price = Number(row.price);
     const compare = row.compare_at_price == null ? null : Number(row.compare_at_price);
+    const was = compare && compare > price ? compare : null;
     return {
         id: `srv-${row.id}`,
+        dbId: row.id,
         name: row.name,
         displayName: row.name,
         subtitle: row.subname || "",
-        price: Number(row.price),
-        compareAtPrice: compare && compare > Number(row.price) ? compare : null,
+        description: row.description || "",
+        ingredients: row.ingredients || "",
+        directions: row.directions || "",
+        category: row.category || "",
+        price,
+        compareAtPrice: was,
+        oldPrice: was,
         size: row.size || "",
         inStock: row.stock_status !== "out_of_stock",
-        cardImage: img,
-        gallery: [img],
+        cardImage: img || gallery[0] || "",
+        gallery,
+        attributes: [row.category && `Category: ${row.category}`].filter(Boolean),
         slug: null,
+        path: `/product/${row.id}`,
     };
 }
+
+// "4 oz" / "2oz" -> the cart's size key
+export const sizeKey = (size) => String(size || "").toLowerCase().replace(/\s+/g, "") || "4oz";
 
 /* =====================================================================
    PRODUCT DETAIL PAGE PHOTOS  (front · ingredients · description · 360°)

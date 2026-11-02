@@ -3,19 +3,167 @@
 // totals, timeline and return requests. The admin moves the order through
 // its statuses here and handles its returns.
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { api } from './api';
 import { ORDER_STATUS, RETURN_STATUS, ReturnActions, StatusPill, formatDate, money } from './orderMeta';
-import { PAYMENT_LABELS, formatAddress, lineProduct } from '../data/account';
+import { PAYMENT_LABELS, formatAddress, lineProduct, shipmentDetails } from '../data/account';
 
 const HISTORY_LABELS = {
   placed: 'Order placed',
   'in-progress': 'Marked in progress',
+  packaging: 'Product packaging',
+  shipped: 'Product shipped',
+  'out-for-delivery': 'Out for delivery',
   delayed: 'Marked delayed',
   delivered: 'Marked delivered',
   canceled: 'Canceled',
 };
+
+const COURIER_SUGGESTIONS = ['UPS', 'FedEx', 'DHL Express', 'USPS', 'Blue Dart', 'Delhivery', 'India Post'];
+const EMPTY_SHIPMENT = { courier: '', trackingNumber: '', warehouse: '', eta: '', trackingUrl: '' };
+
+// Packaging -> shipped -> out for delivery -> delivered. Each step adds an entry
+// to the order's timeline, which the customer sees under My Account → Orders.
+function DeliveryPanel({ order, onOrder, onDelivered, busy }) {
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState(null);
+  const [shipForm, setShipForm] = useState(null); // null = closed
+
+  const done = new Set((order.history || []).map((h) => h.type));
+  const finished = order.status === 'delivered' || order.status === 'canceled';
+  const shipment = order.shipment;
+
+  const record = async (event) => {
+    setSaving(true);
+    setError(null);
+    try {
+      const res = await api.addOrderEvent(order.id, event);
+      onOrder(res.order);
+      setShipForm(null);
+    } catch (err) {
+      setError(err.errors ? err.errors.join(' ') : err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const setField = (k) => (e) => setShipForm((f) => ({ ...f, [k]: e.target.value }));
+  const disabled = saving || busy;
+
+  return (
+    <section className="panel">
+      <div className="panel-head">
+        <div>
+          <h2>Delivery</h2>
+          <p className="muted">Each step appears on the customer's order history straight away.</p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="errors">
+          <ul>
+            <li>{error}</li>
+          </ul>
+        </div>
+      )}
+
+      {shipment && (
+        <dl className="kv" style={{ marginBottom: 16 }}>
+          {shipmentDetails(shipment).map(([k, v]) => (
+            <React.Fragment key={k}>
+              <dt>{k}</dt>
+              <dd>{v}</dd>
+            </React.Fragment>
+          ))}
+          {shipment.trackingUrl && (
+            <>
+              <dt>Tracking link</dt>
+              <dd>
+                <a href={shipment.trackingUrl} target="_blank" rel="noopener noreferrer">
+                  {shipment.trackingUrl}
+                </a>
+              </dd>
+            </>
+          )}
+        </dl>
+      )}
+
+      {finished ? (
+        <p className="muted">This order is {order.status}; no more delivery steps can be added.</p>
+      ) : shipForm ? (
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            record({ type: 'shipped', ...shipForm });
+          }}
+        >
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0 16px' }}>
+            <label className="field">
+              <span>Courier service *</span>
+              <input type="text" list="courier-suggestions" value={shipForm.courier} maxLength={80} onChange={setField('courier')} required autoFocus />
+              <datalist id="courier-suggestions">
+                {COURIER_SUGGESTIONS.map((c) => (
+                  <option key={c} value={c} />
+                ))}
+              </datalist>
+            </label>
+            <label className="field">
+              <span>Tracking number *</span>
+              <input type="text" value={shipForm.trackingNumber} maxLength={80} onChange={setField('trackingNumber')} required />
+            </label>
+            <label className="field">
+              <span>Warehouse / shipped from</span>
+              <input type="text" value={shipForm.warehouse} maxLength={120} onChange={setField('warehouse')} />
+            </label>
+            <label className="field">
+              <span>Estimated delivery date</span>
+              <input type="date" value={shipForm.eta} onChange={setField('eta')} />
+            </label>
+            <label className="field" style={{ gridColumn: '1 / -1' }}>
+              <span>Tracking link (optional)</span>
+              <input type="url" value={shipForm.trackingUrl} maxLength={500} placeholder="https://…" onChange={setField('trackingUrl')} />
+            </label>
+          </div>
+          <div className="row-actions">
+            <button type="submit" className="btn btn-sm" disabled={disabled}>
+              {saving ? 'Saving…' : done.has('shipped') ? 'Update shipment' : 'Mark as shipped'}
+            </button>
+            <button type="button" className="btn btn-outline btn-sm" disabled={disabled} onClick={() => setShipForm(null)}>
+              Cancel
+            </button>
+          </div>
+        </form>
+      ) : (
+        <div className="row-actions">
+          <button type="button" className="btn btn-sm" disabled={disabled || done.has('packaging')} onClick={() => record({ type: 'packaging' })}>
+            {done.has('packaging') ? '✓ Packaging' : 'Mark packaging'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={disabled}
+            onClick={() => setShipForm({ ...EMPTY_SHIPMENT, ...(shipment || {}) })}
+          >
+            {done.has('shipped') ? 'Update shipment' : 'Ship order…'}
+          </button>
+          <button
+            type="button"
+            className="btn btn-sm"
+            disabled={disabled || !done.has('shipped') || done.has('out-for-delivery')}
+            title={done.has('shipped') ? undefined : 'Ship the order first'}
+            onClick={() => record({ type: 'out-for-delivery' })}
+          >
+            {done.has('out-for-delivery') ? '✓ Out for delivery' : 'Out for delivery'}
+          </button>
+          <button type="button" className="btn btn-sm" disabled={disabled} onClick={onDelivered}>
+            Mark delivered
+          </button>
+        </div>
+      )}
+    </section>
+  );
+}
 
 export default function AdminOrderDetail() {
   const { orderId } = useParams();
@@ -166,10 +314,11 @@ export default function AdminOrderDetail() {
             <thead>
               <tr>
                 <th>Product</th>
+                <th>Date &amp; Time</th>
                 <th>Size</th>
                 <th className="num">Qty</th>
                 <th className="num">Price</th>
-                <th className="num">Line total</th>
+                <th className="num">Sub Total</th>
               </tr>
             </thead>
             <tbody>
@@ -183,6 +332,7 @@ export default function AdminOrderDetail() {
                         <span>{l.name || p.name}</span>
                       </div>
                     </td>
+                    <td data-label="Date & Time">{formatDate(order.placed_at, true)}</td>
                     <td data-label="Size">{l.size}</td>
                     <td data-label="Qty" className="num">
                       {l.qty}
@@ -190,7 +340,7 @@ export default function AdminOrderDetail() {
                     <td data-label="Price" className="num">
                       {money(l.price)}
                     </td>
-                    <td data-label="Line total" className="num">
+                    <td data-label="Sub Total" className="num">
                       {money(l.price * l.qty)}
                     </td>
                   </tr>
@@ -200,6 +350,13 @@ export default function AdminOrderDetail() {
           </table>
         </div>
       </section>
+
+      <DeliveryPanel
+        order={order}
+        busy={saving}
+        onOrder={(updated) => setOrder((o) => ({ ...o, ...updated }))}
+        onDelivered={() => changeStatus('delivered')}
+      />
 
       <div className="detail-grid two">
         <section className="panel">
@@ -212,6 +369,12 @@ export default function AdminOrderDetail() {
                   {formatDate(h.at, true)}
                   {h.by && ` · by ${h.by}`}
                 </span>
+                {h.type === 'shipped' &&
+                  shipmentDetails(h.details).map(([k, v]) => (
+                    <span key={k} className="cell-sub">
+                      {k}: {v}
+                    </span>
+                  ))}
               </li>
             ))}
           </ul>

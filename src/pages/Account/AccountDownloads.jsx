@@ -25,8 +25,9 @@ export default function AccountDownloads() {
   const rows = list.slice((safePage - 1) * PER_PAGE, safePage * PER_PAGE);
 
   const onDownload = (o) => {
-    downloadOrderFile(o, "invoice");
-    showToast && showToast(`Invoice for #${o.id} downloaded`);
+    downloadOrderFile(o, "invoice")
+      .then(() => showToast && showToast(`Invoice for #${o.id} downloaded`))
+      .catch(() => showToast && showToast("Couldn't create the invoice. Please try again."));
   };
 
   return (

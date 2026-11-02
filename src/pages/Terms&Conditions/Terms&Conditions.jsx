@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ArrowRight, ChevronDown } from "lucide-react";
 import "./Terms&Conditions.css";
 
@@ -10,71 +10,11 @@ import recentPost2 from "../../assets/shop/product/small/2.png";
 import recentPost3 from "../../assets/shop/product/small/3.png";
 import footerImg from "../../assets/footer/footer.png";
 import Header from "../../components/Header";
+import { api } from "../../api/client";
 
 const BREADCRUMB = [
   { label: "Home", href: "index.html" },
   { label: "FAQ" },
-];
-
-const TERMS = [
-  {
-    id: "general",
-    title: "General",
-    paragraphs: [
-      "These Terms & Conditions govern the use of our website and products.",
-      "By placing an order, you confirm that you are at least 18 years of age or are using the website under parental/guardian supervision.",
-      "We reserve the right to update or modify these terms at any time without prior notice.",
-    ],
-  },
-  {
-    id: "product-information",
-    title: "Product Information",
-    paragraphs: [
-      "Our skincare and wellness products are handcrafted using natural ingredients. Variations in texture, color, or fragrance may occur naturally and do not indicate defects.",
-      "Product descriptions and images are provided for informational purposes only. Actual products may slightly differ due to packaging or ingredient sourcing updates.",
-    ],
-  },
-  {
-    id: "usage-disclaimer",
-    title: "Usage Disclaimer",
-    paragraphs: [
-      "Our products are intended for external use only unless specifically stated otherwise.",
-      "Please perform a patch test before use.",
-      "Discontinue use if irritation occurs and consult a healthcare professional if necessary.",
-      "Our products are not intended to diagnose, treat, cure, or prevent any medical condition.",
-    ],
-  },
-  {
-    id: "orders-payments",
-    title: "Orders & Payments",
-    paragraphs: [
-      "All orders are subject to availability and acceptance.",
-      "Prices are listed in USD and may change without prior notice.",
-      "Payments must be completed through approved payment methods available on the website.",
-    ],
-  },
-  {
-    id: "shipping",
-    title: "Shipping",
-    paragraphs: [
-      "Delivery timelines are estimates and may vary depending on location, courier delays, or unforeseen circumstances.",
-      "Once an order is shipped, tracking details will be shared via email/SMS.",
-    ],
-  },
-  {
-    id: "intellectual-property",
-    title: "Intellectual Property",
-    paragraphs: [
-      "All content on this website, including logos, product names, images, text, and designs, is the property of Chantallow and may not be copied or used without written permission.",
-    ],
-  },
-  {
-    id: "limitation-of-liability",
-    title: "Limitation of Liability",
-    paragraphs: [
-      "Chantallow shall not be held liable for any indirect, incidental, or consequential damages arising from the use of our products or website.",
-    ],
-  },
 ];
 
 const RECENT_POSTS = [
@@ -123,13 +63,13 @@ function Banner() {
    Every section is shown (no collapsing), and each section's sentences
    are joined into one flowing paragraph. */
 
-function TermsSections() {
+function TermsSections({ sections }) {
   return (
     <div className="tc-sections">
-      {TERMS.map((item) => (
+      {sections.map((item) => (
         <section className="tc-section" key={item.id} id={item.id}>
           <h2 className="tc-section-title">{item.title}</h2>
-          <p className="tc-section-text">{item.paragraphs.join(" ")}</p>
+          <p className="tc-section-text">{item.text}</p>
         </section>
       ))}
     </div>
@@ -278,6 +218,18 @@ function Footer() {
 /* ---------- Page ---------- */
 
 export default function TermsConditionsPage() {
+  const [terms, setTerms] = useState(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    api("/terms")
+      .then((res) => !cancelled && setTerms(res.terms))
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <div className="page-wrap">
       <Header />
@@ -286,12 +238,14 @@ export default function TermsConditionsPage() {
       <section className="tc-content">
         <div className="container tc-grid">
           <div className="tc-col-main">
-            <p className="tc-intro">
-              Welcome to Chantallow. By accessing or purchasing from our website, you
-              agree to the following Terms &amp; Conditions. Please read them carefully
-              before using our services.
-            </p>
-            <TermsSections />
+            {terms ? (
+              <>
+                <p className="tc-intro">{terms.intro}</p>
+                <TermsSections sections={terms.sections} />
+              </>
+            ) : (
+              <p className="tc-intro">Loading…</p>
+            )}
           </div>
           <div className="tc-col-side">
             <ContactForm />

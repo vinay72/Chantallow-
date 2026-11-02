@@ -6,7 +6,7 @@
 
 import { useEffect, useState } from 'react';
 import { Link, Navigate, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { ChevronDown, ExternalLink, HelpCircle, House, Info, LayoutDashboard, LogOut, Menu, Newspaper, Package, ShoppingCart, Undo2, Users, X } from 'lucide-react';
+import { ChevronDown, ExternalLink, FileText, HelpCircle, House, Info, LayoutDashboard, LogOut, Menu, Newspaper, Package, ShieldCheck, ShoppingCart, Undo2, Users, X } from 'lucide-react';
 import { homeForRole, useAuth } from '../context/AuthContext';
 import './admin.css';
 
@@ -28,12 +28,14 @@ const NAV = [
       { to: '/admin/home/shortlist', label: 'Soothe Sore Muscles' },
     ],
   },
-  { to: '/admin/home/faqs', label: 'FAQs', Icon: HelpCircle },
   { to: '/admin/about', label: 'About Us', Icon: Info },
   { to: '/admin/products', label: 'Products', Icon: Package },
+  { to: '/admin/blog', label: 'Blog', Icon: Newspaper },
+  { to: '/admin/home/faqs', label: 'FAQs', Icon: HelpCircle },
+  { to: '/admin/terms', label: 'Terms & Conditions', Icon: FileText },
+  { to: '/admin/privacy', label: 'Privacy Policy', Icon: ShieldCheck },
   { to: '/admin/orders', label: 'Orders', Icon: ShoppingCart },
   { to: '/admin/returns', label: 'Returns', Icon: Undo2 },
-  { to: '/admin/blog', label: 'Blog', Icon: Newspaper },
   { to: '/admin/users', label: 'Users', Icon: Users },
 ];
 

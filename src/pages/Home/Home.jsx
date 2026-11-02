@@ -409,7 +409,13 @@ function Hero({ navigate, home }) {
     const { heading: heroHeading, subtitle: heroSubtitle } = home.data?.hero_text || HERO_TEXT_DEFAULT;
 
     // New launch products picked in Admin → Home → New Launches.
-    const launches = home.data ? home.data.new_launches.map(fromServerProduct) : null;
+    // A card photo set for the pick in the admin panel replaces the product's own photo.
+    const launches = home.data
+        ? home.data.new_launches.map((row) => {
+              const p = fromServerProduct(row);
+              return row.home_image ? { ...p, cardImage: mediaUrl(row.home_image) } : p;
+          })
+        : null;
 
     // Nothing until loaded (or the defaults if the server can't be reached).
     const heroProducts =
@@ -573,32 +579,39 @@ function Hero({ navigate, home }) {
                         {heroProducts.map((p) => (
                             <div key={p.id} style={{ display: "flex", alignItems: "center", gap: 16, flexShrink: 0 }}>
                                 <div style={{ position: "relative", width: 110, height: 110, flexShrink: 0 }}>
+                                    {/* Any uploaded photo is fitted whole inside the ring and clipped
+                                        to a white circle, so photos with their own background or odd
+                                        proportions still sit centred like the built-in jars. */}
                                     <div
                                         style={{
                                             position: "absolute",
                                             inset: 0,
                                             borderRadius: "50%",
                                             border: "1px solid #41705B",
+                                            background: "#FFFFFF",
+                                            overflow: "hidden",
+                                            display: "flex",
+                                            alignItems: "center",
+                                            justifyContent: "center",
                                         }}
-                                    />
-                                    <img
-                                        src={p.img}
-                                        alt={p.name}
-                                        style={{
-                                            position: "relative",
-                                            width: "100%",
-                                            height: "100%",
-                                            objectFit: "contain",
-                                            padding: 16,
-                                            display: "block",
-                                        }}
-                                    />
+                                    >
+                                        <img
+                                            src={p.img}
+                                            alt={p.name}
+                                            style={{
+                                                width: "72%",
+                                                height: "72%",
+                                                objectFit: "contain",
+                                                display: "block",
+                                            }}
+                                        />
+                                    </div>
                                     <button
                                         aria-label={p.inStock ? `Add ${p.name}${sizeOf(p) ? ` (${sizeLabel(p, sizeOf(p))})` : ""} to cart` : `${p.name} is sold out`}
                                         disabled={!p.inStock}
                                         onClick={() => {
                                             const size = sizeOf(p);
-                                            addToCart(p.id, 1, size || "One size", p.product);
+                                            if (!addToCart(p.id, 1, size || "One size", p.product)) return;
                                             showToast(`${p.name}${size ? ` (${sizeLabel(p, size)})` : ""} added to cart`);
                                         }}
                                         style={{
@@ -3429,13 +3442,13 @@ function QuickViewModal({ card, onClose }) {
     const displayName = card?.name || product.displayName || product.name;
 
     const handleAdd = () => {
-        addToCart(product.id, qty, size);
-        showToast(`${product.name} (${size.replace("oz", " oz")}) added to cart`);
         onClose();
+        if (!addToCart(product.id, qty, size)) return;
+        showToast(`${product.name} (${size.replace("oz", " oz")}) added to cart`);
     };
 
     const handleWishlist = () => {
-        toggleWishlist(product.id);
+        if (!toggleWishlist(product.id)) return;
         showToast(liked ? `${product.name} removed from favourites` : `${product.name} added to favourites ♥`);
     };
 

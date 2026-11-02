@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import "./CheckOut.css";
 import paymentCards from "../../assets/footer/footer.png";
 import SiteFooter from "../../components/SiteFooter";
 import { useShop } from "../../context/ShopContext";
+import { useAuth } from "../../context/AuthContext";
 import { formatPrice } from "../../data/products";
 import { placeOrder } from "../../data/account";
 import Header from "../../components/Header";
@@ -194,11 +195,14 @@ function AddressFields({ data, set, errors, prefix }) {
 export default function CheckOut() {
   const navigate = useNavigate();
   const { cartItems, subtotal, clearCart, showToast } = useShop();
+  const { user, login: authLogin, register: authRegister } = useAuth();
 
   // collapsible bars
   const [loginOpen, setLoginOpen] = useState(false);
   const [couponOpen, setCouponOpen] = useState(false);
   const [login, setLogin] = useState({ user: "", pass: "" });
+  const [loginError, setLoginError] = useState("");
+  const [loggingIn, setLoggingIn] = useState(false);
   const [coupon, setCoupon] = useState("");
   const [couponMsg, setCouponMsg] = useState("");
 
@@ -223,6 +227,17 @@ export default function CheckOut() {
 
   const shippingCost = shippingMethod === "flat" ? FLAT_RATE : 0;
   const total = subtotal + shippingCost;
+
+  // Signed-in shoppers don't need the login panel or account checkbox —
+  // the order links to their account automatically (the API client already
+  // sends their token). Just prefill the email so it's one less field.
+  useEffect(() => {
+    if (user) {
+      setEmail(user.email);
+      setCreateAccount(false);
+      setLoginOpen(false);
+    }
+  }, [user]);
 
   const setB = (k, v) => setBilling((p) => ({ ...p, [k]: v }));
   const setS = (k, v) => setShipping((p) => ({ ...p, [k]: v }));
@@ -257,7 +272,7 @@ export default function CheckOut() {
     if (shipDifferent) validateAddress(shipping, "ship_", out);
     if (!/^\+?[0-9 ]{7,15}$/.test(phone.trim())) out.phone = "Please enter a valid phone number.";
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) out.email = "Please enter a valid email address.";
-    if (createAccount && password.length < 6) out.password = "Password must be at least 6 characters.";
+    if (!user && createAccount && password.length < 6) out.password = "Password must be at least 6 characters.";
     if (!agree) out.agree = "Please accept the terms and conditions to continue.";
     if (cartItems.length === 0) out.cart = "Your cart is empty.";
 
@@ -271,8 +286,29 @@ export default function CheckOut() {
       return;
     }
 
-    // Save the order on the server (shows in My Account → Orders and the admin panel)
     setPlacing(true);
+    let signedIn = Boolean(user);
+
+    // "Create an account?" — sign them up and in first, so the order below
+    // is placed with their token and lands in their new account's history
+    // (and the admin panel), the way checking out with an account would.
+    if (!user && createAccount) {
+      try {
+        const name = [billing.firstName, billing.lastName].filter(Boolean).join(" ").trim() || email.trim();
+        await authRegister(name, email.trim(), password);
+        signedIn = true;
+      } catch (err) {
+        setErrors({ email: err.message });
+        setPlacing(false);
+        requestAnimationFrame(() => {
+          const el = document.querySelector(".co-page .has-error, .co-page .co-error");
+          if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+        });
+        return;
+      }
+    }
+
+    // Save the order on the server (shows in My Account → Orders and the admin panel)
     let saved;
     try {
       saved = await placeOrder({
@@ -298,7 +334,7 @@ export default function CheckOut() {
       setPlacing(false);
     }
     const orderNo = `#${saved.id}`;
-    setPlacedOrder({ id: saved.id, orderNo, total, email: email.trim(), payment });
+    setPlacedOrder({ id: saved.id, orderNo, total, email: email.trim(), payment, signedIn });
     clearCart();
     showToast && showToast("Order placed — thank you!");
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -306,12 +342,27 @@ export default function CheckOut() {
 
   const applyCoupon = (e) => {
     e.preventDefault();
-    setCouponMsg(coupon.trim() ? `Coupon "${coupon.trim()}" applied.` : "Please enter a coupon code.");
+    setCouponMsg(coupon.trim() ? `"${coupon.trim()}" isn't a valid coupon code.` : "Please enter a coupon code.");
   };
 
-  const handleLogin = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    showToast && showToast(login.user ? `Welcome back, ${login.user}` : "Enter your username or email");
+    if (!login.user.trim() || !login.pass) {
+      setLoginError("Enter your email and password.");
+      return;
+    }
+    setLoggingIn(true);
+    setLoginError("");
+    try {
+      const signedIn = await authLogin(login.user.trim(), login.pass);
+      setLoginOpen(false);
+      setLogin({ user: "", pass: "" });
+      showToast && showToast(`Welcome back, ${signedIn.name}`);
+    } catch (err) {
+      setLoginError(err.message);
+    } finally {
+      setLoggingIn(false);
+    }
   };
 
   return (
@@ -345,10 +396,19 @@ export default function CheckOut() {
                 be shipped once the funds have cleared.
               </p>
             )}
+            {!placedOrder.signedIn && (
+              <p className="co-thanks__note">
+                This order isn't attached to an account, so it won't show up in an order history page — keep your order number
+                handy, or <Link to="/register">create an account</Link> and use this same email to have future orders saved
+                automatically.
+              </p>
+            )}
             <div className="co-thanks__actions">
-              <button type="button" className="co-btn co-btn--primary" onClick={() => navigate(`/account/orders/${placedOrder.id}`)}>
-                View My Order
-              </button>
+              {placedOrder.signedIn && (
+                <button type="button" className="co-btn co-btn--primary" onClick={() => navigate(`/account/orders/${placedOrder.id}`)}>
+                  View My Order
+                </button>
+              )}
               <button type="button" className="co-btn co-btn--outline" onClick={() => navigate("/shop-list")}>
                 Continue Shopping
               </button>
@@ -365,38 +425,50 @@ export default function CheckOut() {
             <div className="co-billing">
               <h2 className="co-title">Billing details</h2>
 
-              {/* Returning customer */}
-              <div className="co-toggle">
-                <button type="button" className="co-toggle__bar" onClick={() => setLoginOpen((v) => !v)} aria-expanded={loginOpen}>
-                  <span>
-                    Returning customer? <em>Click here to login</em>
-                  </span>
-                  <Chevron open={loginOpen} size={20} weight={2.6} />
-                </button>
-                {loginOpen && (
-                  <div className="co-toggle__panel">
-                    <p className="co-hint">
-                      If your order has not yet shipped, you can contact us to change your shipping address
-                    </p>
-                    <div className="co-row">
-                      <Field label="Username or email">
-                        <input className="co-input" value={login.user} onChange={(e) => setLogin((p) => ({ ...p, user: e.target.value }))} />
-                      </Field>
-                      <Field label="Password">
-                        <input
-                          className="co-input"
-                          type="password"
-                          value={login.pass}
-                          onChange={(e) => setLogin((p) => ({ ...p, pass: e.target.value }))}
-                        />
-                      </Field>
+              {/* Returning customer — signs them in so the order links to their account */}
+              {user ? (
+                <p className="co-hint co-hint--ok">
+                  Signed in as <strong>{user.name}</strong> ({user.email}). This order will be saved to your account.
+                </p>
+              ) : (
+                <div className="co-toggle">
+                  <button type="button" className="co-toggle__bar" onClick={() => setLoginOpen((v) => !v)} aria-expanded={loginOpen}>
+                    <span>
+                      Returning customer? <em>Click here to login</em>
+                    </span>
+                    <Chevron open={loginOpen} size={20} weight={2.6} />
+                  </button>
+                  {loginOpen && (
+                    <div className="co-toggle__panel">
+                      <p className="co-hint">Log in to have this order saved to your account's order history.</p>
+                      <div className="co-row">
+                        <Field label="Email">
+                          <input
+                            className="co-input"
+                            type="email"
+                            value={login.user}
+                            onChange={(e) => setLogin((p) => ({ ...p, user: e.target.value }))}
+                            autoComplete="email"
+                          />
+                        </Field>
+                        <Field label="Password">
+                          <input
+                            className="co-input"
+                            type="password"
+                            value={login.pass}
+                            onChange={(e) => setLogin((p) => ({ ...p, pass: e.target.value }))}
+                            autoComplete="current-password"
+                          />
+                        </Field>
+                      </div>
+                      {loginError && <p className="co-error" role="alert">{loginError}</p>}
+                      <button type="button" className="co-btn co-btn--primary co-btn--sm" disabled={loggingIn} onClick={handleLogin}>
+                        {loggingIn ? "Logging in…" : "Login"}
+                      </button>
                     </div>
-                    <button type="button" className="co-btn co-btn--primary co-btn--sm" onClick={handleLogin}>
-                      Login
-                    </button>
-                  </div>
-                )}
-              </div>
+                  )}
+                </div>
+              )}
 
               {/* Coupon */}
               <div className="co-toggle">
@@ -417,7 +489,7 @@ export default function CheckOut() {
                         Apply Coupon
                       </button>
                     </div>
-                    {couponMsg && <p className="co-hint co-hint--ok">{couponMsg}</p>}
+                    {couponMsg && <p className="co-error">{couponMsg}</p>}
                   </div>
                 )}
               </div>
@@ -429,24 +501,35 @@ export default function CheckOut() {
               </Field>
 
               <Field label="Email address" required error={errors.email}>
-                <input className="co-input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
+                <input
+                  className="co-input"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                  readOnly={Boolean(user)}
+                />
               </Field>
 
               <div className="co-checks">
-                <label className="co-check">
-                  <input type="checkbox" checked={createAccount} onChange={(e) => setCreateAccount(e.target.checked)} />
-                  <span>Create an account?</span>
-                </label>
-                {createAccount && (
-                  <Field label="Create account password" required error={errors.password}>
-                    <input
-                      className="co-input"
-                      type="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      autoComplete="new-password"
-                    />
-                  </Field>
+                {!user && (
+                  <>
+                    <label className="co-check">
+                      <input type="checkbox" checked={createAccount} onChange={(e) => setCreateAccount(e.target.checked)} />
+                      <span>Create an account?</span>
+                    </label>
+                    {createAccount && (
+                      <Field label="Create account password" required error={errors.password}>
+                        <input
+                          className="co-input"
+                          type="password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          autoComplete="new-password"
+                        />
+                      </Field>
+                    )}
+                  </>
                 )}
 
                 <label className="co-check">

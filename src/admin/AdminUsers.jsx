@@ -40,7 +40,11 @@ export default function AdminUsers() {
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return q ? users.filter((u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) : users;
+    return q
+      ? users.filter(
+          (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q) || String(u.id) === q
+        )
+      : users;
   }, [users, query]);
 
   const customers = users.filter((u) => u.role === 'user').length;
@@ -73,7 +77,7 @@ export default function AdminUsers() {
           <div className="search-box">
             <input
               type="search"
-              placeholder="Search by name or email"
+              placeholder="Search by name, email, or user ID"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               aria-label="Search users"

@@ -82,16 +82,33 @@ export const lineProduct = (line) => {
 export const orderSubtotal = (order) => order.items.reduce((s, l) => s + l.price * l.qty, 0);
 export const orderTotal = (order) => Math.max(0, orderSubtotal(order) - (order.discount || 0) + (order.shippingCost || 0));
 
-const addHours = (iso, h) => new Date(new Date(iso).getTime() + h * 3600 * 1000).toISOString();
 
 // Server timeline events -> the "Order History" entries the page shows.
 const HISTORY_STEPS = {
   placed: { title: "Order Placed" },
   "in-progress": { title: "Order Processing" },
+  packaging: { title: "Product Packaging" },
+  shipped: { title: "Product Shipped" },
+  "out-for-delivery": { title: "Out For Delivery" },
   delayed: { title: "Shipment Delayed", warning: true },
   delivered: { title: "Product Delivered" },
   canceled: { title: "Order Canceled", danger: true },
 };
+
+// "2026-11-09" -> "09/11/2026" (a calendar day, so no timezone shift)
+export const formatDay = (ymd) => {
+  const [y, m, d] = String(ymd || "").split("-");
+  return y && m && d ? `${d}/${m}/${y}` : "";
+};
+
+// Label/value lines shown under a "Product Shipped" step.
+export const shipmentDetails = (s) =>
+  [
+    ["Courier Service", s?.courier],
+    ["Tracking Number", s?.trackingNumber],
+    ["Warehouse", s?.warehouse],
+    ["Estimated Delivery Date", formatDay(s?.eta)],
+  ].filter(([, v]) => v);
 
 // Newest first, as the timeline is drawn top-down.
 function buildHistory(events = []) {
@@ -100,7 +117,12 @@ function buildHistory(events = []) {
       ...(HISTORY_STEPS[e.type] || { title: e.type }),
       at: e.at,
       done: true,
-      details: e.type === "canceled" ? [["Canceled By", e.by === "admin" ? "Chantallow" : "You"]] : undefined,
+      details:
+        e.type === "canceled"
+          ? [["Canceled By", e.by === "admin" ? "Chantallow" : "You"]]
+          : e.type === "shipped"
+          ? shipmentDetails(e.details)
+          : undefined,
     }))
     .reverse();
 }
@@ -125,25 +147,16 @@ function splitName(name) {
   return { firstName, lastName: rest.join(" ") };
 }
 
-const COURIERS = [
-  { service: "UPS", agent: "R. Gosling" },
-  { service: "DHL Express", agent: "M. Carter" },
-  { service: "FedEx", agent: "S. Patel" },
-  { service: "Blue Dart", agent: "A. Mehra" },
-];
-
-// Courier shown on an order (the shop doesn't track couriers yet, so this is
-// picked from the order number and stays the same for each order).
+// The order's shipment, as entered by Chantallow when it was shipped
+// (null until then).
 function courierFor(order) {
-  const index = [...order.id].reduce((n, ch) => n + ch.charCodeAt(0), 0);
-  const c = COURIERS[index % COURIERS.length];
+  const s = order.shipment;
+  if (!s || !s.courier) return null;
   return {
-    ...c,
-    eta: formatStamp(addHours(order.placed_at, 72)).split(" ")[0],
-    note:
-      `Your parcel is handled by ${c.service}. Our courier partner will contact you on your registered phone number before delivery. ` +
-      `If you are not at home, the parcel will be left with a neighbour ` +
-      `or taken back to the nearest ${c.service} point for collection within 5 working days.`,
+    service: s.courier,
+    trackingNumber: s.trackingNumber || "",
+    trackingUrl: s.trackingUrl || "",
+    details: shipmentDetails(s),
   };
 }
 
@@ -390,38 +403,18 @@ export function resetAccountData() {
 }
 
 /* ------------------------------ files ------------------------------ */
-/** Downloads a plain-text invoice / order summary for one order. */
-export function downloadOrderFile(order, kind = "invoice") {
-  const lines = [
-    "CHANTALLOW",
-    kind === "invoice" ? "INVOICE" : "ORDER DETAILS",
-    "",
-    `Order Number : #${order.id}`,
-    `Date         : ${formatStartTime(order.placedAt)}`,
-    `Status       : ${ORDER_STATUS[order.status].label}`,
-    `Payment      : ${PAYMENT_LABELS[order.payment] || order.payment}`,
-    `Ship To      : ${formatAddress(order.address)}`,
-    "",
-    "ITEMS",
-    ...order.items.map((l) => {
-      const p = lineProduct(l);
-      return `- ${p.name} [${l.size}] x ${l.qty}  ${formatMoney(l.price * l.qty)}`;
-    }),
-    "",
-    `Subtotal  : ${formatMoney(orderSubtotal(order))}`,
-    `Discount  : - ${formatMoney(order.discount)}`,
-    `Shipping  : ${formatMoney(order.shippingCost)}`,
-    `Total     : ${formatMoney(orderTotal(order))}`,
-    "",
-    "Thank you for shopping with Chantallow.",
-  ];
-  const blob = new Blob([lines.join("\n")], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `chantallow-${kind}-${order.id}.txt`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+/** Downloads a PDF invoice / order summary for one order. */
+export async function downloadOrderFile(order, kind = "invoice") {
+  const { buildInvoicePdf } = await import("./invoicePdf");
+  const doc = buildInvoicePdf(order, kind, {
+    formatAddress,
+    formatStartTime,
+    money: formatMoney,
+    statusLabel: (s) => ORDER_STATUS[s]?.label || s,
+    paymentLabel: (p) => PAYMENT_LABELS[p] || p || "-",
+    itemName: (l) => l.name || lineProduct(l).name,
+    subtotal: orderSubtotal(order),
+    total: orderTotal(order),
+  });
+  doc.save(`chantallow-${kind}-${order.id}.pdf`);
 }

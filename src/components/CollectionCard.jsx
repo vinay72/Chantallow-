@@ -30,15 +30,14 @@ export default function CollectionCard({ c, onQuickView }) {
 
     const handleWishlist = (e) => {
         e.stopPropagation(); // don't also open the detail page
-        toggleWishlist(c.id, combo);
+        if (!toggleWishlist(c.id, combo)) return;
         showToast(liked ? `${c.name} removed from favourites` : `${c.name} added to favourites ♥`);
     };
 
     const handleCart = (e) => {
         e.stopPropagation();
-        if (combo) addToCart(c.id, 1, "Combo", combo);
-        else addToCart(c.id, 1);
-        showToast(`${c.name} added to cart`);
+        const added = combo ? addToCart(c.id, 1, "Combo", combo) : addToCart(c.id, 1);
+        if (added) showToast(`${c.name} added to cart`);
     };
 
     const handleQuickView = (e) => {

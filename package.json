@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "jspdf": "^4.2.1",
     "lucide-react": "^1.23.0",
     "mammoth": "^1.13.0",
     "quill-delta": "^5.1.0",

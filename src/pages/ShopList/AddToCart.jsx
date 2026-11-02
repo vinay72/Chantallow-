@@ -86,11 +86,15 @@ export default function AddToCart() {
       setCouponMessage("Enter a coupon code first.");
       return;
     }
-    setCouponMessage(`"${couponCode}" applied.`);
+    setCouponMessage(`"${couponCode.trim()}" isn't a valid coupon code.`);
   };
 
-  const savings = cartItems.length ? subtotal * 0.08 : 0;
-  const total = subtotal - savings;
+  // the total is what checkout charges; savings are only real markdowns (compare-at price above the price)
+  const total = subtotal;
+  const savings = cartItems.reduce((sum, { product, qty }) => {
+    const was = product.compareAtPrice ?? product.oldPrice;
+    return sum + (was > product.price ? (was - product.price) * qty : 0);
+  }, 0);
 
   return (
     <div className="sc-page ac-page">
@@ -147,7 +151,7 @@ export default function AddToCart() {
                               </Link>
                               <ul className="sc-item-attrs">
                                 <li>Size: {line.size}</li>
-                                {product.attributes.map((attr) => (
+                                {(product.attributes || []).map((attr) => (
                                   <li key={attr}>{attr}</li>
                                 ))}
                               </ul>
@@ -289,10 +293,12 @@ export default function AddToCart() {
                 </div>
               </div>
 
-              <p className="sc-save-line">
-                <CheckIcon />
-                <span>You will save {formatPrice(savings)} on this order</span>
-              </p>
+              {savings > 0 && (
+                <p className="sc-save-line">
+                  <CheckIcon />
+                  <span>You will save {formatPrice(savings)} on this order</span>
+                </p>
+              )}
 
               <div className="sc-total-row">
                 <span>Total Amount</span>

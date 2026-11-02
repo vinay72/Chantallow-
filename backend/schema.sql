@@ -78,7 +78,10 @@ ALTER TABLE orders ADD COLUMN IF NOT EXISTS customer_name TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS phone TEXT;
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS address JSONB;            -- delivery address
 ALTER TABLE orders ADD COLUMN IF NOT EXISTS notes TEXT;
-ALTER TABLE orders ADD COLUMN IF NOT EXISTS history JSONB NOT NULL DEFAULT '[]'; -- [{type, at, by}]
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS history JSONB NOT NULL DEFAULT '[]'; -- [{type, at, by, details?}]
+-- Latest shipment, set when the admin marks the order shipped:
+-- {courier, trackingNumber, warehouse, eta: 'YYYY-MM-DD', trackingUrl}
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipment JSONB;
 ALTER TABLE order_returns ADD COLUMN IF NOT EXISTS updated_at TIMESTAMPTZ NOT NULL DEFAULT now();
 
 -- Small site-wide settings the admin edits (e.g. which products the home page

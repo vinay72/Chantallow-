@@ -2,7 +2,6 @@ import React, { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import AboutUs from "../pages/AboutUs/AboutUs";
 import Home from "../pages/Home/Home";
-import ShopCart from "../pages/Home/ShopCart";
 import ShopSection from "../pages/ShopList/ShopList";
 import BlogCategory from "../pages/BlogCategory/BlogCategory";
 import ContactUs from "../pages/ContactUs/ContactUs";
@@ -49,6 +48,8 @@ import AdminHomeFurkind from "../admin/AdminHomeFurkind";
 import AdminHomeOffers from "../admin/AdminHomeOffers";
 import AdminHomeShortlist from "../admin/AdminHomeShortlist";
 import AdminAboutUs from "../admin/AdminAboutUs";
+import AdminTerms from "../admin/AdminTerms";
+import AdminPrivacy from "../admin/AdminPrivacy";
 import AdminCombos from "../admin/AdminCombos";
 import AdminComboForm from "../admin/AdminComboForm";
 import AdminComboDetail from "../admin/AdminComboDetail";
@@ -66,7 +67,7 @@ function AppRouter() {
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/aboutus" element={<AboutUs />} />
-        <Route path="/shopcart" element={<ShopCart />} />
+        <Route path="/shopcart" element={<Navigate to="/cart" replace />} />
         <Route path="/shop-list" element={<ShopSection />} />
 
         {/* Cart & wishlist (same page, two tabs) */}
@@ -145,6 +146,8 @@ function AppRouter() {
           <Route path="home/combos/:id/edit" element={<AdminComboForm mode="edit" />} />
           <Route path="home/faqs" element={<Suspense fallback={<div className="empty-state">Loading FAQs…</div>}><AdminFaqs /></Suspense>} />
           <Route path="about" element={<AdminAboutUs />} />
+          <Route path="terms" element={<AdminTerms />} />
+          <Route path="privacy" element={<AdminPrivacy />} />
           <Route path="orders" element={<AdminOrders />} />
           <Route path="orders/:orderId" element={<AdminOrderDetail />} />
           <Route path="returns" element={<AdminReturns />} />

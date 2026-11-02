@@ -39,12 +39,12 @@ export default function ComboDetail() {
   const liked = combo ? isInWishlist(combo.id) : false;
 
   const addCart = () => {
-    addToCart(combo.id, qty, "Combo", combo);
+    if (!addToCart(combo.id, qty, "Combo", combo)) return;
     showToast(`${combo.name}${qty > 1 ? ` × ${qty}` : ""} added to cart`);
   };
 
   const toggleLike = () => {
-    toggleWishlist(combo.id, combo);
+    if (!toggleWishlist(combo.id, combo)) return;
     showToast(liked ? `${combo.name} removed from favourites` : `${combo.name} added to favourites ♥`);
   };
 
