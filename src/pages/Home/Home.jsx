@@ -798,10 +798,11 @@ function MissionStrip({ home }) {
     const items = picks?.length
         ? picks.map((row) => {
               const p = fromServerProduct(row);
-              const builtIn = CATALOGUE.find((x) => x.name.toLowerCase() === p.name.toLowerCase());
+              // the product's own detail page, e.g. /product/malachite-fusion
+              const nameSlug = p.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
               return {
                   id: p.id,
-                  slug: builtIn ? builtIn.slug : null,
+                  path: `/product/${nameSlug}`,
                   name: p.name,
                   accent: row.home_color || "#2D2E2F",
                   img: row.home_image ? mediaUrl(row.home_image) : p.cardImage,
@@ -855,9 +856,9 @@ function MissionStrip({ home }) {
                                 />
                             </div>
                         ) : (
-                            <a
+                            <Link
                                 key={p.id}
-                                href="#shop"
+                                to={p.path || (p.slug ? `/product/${p.slug}` : "/shop-list")}
                                 style={{ textDecoration: "none", textAlign: "center" }}
                             >
                                 <div
@@ -893,9 +894,9 @@ function MissionStrip({ home }) {
                                         className="ctw-buy-now"
                                         aria-label={`Buy ${p.name} now`}
                                         onClick={(e) => {
-                                            e.preventDefault();   // don't follow the card's #shop link
+                                            e.preventDefault();   // the card itself links to the same page
                                             e.stopPropagation();
-                                            navigate(p.slug ? `/product/${p.slug}` : "/shop-list");
+                                            navigate(p.path || (p.slug ? `/product/${p.slug}` : "/shop-list"));
                                         }}
                                     >
                                         Buy Now
@@ -912,7 +913,7 @@ function MissionStrip({ home }) {
                                 >
                                     {p.name}
                                 </h3>
-                            </a>
+                            </Link>
                         )
                     )}
                 </div>
@@ -1476,13 +1477,11 @@ function MoreCollections({ home }) {
               const p = fromServerProduct(row);
               // Products that also exist in the built-in catalogue keep their detail page.
               const builtIn = CATALOGUE.find((x) => x.name.toLowerCase() === p.name.toLowerCase());
-              // `scene`: an ordinary product photo, so it's drawn on the arched backdrop + stand.
-              // Photos marked "already has the backdrop" in the admin are shown as they are.
+              // photos are shown as they are (no arched backdrop)
               return {
                   id: p.id,
                   name: p.name,
-                  img: p.cardImage,
-                  scene: row.home_style !== "photo",
+                  img: row.home_image ? mediaUrl(row.home_image) : p.cardImage,
                   path: builtIn ? `/product/${builtIn.slug}` : "/shop-list",
               };
           })
@@ -1557,43 +1556,30 @@ function MoreCollections({ home }) {
                                     to={c.path}
                                     style={{ textDecoration: "none", display: "block" }}
                                 >
-                                    {c.scene ? (
-                                        // Admin-picked product: the built-in photos have the arched
-                                        // backdrop and stand baked in; here CSS draws them and the
-                                        // white photo background is blended away (see Home.css).
-                                        <div className="ctw-best-scene">
-                                            <span className="ctw-best-stand" aria-hidden="true" />
-                                            <img className="ctw-best-jar" src={c.img} alt={`Chantallow ${c.name} tallow skincare jar`} />
-                                        </div>
-                                    ) : (
-                                        <div
+                                    <div
+                                        style={{
+                                            aspectRatio: "1 / 1",
+                                            overflow: "hidden",
+                                            marginBottom: 14,
+                                        }}
+                                    >
+                                        <img
+                                            src={c.img}
+                                            alt={`Chantallow ${c.name} tallow skincare jar`}
                                             style={{
-                                                aspectRatio: "1 / 1",
-                                                borderRadius: "150px 150px 0 0",
-                                                overflow: "hidden",
-                                                marginBottom: 14,
-                                                background: c.bg || "#EDF8F3",
+                                                width: "100%",
+                                                height: "100%",
+                                                objectFit: c.fit || "cover",
+                                                objectPosition: c.fit === "contain" ? "center bottom" : "center",
+                                                padding: c.fit === "contain" ? "12% 8% 3%" : 0,
+                                                mixBlendMode: c.fit === "contain" ? "multiply" : "normal",
+                                                display: "block",
+                                                transition: "transform .5s ease",
                                             }}
-                                        >
-                                            <img
-                                                src={c.img}
-                                                alt={`Chantallow ${c.name} tallow skincare jar`}
-                                                style={{
-                                                    width: "100%",
-                                                    height: "100%",
-                                                    objectFit: c.fit || "cover",
-                                                    objectPosition: c.fit === "contain" ? "center bottom" : "center",
-                                                    padding: c.fit === "contain" ? "12% 8% 3%" : 0,
-                                                    // blends the photo's cream background into the backdrop
-                                                    mixBlendMode: c.fit === "contain" ? "multiply" : "normal",
-                                                    display: "block",
-                                                    transition: "transform .5s ease",
-                                                }}
-                                                onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
-                                                onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
-                                            />
-                                        </div>
-                                    )}
+                                            onMouseEnter={(e) => (e.currentTarget.style.transform = "scale(1.05)")}
+                                            onMouseLeave={(e) => (e.currentTarget.style.transform = "scale(1)")}
+                                        />
+                                    </div>
                                     <div
                                         style={{
                                             textAlign: "center",

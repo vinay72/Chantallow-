@@ -37,7 +37,7 @@ function fileFilter(req, file, cb) {
 const upload = multer({
   storage,
   fileFilter,
-  limits: { fileSize: 50 * 1024 * 1024, files: 16 }, // 50MB/file, up to 15 media + 1 cover
+  limits: { fileSize: 50 * 1024 * 1024, files: 17 }, // 50MB/file, up to 15 media + 2 covers (4 oz, 2 oz)
 });
 
 module.exports = { upload, UPLOAD_DIR };

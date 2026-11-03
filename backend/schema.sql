@@ -17,6 +17,7 @@ CREATE TABLE IF NOT EXISTS products (
 ALTER TABLE products ADD COLUMN IF NOT EXISTS ingredients TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS directions TEXT;
 ALTER TABLE products ADD COLUMN IF NOT EXISTS main_image TEXT; -- cover image url
+ALTER TABLE products ADD COLUMN IF NOT EXISTS main_image_2oz TEXT; -- optional 2 oz jar photo
 
 CREATE INDEX IF NOT EXISTS idx_products_category ON products (category);
 CREATE INDEX IF NOT EXISTS idx_products_price ON products (price);
@@ -166,3 +167,26 @@ CREATE TABLE IF NOT EXISTS password_resets (
 );
 
 CREATE INDEX IF NOT EXISTS idx_password_resets_user ON password_resets (user_id);
+
+-- Customer ratings + reviews on product pages, with an optional reply from the admin.
+-- product_key is the product's id ("11") or, for the built-in Furkind page, its slug.
+CREATE TABLE IF NOT EXISTS product_reviews (
+  id SERIAL PRIMARY KEY,
+  product_key TEXT NOT NULL,
+  user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+  author_name TEXT NOT NULL,
+  rating INTEGER NOT NULL CHECK (rating BETWEEN 1 AND 5),
+  title TEXT,
+  body TEXT NOT NULL,
+  admin_reply TEXT,
+  replied_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_product_reviews_product ON product_reviews (product_key);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_product_reviews_one_per_user ON product_reviews (product_key, user_id);
+
+-- Review photos (up to 3 uploaded image urls) and "Helpful" votes (user ids).
+ALTER TABLE product_reviews ADD COLUMN IF NOT EXISTS images JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE product_reviews ADD COLUMN IF NOT EXISTS helpful_by INTEGER[] NOT NULL DEFAULT '{}';

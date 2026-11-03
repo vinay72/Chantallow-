@@ -147,25 +147,12 @@ function Thumb({ product, size = 56 }) {
   );
 }
 
-// How a best seller will look in "Our Best Sellers": arched image + name.
-// 'photo': the photo already has the backdrop, shown as is. 'scene': a plain
-// product photo, drawn on the arched backdrop + stand (same as Home.css).
-function BestSellerPreview({ product, style }) {
-  const url = coverOf(product);
-  if (style === 'photo' || !url) {
-    return (
-      <div className="best-preview-card">
-        <div className="best-preview-img">{url ? <img src={mediaUrl(url)} alt="" /> : <span className="muted">No image</span>}</div>
-        <div className="best-preview-name">{product.name}</div>
-      </div>
-    );
-  }
+// How a best seller will look in "Our Best Sellers": the product photo as it is + name.
+function BestSellerPreview({ product, image }) {
+  const url = image || coverOf(product);
   return (
     <div className="best-preview-card">
-      <div className="best-preview-scene">
-        <span className="best-preview-stand" aria-hidden="true" />
-        <img className="best-preview-jar" src={mediaUrl(url)} alt="" />
-      </div>
+      <div className="best-preview-img">{url ? <img src={mediaUrl(url)} alt="" /> : <span className="muted">No image</span>}</div>
       <div className="best-preview-name">{product.name}</div>
     </div>
   );
@@ -605,26 +592,18 @@ export default function AdminHome({ section = 'new_launches' }) {
                         {p.size && ` · ${p.size}`}
                         {p.stock_status === 'out_of_stock' && <span className="sold-out"> · Out of stock</span>}
                       </div>
-                      {section === 'best_sellers' && (
-                        <label className="style-check">
-                          <input
-                            type="checkbox"
-                            checked={styleOf(p.id) === 'photo'}
-                            onChange={(e) => setStyles((m) => ({ ...m, [p.id]: e.target.checked ? 'photo' : 'scene' }))}
-                          />
-                          Photo already has the arch backdrop
-                        </label>
-                      )}
-                      {section === 'tattoo' && (
+                      {(section === 'tattoo' || section === 'best_sellers') && (
                         <div className="card-photo-row">
-                          <input
-                            className="label-input"
-                            value={labels[p.id] || ''}
-                            maxLength={60}
-                            placeholder="Star badge, e.g. 20% Sale (empty = none)"
-                            aria-label={`Star badge for ${p.name}`}
-                            onChange={(e) => setLabels((m) => ({ ...m, [p.id]: e.target.value }))}
-                          />
+                          {section === 'tattoo' && (
+                            <input
+                              className="label-input"
+                              value={labels[p.id] || ''}
+                              maxLength={60}
+                              placeholder="Star badge, e.g. 20% Sale (empty = none)"
+                              aria-label={`Star badge for ${p.name}`}
+                              onChange={(e) => setLabels((m) => ({ ...m, [p.id]: e.target.value }))}
+                            />
+                          )}
                           <div className="card-photo">
                             <span className="card-photo-thumb">
                               {(images[p.id] || coverOf(p)) && <img src={mediaUrl(images[p.id] || coverOf(p))} alt="" />}
@@ -732,7 +711,7 @@ export default function AdminHome({ section = 'new_launches' }) {
                 >
                   {pickedProducts.map((p) =>
                     section === 'best_sellers' ? (
-                      <BestSellerPreview key={p.id} product={p} style={styleOf(p.id)} />
+                      <BestSellerPreview key={p.id} product={p} image={images[p.id]} />
                     ) : section === 'featured' ? (
                       <FeaturedPreview key={p.id} product={p} label={labelOf(p.id)} />
                     ) : section === 'tattoo' ? (

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 import "./CheckOut.css";
 import paymentCards from "../../assets/footer/footer.png";
 import SiteFooter from "../../components/SiteFooter";
@@ -195,7 +195,7 @@ function AddressFields({ data, set, errors, prefix }) {
 export default function CheckOut() {
   const navigate = useNavigate();
   const { cartItems, subtotal, clearCart, showToast } = useShop();
-  const { user, login: authLogin, register: authRegister } = useAuth();
+  const { user, loading: authLoading, login: authLogin, register: authRegister } = useAuth();
 
   // collapsible bars
   const [loginOpen, setLoginOpen] = useState(false);
@@ -364,6 +364,12 @@ export default function CheckOut() {
       setLoggingIn(false);
     }
   };
+
+  // Like Amazon: browsing and filling the cart is open to everyone, but paying
+  // needs an account — send guests to sign in / register, then straight back here.
+  if (!authLoading && !user && !placedOrder) {
+    return <Navigate to="/login?redirect=/checkout" replace />;
+  }
 
   return (
     <div className="co-page">

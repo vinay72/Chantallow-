@@ -75,16 +75,19 @@ function removeMediaFiles(media) {
 const productUploads = upload.fields([
   { name: 'media', maxCount: 15 },
   { name: 'main_image', maxCount: 1 },
+  { name: 'main_image_2oz', maxCount: 1 },
 ]);
 
 const galleryFiles = (req) => req.files?.media || [];
 const coverFile = (req) => req.files?.main_image?.[0] || null;
+const cover2ozFile = (req) => req.files?.main_image_2oz?.[0] || null;
 const coverUrl = (file) => (file ? '/uploads/products/' + file.filename : null);
 
 // Removes everything this request uploaded (used when the request fails).
 function removeRequestUploads(req) {
   removeMediaFiles(normalizeMedia(galleryFiles(req)));
   if (coverFile(req)) removeMediaFiles([{ url: coverUrl(coverFile(req)) }]);
+  if (cover2ozFile(req)) removeMediaFiles([{ url: coverUrl(cover2ozFile(req)) }]);
 }
 
 // Parses the JSON `images` alternative to file uploads. Returns null if invalid.
@@ -793,8 +796,8 @@ function validateFaqBody(body) {
 // An About Us product highlight — { name, desc } ("Malachite Fusion: Moringa & ...").
 function validateHighlightBody(body) {
   const errors = [];
-  const name = clip(body?.name, 60);
-  const desc = clip(body?.desc, 160);
+  const name = clip(body?.name, 90);
+  const desc = clip(body?.desc, 700);
   if (!name) errors.push('Name is required.');
   if (!desc) errors.push('Description is required.');
   return { errors, values: { name, desc } };
@@ -1474,15 +1477,15 @@ api.post('/products', adminOnly, productUploads, async (req, res, next) => {
 
     const { rows } = await pool.query(
       `INSERT INTO products (name, subname, description, ingredients, directions, price, compare_at_price,
-                             category, size, stock_status, images, main_image)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                             category, size, stock_status, images, main_image, main_image_2oz)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
        RETURNING *`,
       [
         values.name, values.subname || null, values.description || null,
         values.ingredients || null, values.directions || null,
         values.price, values.compare_at_price, values.category || null,
         values.size || null, values.stock_status, JSON.stringify(media),
-        coverUrl(coverFile(req)),
+        coverUrl(coverFile(req)), coverUrl(cover2ozFile(req)),
       ]
     );
     res.status(201).json({ success: true, product: rows[0] });
@@ -1531,6 +1534,10 @@ api.put('/products/:id', adminOnly, productUploads, async (req, res, next) => {
     let cover = previousCover;
     if (coverFile(req)) cover = coverUrl(coverFile(req));
     else if (req.body.remove_main_image === '1') cover = null;
+    const previousCover2oz = existing[0].main_image_2oz;
+    let cover2oz = previousCover2oz;
+    if (cover2ozFile(req)) cover2oz = coverUrl(cover2ozFile(req));
+    else if (req.body.remove_main_image_2oz === '1') cover2oz = null;
     if (!cover) {
       removeRequestUploads(req);
       return res.status(400).json({ success: false, errors: ['Add a cover image.'] });
@@ -1540,14 +1547,14 @@ api.put('/products/:id', adminOnly, productUploads, async (req, res, next) => {
       `UPDATE products
        SET name = $1, subname = $2, description = $3, ingredients = $4, directions = $5,
            price = $6, compare_at_price = $7, category = $8, size = $9, stock_status = $10,
-           images = $11, main_image = $12, updated_at = now()
-       WHERE id = $13
+           images = $11, main_image = $12, main_image_2oz = $13, updated_at = now()
+       WHERE id = $14
        RETURNING *`,
       [
         values.name, values.subname || null, values.description || null,
         values.ingredients || null, values.directions || null,
         values.price, values.compare_at_price, values.category || null,
-        values.size || null, values.stock_status, JSON.stringify(media), cover, req.params.id,
+        values.size || null, values.stock_status, JSON.stringify(media), cover, cover2oz, req.params.id,
       ]
     );
 
@@ -1555,6 +1562,7 @@ api.put('/products/:id', adminOnly, productUploads, async (req, res, next) => {
     const stillUsed = new Set(media.map((m) => m.url));
     removeMediaFiles(previous.filter((m) => !stillUsed.has(m.url)));
     if (previousCover && previousCover !== cover) removeMediaFiles([{ url: previousCover }]);
+    if (previousCover2oz && previousCover2oz !== cover2oz) removeMediaFiles([{ url: previousCover2oz }]);
 
     res.json({ success: true, product: rows[0] });
   } catch (err) {
@@ -1566,7 +1574,7 @@ api.put('/products/:id', adminOnly, productUploads, async (req, res, next) => {
 // --- DELETE /api/products/:id ---
 api.delete('/products/:id', adminOnly, async (req, res, next) => {
   try {
-    const { rows } = await pool.query('DELETE FROM products WHERE id = $1 RETURNING images, main_image', [
+    const { rows } = await pool.query('DELETE FROM products WHERE id = $1 RETURNING images, main_image, main_image_2oz', [
       req.params.id,
     ]);
     if (!rows.length) return res.status(404).json({ success: false, error: 'Product not found' });
@@ -1574,6 +1582,7 @@ api.delete('/products/:id', adminOnly, async (req, res, next) => {
     // Clean the files off disk so uploads don't pile up.
     removeMediaFiles(rows[0].images);
     if (rows[0].main_image) removeMediaFiles([{ url: rows[0].main_image }]);
+    if (rows[0].main_image_2oz) removeMediaFiles([{ url: rows[0].main_image_2oz }]);
     res.json({ success: true, deleted: Number(req.params.id) });
   } catch (err) {
     next(err);
@@ -2130,6 +2139,218 @@ api.delete('/admin/combos/:id', adminOnly, async (req, res, next) => {
     if (!rows.length) return res.status(404).json({ success: false, error: 'Combo not found' });
     if (rows[0].image) removeMediaFiles([{ url: rows[0].image }]);
     res.json({ success: true, deleted: Number(req.params.id) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ----------------------------- product reviews -----------------------------
+
+const reviewKey = (v) => clip(v, 80).toLowerCase();
+const REVIEW_COLUMNS = `id, product_key, user_id, author_name, rating, title, body, images,
+  admin_reply, replied_at, created_at, cardinality(helpful_by) AS helpful_count`;
+const MAX_REVIEW_PHOTOS = 3;
+const reviewPhotos = upload.array('photos', MAX_REVIEW_PHOTOS);
+
+// Ratings & reviews are for shoppers who bought the product (admins never see them on the storefront).
+// Order lines store the product as "srv-<id>" (catalogue products) or 9 (the built-in Furkind page).
+// Combos are "combo-<id>"; order lines from the old built-in catalogue (ids 1-8) are reviewed as "legacy-<id>".
+const orderProductIds = (key) => {
+  if (/^\d+$/.test(key)) return [`srv-${key}`];
+  if (key === 'furkind-pet-tallow') return ['9'];
+  if (/^combo-\d+$/.test(key)) return [key];
+  const legacy = /^legacy-([1-8])$/.exec(key);
+  return legacy ? [legacy[1]] : [];
+};
+async function hasBought(user, key) {
+  if (!user || user.role === 'admin') return false;
+  const ids = orderProductIds(key);
+  if (!ids.length) return false;
+  const { rows } = await pool.query(
+    `SELECT 1 FROM orders o
+     WHERE o.user_id = $1 AND o.status <> 'canceled'
+       AND EXISTS (SELECT 1 FROM jsonb_array_elements(o.items) it WHERE it->>'productId' = ANY($2::text[]))
+     LIMIT 1`,
+    [user.id, ids]
+  );
+  return rows.length > 0;
+}
+
+// a review row as the storefront sees it: who voted is private, "you voted" is a flag
+const publicReview = (row, userId) => {
+  const { helpful_by, ...rest } = row;
+  return { ...rest, helpful_count: Number(row.helpful_count) || 0, helpful_by_me: Boolean(userId && helpful_by?.includes(userId)) };
+};
+
+// --- GET /api/reviews?product=KEY --- (public: a product's reviews, newest first, with the average)
+api.get('/reviews', optionalAuth, async (req, res, next) => {
+  try {
+    const key = reviewKey(req.query.product);
+    if (!key) return res.status(400).json({ success: false, error: '`product` is required.' });
+    if (!(await hasBought(req.user, key))) {
+      return res.json({ success: true, eligible: false, count: 0, average: 0, counts: [0, 0, 0, 0, 0], reviews: [] });
+    }
+    const { rows } = await pool.query(
+      `SELECT ${REVIEW_COLUMNS}, helpful_by FROM product_reviews WHERE product_key = $1 ORDER BY created_at DESC, id DESC`,
+      [key]
+    );
+    const count = rows.length;
+    const average = count ? rows.reduce((sum, r) => sum + r.rating, 0) / count : 0;
+    const counts = [0, 0, 0, 0, 0];
+    rows.forEach((r) => (counts[r.rating - 1] += 1));
+    res.json({
+      success: true,
+      eligible: true,
+      count,
+      average: Math.round(average * 10) / 10,
+      counts,
+      reviews: rows.map((r) => publicReview(r, req.user?.id)),
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/reviews/mine --- (signed in: every review you have written, newest first)
+api.get('/reviews/mine', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT ${REVIEW_COLUMNS}, helpful_by FROM product_reviews WHERE user_id = $1 ORDER BY updated_at DESC, id DESC`,
+      [req.user.id]
+    );
+    res.json({ success: true, reviews: rows.map((r) => publicReview(r, req.user.id)) });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/reviews --- multipart: product, rating, title, text, name, photos[] (up to 3 images),
+// keep_photos (the existing photo urls to keep when editing). Signed in; posting again edits your review.
+api.post('/reviews', requireAuth, reviewPhotos, async (req, res, next) => {
+  const uploaded = (req.files || []).map((f) => '/uploads/products/' + f.filename);
+  const discardUploads = () => removeMediaFiles(uploaded.map((url) => ({ url })));
+  try {
+    const key = reviewKey(req.body?.product);
+    const rating = Number(req.body?.rating);
+    const title = clip(req.body?.title, 120);
+    const text = clip(req.body?.text, 2000);
+    const name = clip(req.body?.name, 80) || clip(req.user.name, 80) || 'Customer';
+    const errors = [];
+    if (!key) errors.push('Product is required.');
+    else if (!(await hasBought(req.user, key))) errors.push('You can review a product after you have bought it.');
+    if (!Number.isInteger(rating) || rating < 1 || rating > 5) errors.push('Choose a rating from 1 to 5 stars.');
+    if (!text) errors.push('Write a few words about the product.');
+    if ((req.files || []).some((f) => !f.mimetype.startsWith('image/'))) errors.push('Only photos can be attached.');
+
+    const { rows: existing } = key
+      ? await pool.query('SELECT images FROM product_reviews WHERE product_key = $1 AND user_id = $2', [key, req.user.id])
+      : { rows: [] };
+    const previous = existing[0]?.images || [];
+    const keepUrls = new Set([].concat(req.body?.keep_photos ?? []).filter(Boolean));
+    const kept = req.body?.keep_photos === undefined ? previous : previous.filter((url) => keepUrls.has(url));
+    const images = [...kept, ...uploaded];
+    if (images.length > MAX_REVIEW_PHOTOS) errors.push(`You can attach up to ${MAX_REVIEW_PHOTOS} photos.`);
+    if (errors.length) {
+      discardUploads();
+      return res.status(400).json({ success: false, errors, error: errors[0] });
+    }
+
+    const { rows } = await pool.query(
+      `INSERT INTO product_reviews (product_key, user_id, author_name, rating, title, body, images)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
+       ON CONFLICT (product_key, user_id)
+       DO UPDATE SET rating = EXCLUDED.rating, title = EXCLUDED.title, body = EXCLUDED.body,
+                     author_name = EXCLUDED.author_name, images = EXCLUDED.images, updated_at = now()
+       RETURNING ${REVIEW_COLUMNS}, helpful_by`,
+      [key, req.user.id, name, rating, title || null, text, JSON.stringify(images)]
+    );
+    removeMediaFiles(previous.filter((url) => !images.includes(url)).map((url) => ({ url })));
+    res.status(201).json({ success: true, review: publicReview(rows[0], req.user.id) });
+  } catch (err) {
+    discardUploads();
+    next(err);
+  }
+});
+
+// --- POST /api/reviews/:id/helpful --- (signed in: toggles your "Helpful" vote)
+api.post('/reviews/:id/helpful', requireAuth, async (req, res, next) => {
+  try {
+    const { rows: target } = await pool.query('SELECT product_key FROM product_reviews WHERE id = $1', [Number(req.params.id) || 0]);
+    if (!target.length || !(await hasBought(req.user, target[0].product_key))) {
+      return res.status(404).json({ success: false, error: 'Review not found.' });
+    }
+    const { rows } = await pool.query(
+      `UPDATE product_reviews
+       SET helpful_by = CASE WHEN $1 = ANY(helpful_by) THEN array_remove(helpful_by, $1) ELSE array_append(helpful_by, $1) END
+       WHERE id = $2 AND user_id IS DISTINCT FROM $1
+       RETURNING ${REVIEW_COLUMNS}, helpful_by`,
+      [req.user.id, Number(req.params.id) || 0]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Review not found.' });
+    const r = publicReview(rows[0], req.user.id);
+    res.json({ success: true, helpful_count: r.helpful_count, helpful_by_me: r.helpful_by_me });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- DELETE /api/reviews/:id --- (your own review)
+api.delete('/reviews/:id', requireAuth, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      'DELETE FROM product_reviews WHERE id = $1 AND user_id = $2 RETURNING id, images',
+      [Number(req.params.id) || 0, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Review not found.' });
+    removeMediaFiles((rows[0].images || []).map((url) => ({ url })));
+    res.json({ success: true, deleted: rows[0].id });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- GET /api/admin/reviews --- (every review, with the product's name when it is a catalogue product)
+api.get('/admin/reviews', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT r.id, r.product_key, r.author_name, r.rating, r.title, r.body, r.images, r.admin_reply, r.replied_at, r.created_at,
+              cardinality(r.helpful_by) AS helpful_count, coalesce(p.name, c.name) AS product_name
+       FROM product_reviews r
+       LEFT JOIN products p ON p.id::text = r.product_key
+       LEFT JOIN combos c ON 'combo-' || c.id::text = r.product_key
+       ORDER BY (r.admin_reply IS NULL) DESC, r.created_at DESC, r.id DESC`
+    );
+    res.json({ success: true, count: rows.length, reviews: rows });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- PUT /api/admin/reviews/:id/reply --- body: { reply } (an empty reply removes it)
+api.put('/admin/reviews/:id/reply', adminOnly, async (req, res, next) => {
+  try {
+    const reply = clip(req.body?.reply, 2000);
+    const { rows } = await pool.query(
+      `UPDATE product_reviews
+       SET admin_reply = $1, replied_at = CASE WHEN $1::text IS NULL THEN NULL ELSE now() END, updated_at = now()
+       WHERE id = $2
+       RETURNING *`,
+      [reply || null, Number(req.params.id) || 0]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Review not found.' });
+    res.json({ success: true, review: rows[0] });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- DELETE /api/admin/reviews/:id ---
+api.delete('/admin/reviews/:id', adminOnly, async (req, res, next) => {
+  try {
+    const { rows } = await pool.query('DELETE FROM product_reviews WHERE id = $1 RETURNING id, images', [Number(req.params.id) || 0]);
+    if (!rows.length) return res.status(404).json({ success: false, error: 'Review not found.' });
+    removeMediaFiles((rows[0].images || []).map((url) => ({ url })));
+    res.json({ success: true, deleted: rows[0].id });
   } catch (err) {
     next(err);
   }

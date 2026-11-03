@@ -57,29 +57,24 @@ export function ShopProvider({ children }) {
 
     useEffect(() => () => clearTimeout(toastTimer.current), []);
 
-    /* ---------------- Login gate ---------------- */
-    // Adding to the cart or wishlist needs an account. Each gated action
-    // returns false (and opens the "Login First" modal) when nobody is signed in,
-    // so callers skip their "added" toast. While a stored token is still being
-    // checked (`loading`), the shopper is treated as signed in.
+    /* ---------------- Checkout login prompt ---------------- */
+    // Browsing and the cart are open to everyone; paying needs an account. A guest
+    // pressing "Place Order" gets the "Login First" modal, whose Login button
+    // goes to /login and brings them back to /checkout afterwards.
     const { user, loading } = useAuth();
-    const signedIn = Boolean(user) || loading;
-    const [loginPrompt, setLoginPrompt] = useState(null); // "cart" | "wishlist" | null
-    const needLogin = useCallback(
-        (reason) => {
-            if (signedIn) return false;
-            setLoginPrompt(reason);
-            return true;
-        },
-        [signedIn]
-    );
-    const closeLoginPrompt = useCallback(() => setLoginPrompt(null), []);
+    const [loginPrompt, setLoginPrompt] = useState(false);
+    // true when the shopper must sign in first (and the modal is now showing)
+    const requireLoginForCheckout = useCallback(() => {
+        if (user || loading) return false;
+        setLoginPrompt(true);
+        return true;
+    }, [user, loading]);
+    const closeLoginPrompt = useCallback(() => setLoginPrompt(false), []);
 
     /* ---------------- Cart ---------------- */
     // `product` is only needed for admin-added products (see fromServerProduct).
     const addToCart = useCallback(
         (productId, qty = 1, size = "2oz", product = null) => {
-            if (needLogin("cart")) return false;
             const id = normId(productId);
             const key = `${id}-${size}`;
             setCart((prev) => {
@@ -91,7 +86,7 @@ export function ShopProvider({ children }) {
             });
             return true;
         },
-        [needLogin]
+        []
     );
 
     const updateQty = useCallback((key, delta) => {
@@ -114,13 +109,12 @@ export function ShopProvider({ children }) {
 
     const addToWishlist = useCallback(
         (productId, product = null) => {
-            if (needLogin("wishlist")) return false;
             const id = normId(productId);
             rememberCopy(id, product);
             setWishlist((prev) => (prev.includes(id) ? prev : [...prev, id]));
             return true;
         },
-        [needLogin, rememberCopy]
+        [rememberCopy]
     );
 
     const removeFromWishlist = useCallback((productId) => {
@@ -130,13 +124,12 @@ export function ShopProvider({ children }) {
 
     const toggleWishlist = useCallback(
         (productId, product = null) => {
-            if (needLogin("wishlist")) return false;
             const id = normId(productId);
             rememberCopy(id, product);
             setWishlist((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]));
             return true;
         },
-        [needLogin, rememberCopy]
+        [rememberCopy]
     );
 
     const isInWishlist = useCallback((productId) => wishlist.includes(normId(productId)), [wishlist]);
@@ -187,12 +180,13 @@ export function ShopProvider({ children }) {
         isInWishlist,
         moveToCart,
         showToast,
+        requireLoginForCheckout,
     };
 
     return (
         <ShopContext.Provider value={value}>
             {children}
-            {loginPrompt && <LoginFirstModal reason={loginPrompt} onClose={closeLoginPrompt} />}
+            {loginPrompt && <LoginFirstModal onClose={closeLoginPrompt} />}
             {toast && (
                 <div
                     key={toast.id}
@@ -229,13 +223,12 @@ export function ShopProvider({ children }) {
     );
 }
 
-// Shown when a signed-out shopper tries to add to the cart or wishlist.
-// ShopProvider sits outside the router, so these are plain links; the cart
-// lives in localStorage, so a full page load loses nothing.
-function LoginFirstModal({ reason, onClose }) {
+// Shown when a signed-out shopper tries to check out. ShopProvider sits outside
+// the router, so these are plain links; the cart lives in localStorage, so a
+// full page load loses nothing.
+function LoginFirstModal({ onClose }) {
     const loginRef = useRef(null);
-    const here = window.location.pathname + window.location.search;
-    const redirect = `?redirect=${encodeURIComponent(here)}`;
+    const redirect = `?redirect=${encodeURIComponent("/checkout")}`;
 
     useEffect(() => {
         loginRef.current?.focus();
@@ -295,17 +288,7 @@ function LoginFirstModal({ reason, onClose }) {
                     type="button"
                     onClick={onClose}
                     aria-label="Close"
-                    style={{
-                        position: "absolute",
-                        top: 12,
-                        right: 14,
-                        background: "none",
-                        border: "none",
-                        fontSize: 24,
-                        lineHeight: 1,
-                        color: "#8A8A80",
-                        cursor: "pointer",
-                    }}
+                    style={{ position: "absolute", top: 12, right: 14, background: "none", border: "none", fontSize: 24, lineHeight: 1, color: "#8A8A80", cursor: "pointer" }}
                 >
                     ×
                 </button>
@@ -313,12 +296,12 @@ function LoginFirstModal({ reason, onClose }) {
                     Login First
                 </h2>
                 <p style={{ margin: "0 0 24px", fontSize: 15, lineHeight: 1.6, color: "#5A5A52" }}>
-                    Please log in to add products to your {reason === "wishlist" ? "wishlist" : "cart"}.
+                    Please log in to continue to checkout and pay for your cart.
                 </p>
                 <a ref={loginRef} href={`/login${redirect}`} style={{ ...btn, background: "#1B4D3E", color: "#fff", border: "1px solid #1B4D3E" }}>
                     Login
                 </a>
-                <a href="/register" style={{ ...btn, marginTop: 10, background: "#fff", color: "#1B4D3E", border: "1px solid #1B4D3E" }}>
+                <a href={`/register${redirect}`} style={{ ...btn, marginTop: 10, background: "#fff", color: "#1B4D3E", border: "1px solid #1B4D3E" }}>
                     Create An Account
                 </a>
                 <button

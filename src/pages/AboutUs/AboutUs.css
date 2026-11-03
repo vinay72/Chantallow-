@@ -812,3 +812,12 @@
     padding: 60px 20px;
   }
 }
+/* The built-in "Non-Stop Skin Care" banner already has its text in the picture:
+   show the whole picture (nothing cropped) and skip the text overlay. */
+.ct-collage-small.dark.is-banner {
+  padding: 0;
+  align-items: center;
+  background: #3a2c4c;
+}
+.ct-collage-small.dark.is-banner img { object-fit: contain; }
+.ct-collage-small.dark.is-banner .tag { display: none; }

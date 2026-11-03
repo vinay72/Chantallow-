@@ -1,122 +1,71 @@
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import AccountLayout, { EmptyState } from "./AccountLayout";
 import { useShop } from "../../context/ShopContext";
-import { deleteReview, formatLongDate, lineProduct, saveReview, useAccount } from "../../data/account";
+import { useAccount } from "../../data/account";
+import { api } from "../../api/client";
+import { ReviewCard, ReviewForm } from "../../components/ProductReviews";
 
 /**
  * My Account → Review
  * Route: /account/review
- * Every product from a delivered order can be reviewed (1–5 stars + text). Reviews can be edited or deleted.
+ * Every product or combo from a delivered order can be reviewed. Writing a review opens a
+ * full "Ratings & Reviews" screen (tips on the left; star rating, description,
+ * title, name and photos on the right). Reviews are saved on the server, so they
+ * show on the product page and the admin can reply to them.
  */
-function Stars({ value, onChange, size = 20 }) {
-  const [hover, setHover] = useState(0);
-  const shown = hover || value;
-  return (
-    <div className="ua-stars" onMouseLeave={() => setHover(0)} role={onChange ? "radiogroup" : undefined} aria-label={`${value} out of 5 stars`}>
-      {[1, 2, 3, 4, 5].map((n) => {
-        const star = (
-          <svg width={size} height={size} viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              d="m12 2.5 2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4l-5.9 3.1 1.2-6.5L2.5 9.4l6.6-.9L12 2.5Z"
-              fill={n <= shown ? "#E8A93B" : "none"}
-              stroke={n <= shown ? "#E8A93B" : "#B9C3BD"}
-              strokeWidth="1.5"
-              strokeLinejoin="round"
-            />
-          </svg>
-        );
-        return onChange ? (
-          <button key={n} type="button" role="radio" aria-checked={value === n} aria-label={`${n} star${n > 1 ? "s" : ""}`} onMouseEnter={() => setHover(n)} onClick={() => onChange(n)}>
-            {star}
-          </button>
-        ) : (
-          <span key={n}>{star}</span>
-        );
-      })}
-    </div>
-  );
-}
 
-function ReviewRow({ productId, size, review }) {
+// An order line's productId -> the key reviews are stored under
+const reviewKeyOf = (productId) => {
+  const id = String(productId);
+  const server = /^srv-(\d+)$/.exec(id);
+  if (server) return server[1];
+  if (id === "9") return "furkind-pet-tallow";
+  if (/^combo-\d+$/.test(id)) return id;
+  if (/^[1-8]$/.test(id)) return `legacy-${id}`; // from the old built-in catalogue
+  return null;
+};
+
+function ReviewRow({ line, review, onWrite, onChanged }) {
   const { showToast } = useShop();
-  const p = lineProduct({ productId });
-  const [editing, setEditing] = useState(false);
-  const [form, setForm] = useState({ rating: 0, title: "", text: "" });
-  const [error, setError] = useState("");
 
-  const start = () => {
-    setForm(review ? { rating: review.rating, title: review.title, text: review.text } : { rating: 0, title: "", text: "" });
-    setError("");
-    setEditing(true);
-  };
-
-  const onSave = (e) => {
-    e.preventDefault();
-    if (!form.rating) return setError("Please choose a star rating.");
-    if (form.text.trim().length < 10) return setError("Please write at least 10 characters.");
-    saveReview({ productId, rating: form.rating, title: form.title.trim(), text: form.text.trim() });
-    setEditing(false);
-    showToast && showToast(review ? "Review updated" : "Thank you for your review!");
+  const remove = async () => {
+    if (!window.confirm("Delete your review?")) return;
+    try {
+      await api(`/reviews/${review.id}`, { method: "DELETE" });
+      showToast && showToast("Review deleted");
+      onChanged();
+    } catch (err) {
+      showToast && showToast(err.message);
+    }
   };
 
   return (
     <div className="ua-review">
-      <Link to={p.slug ? `/product/${p.slug}` : "/shop-list"} className="ua-thumb ua-thumb--lg">
-        {p.img && <img src={p.img} alt={p.name} />}
+      <Link to={line.path} className="ua-thumb ua-thumb--lg">
+        {line.img && <img src={line.img} alt={line.name} />}
       </Link>
       <div className="ua-review__body">
         <h6>
-          {p.name} <small>({size})</small>
+          {line.name} {line.size && <small>({line.size})</small>}
         </h6>
 
-        {editing ? (
-          <form className="ua-form" onSubmit={onSave} noValidate>
-            <Stars value={form.rating} onChange={(n) => setForm((f) => ({ ...f, rating: n }))} size={24} />
-            <label className="ua-field ua-field--full">
-              <span>Title (optional)</span>
-              <input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Sum it up in a few words" />
-            </label>
-            <label className={`ua-field ua-field--full${error ? " has-error" : ""}`}>
-              <span>Your Review *</span>
-              <textarea rows={4} value={form.text} onChange={(e) => setForm((f) => ({ ...f, text: e.target.value }))} placeholder="How did it work for your skin?" />
-              {error && <em>{error}</em>}
-            </label>
-            <div className="ua-form__buttons">
-              <button type="submit" className="ua-btn ua-btn--primary ua-btn--sm">
-                {review ? "Update Review" : "Submit Review"}
-              </button>
-              <button type="button" className="ua-btn ua-btn--outline ua-btn--sm" onClick={() => setEditing(false)}>
-                Cancel
-              </button>
-            </div>
-          </form>
-        ) : review ? (
+        {review ? (
           <>
-            <div className="ua-review__meta">
-              <Stars value={review.rating} />
-              <span>{formatLongDate(review.updatedAt)}</span>
-            </div>
-            {review.title && <strong className="ua-review__title">{review.title}</strong>}
-            <p>{review.text}</p>
+            <ul className="ct-review-list ua-rv-card">
+              <ReviewCard review={review} mine onHelpful={() => {}} />
+            </ul>
             <div className="ua-review__actions">
-              <button type="button" className="ua-link ua-link-btn" onClick={start}>
+              <button type="button" className="ua-link ua-link-btn" onClick={() => onWrite(line)}>
                 Edit
               </button>
-              <button
-                type="button"
-                className="ua-link ua-link-btn ua-link--danger"
-                onClick={() => {
-                  deleteReview(review.id);
-                  showToast && showToast("Review deleted");
-                }}
-              >
+              <button type="button" className="ua-link ua-link-btn ua-link--danger" onClick={remove}>
                 Delete
               </button>
             </div>
           </>
         ) : (
-          <button type="button" className="ua-btn ua-btn--outline ua-btn--sm" onClick={start}>
+          <button type="button" className="ua-btn ua-btn--outline ua-btn--sm" onClick={() => onWrite(line)}>
             Write A Review
           </button>
         )}
@@ -126,35 +75,89 @@ function ReviewRow({ productId, size, review }) {
 }
 
 export default function AccountReview() {
-  const { orders, reviews } = useAccount();
+  const { orders } = useAccount();
+  const { showToast } = useShop();
+  const [reviews, setReviews] = useState(null);
+  const [writing, setWriting] = useState(null); // the order line being reviewed
 
-  // unique products from delivered orders
-  const products = useMemo(() => {
+  const load = useCallback(
+    () =>
+      api("/reviews/mine")
+        .then((res) => setReviews(res.reviews))
+        .catch(() => setReviews([])),
+    []
+  );
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  // unique, reviewable products from delivered orders (the line carries its name + photo)
+  const lines = useMemo(() => {
     const seen = new Map();
     orders
       .filter((o) => o.status === "delivered")
-      .forEach((o) => o.items.forEach((l) => !seen.has(l.productId) && seen.set(l.productId, l.size)));
-    return [...seen.entries()].map(([productId, size]) => ({ productId, size }));
+      .forEach((o) =>
+        o.items.forEach((l) => {
+          const key = reviewKeyOf(l.productId);
+          if (!key || seen.has(key)) return;
+          seen.set(key, {
+            key,
+            name: l.name || "Chantallow product",
+            img: l.img || "",
+            size: l.size,
+            path: key === "furkind-pet-tallow" ? "/furkind-pet-tallow" : key.startsWith("combo-") ? `/combo/${key.slice(6)}` : key.startsWith("legacy-") ? "/shop-list" : `/product/${key}`,
+          });
+        })
+      );
+    return [...seen.values()];
   }, [orders]);
 
-  const reviewed = reviews.length;
+  const reviewOf = (key) => (reviews || []).find((r) => r.product_key === key);
+  const reviewedCount = lines.filter((l) => reviewOf(l.key)).length;
+
+  /* ---------- the full "write a review" screen ---------- */
+  if (writing) {
+    return (
+      <AccountLayout crumb="Account Review">
+        <div className="ua-rw-page">
+          <div className="ua-rw-head">
+            <h4>Ratings &amp; Reviews</h4>
+            <Link to={writing.path} className="ua-rw-product">
+              <span>{writing.name}</span>
+              {writing.img && <img src={writing.img} alt="" />}
+            </Link>
+          </div>
+          <ReviewForm
+            productKey={writing.key}
+            existing={reviewOf(writing.key)}
+            onCancel={() => setWriting(null)}
+            onDone={async () => {
+              await load();
+              setWriting(null);
+              showToast && showToast("Thank you for your review!");
+            }}
+          />
+        </div>
+      </AccountLayout>
+    );
+  }
 
   return (
     <AccountLayout crumb="Account Review">
       <div className="ua-card">
         <h4 className="ua-card__title">Reviews</h4>
         <p className="ua-card__text">
-          {products.length
-            ? `You've reviewed ${reviewed} of ${products.length} products you've received.`
+          {lines.length
+            ? `You've reviewed ${reviewedCount} of ${lines.length} products you've received.`
             : "Products from your delivered orders will appear here for you to review."}
         </p>
 
-        {products.length === 0 ? (
+        {lines.length === 0 ? (
           <EmptyState title="Nothing to review yet" />
         ) : (
           <div className="ua-review-list">
-            {products.map(({ productId, size }) => (
-              <ReviewRow key={productId} productId={productId} size={size} review={reviews.find((r) => r.productId === productId)} />
+            {lines.map((line) => (
+              <ReviewRow key={line.key} line={line} review={reviewOf(line.key)} onWrite={setWriting} onChanged={load} />
             ))}
           </div>
         )}

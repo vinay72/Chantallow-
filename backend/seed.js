@@ -45,14 +45,14 @@ const FAQS = [
 
 // "Illuminate Beauty" product highlights on the About Us page.
 const ABOUT_HIGHLIGHTS = [
-  ['Malachite Fusion', 'Moringa & Butterfly Pea For Deep Botanical Support.'],
-  ['Jasper Revive', 'Colombian Coffee Infusion To Refresh And Hydrate.'],
-  ['Amber Glow', 'Manuka Honey & Royal Jelly For Ultimate Skin Food.'],
-  ['Amethyst Relief', 'Organic Lavender For A Soothing, Peaceful Aroma.'],
-  ['Obsidian Infusion', 'Organic Cacao & Hazelnut For Comforting Moisture.'],
-  ['Olivine Relief', 'Magnesium & Arnica For Restorative Muscle Care.'],
-  ['Bare Whipped Tallow', 'Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil.'],
-  ['Taluma Hair Care', 'Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil.'],
+  ['Malachite Fusion', 'Moringa & Butterfly Pea for deep botanical support.'],
+  ['Jasper Revive', 'Colombian Coffee infusion to refresh and hydrate.'],
+  ['Amber Glow', 'Manuka Honey & Royal Jelly for ultimate skin food.'],
+  ['Amethyst Relief', 'Organic Lavender for a soothing, peaceful aroma.'],
+  ['Obsidian Infusion', 'Organic Cacao & Hazelnut for comforting moisture.'],
+  ['Olivine Relief', 'Magnesium & Arnica for restorative muscle care.'],
+  ['Bare Whipped Tallow', 'Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil .'],
+  ['Taluma Hair Care', 'Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil .'],
 ];
 
 // Sample blog posts. Covers are the storefront's own photos (public/assets).
@@ -172,6 +172,17 @@ async function seedHomeContent() {
       ]);
     }
     console.log(`Seeded ${ABOUT_HIGHLIGHTS.length} About Us product highlights.`);
+  });
+
+  // One-off: replace whatever highlights are stored with the current list.
+  await once('reset_about_highlights_v2', async () => {
+    await pool.query('DELETE FROM about_highlights');
+    for (const [i, [name, description]] of ABOUT_HIGHLIGHTS.entries()) {
+      await pool.query('INSERT INTO about_highlights (name, description, position) VALUES ($1, $2, $3)', [
+        name, description, i + 1,
+      ]);
+    }
+    console.log(`Reset About Us product highlights to ${ABOUT_HIGHLIGHTS.length} items.`);
   });
 }
 

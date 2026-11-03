@@ -35,6 +35,14 @@ const SIZES = [
     { value: "", label: "all" },
 ];
 
+// Every size a product is sold in as a photo: its own size, plus 2 oz when a 2 oz photo was uploaded.
+const productSizeTags = (p) => {
+    const base = p.size || "4 oz";
+    const tags = [{ label: base, image: p.cardImage }];
+    if (p.cardImage2oz && sizeKey(base) !== "2oz") tags.push({ label: "2 oz", image: p.cardImage2oz });
+    return tags;
+};
+
 // Price slider bounds for a product list (whole dollars, never a zero-width range).
 const priceBounds = (products) => {
     if (!products.length) return { min: 0, max: 1 };
@@ -157,7 +165,7 @@ function ShopSection() {
         return (products || []).filter(
             (p) =>
                 (!q || [p.name, p.subtitle, p.description, p.category].some((t) => String(t).toLowerCase().includes(q))) &&
-                (!sizes.length || sizes.includes(sizeKey(p.size))) &&
+                (!sizes.length || productSizeTags(p).some((t) => sizes.includes(sizeKey(t.label)))) &&
                 p.price >= minPrice &&
                 p.price <= maxPrice
         );
@@ -332,7 +340,7 @@ function ShopSection() {
                     ) : (
                         <div className="ctw-product-list">
                             {visible.map((p) => (
-                                <ProductCard key={p.id} product={p} />
+                                <ProductCard key={p.id} product={p} sizeFilter={sizes} />
                             ))}
                         </div>
                     )}
@@ -380,10 +388,20 @@ function PriceRange({ lo, hi, min, max, onMinChange, onMaxChange }) {
 
 /* ------------------------------ Product Card ------------------------------ */
 
-function ProductCard({ product }) {
+function ProductCard({ product, sizeFilter = [] }) {
     const { addToCart, toggleWishlist, isInWishlist, showToast } = useShop();
-    const { id, name, subtitle, path, description, price, compareAtPrice, cardImage, size, inStock } = product;
+    const { id, name, subtitle, path, description, price, compareAtPrice, size, inStock } = product;
     const liked = isInWishlist(id);
+
+    // the product's own size shows its cover; an uploaded 2 oz photo adds a 2 oz tag
+    const sizeTags = productSizeTags(product);
+    const [picked, setPicked] = useState(sizeTags[0].label);
+    // choosing a size in the filter shows that size's photo on every matching card
+    useEffect(() => {
+        const match = sizeTags.find((t) => sizeFilter.includes(sizeKey(t.label)));
+        setPicked(match ? match.label : sizeTags[0].label);
+    }, [sizeFilter.join(",")]); // eslint-disable-line react-hooks/exhaustive-deps
+    const shown = sizeTags.find((t) => t.label === picked) || sizeTags[0];
 
     const handleCart = () => {
         if (addToCart(id, 1, sizeKey(size), product)) showToast(`${name} added to cart`);
@@ -398,7 +416,7 @@ function ProductCard({ product }) {
         <article className="ctw-product-card">
             <div className="ctw-product-media">
                 <Link to={path}>
-                    <img className="ctw-product-photo" src={cardImage} alt={`Chantallow ${name}${size ? `, ${size}` : ""}`} />
+                    <img key={shown.image} className="ctw-product-photo" src={shown.image} alt={`Chantallow ${name}, ${shown.label}`} />
                 </Link>
             </div>
 
@@ -429,9 +447,19 @@ function ProductCard({ product }) {
                     {compareAtPrice != null && <del>{formatPrice(compareAtPrice)}</del>}
                 </div>
 
-                {size && (
+                {sizeTags.length > 0 && (
                     <div className="ctw-jar-sizes">
-                        <span className="ctw-jar-size is-active">{size}</span>
+                        {sizeTags.map((t) => (
+                            <button
+                                key={t.label}
+                                type="button"
+                                className={t.label === shown.label ? "ctw-jar-size is-active" : "ctw-jar-size"}
+                                aria-pressed={t.label === shown.label}
+                                onClick={() => setPicked(t.label)}
+                            >
+                                {t.label}
+                            </button>
+                        ))}
                     </div>
                 )}
 

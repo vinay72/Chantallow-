@@ -1540,3 +1540,15 @@
   background: none;
   border-left: none;
 }
+/* ---------------- Write a review: full "Ratings & Reviews" screen ---------------- */
+.ua-page .ua-rw-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 18px 26px; margin-bottom: 14px; background: #fff; border: 1px solid #D5E2DA;
+}
+.ua-page .ua-rw-head h4 { margin: 0; font-size: 24px; font-weight: 500; color: #1C1C1A; }
+.ua-page .ua-rw-product { display: flex; align-items: center; gap: 14px; color: #2D2E2F; text-decoration: none; font-size: 16px; min-width: 0; }
+.ua-page .ua-rw-product span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ua-page .ua-rw-product img { width: 48px; height: 48px; object-fit: contain; border: 1px solid #E3EAE5; background: #fff; flex: 0 0 auto; }
+.ua-page .ua-rw-page .ct-rw { margin-bottom: 0; }
+.ua-page .ua-rv-card { margin: 0 0 8px; }
+.ua-page .ua-rv-card .ct-review { padding: 0; border-bottom: 0; }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Eye, EyeOff, ArrowRight, ArrowLeft } from "lucide-react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useLocation, useNavigate } from "react-router-dom";
 import { homeForRole, useAuth } from "../../context/AuthContext";
 import "./SignUp.css";
 import "../../components/SiteFooter.css";
@@ -53,7 +53,11 @@ export default function SignUp() {
 
 function SignUpSection() {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, register } = useAuth();
+    // ?redirect=/checkout when a guest was sent here to pay — return them there after sign-up
+    const redirectParam = new URLSearchParams(location.search).get("redirect");
+    const after = redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//") ? redirectParam : homeForRole("user");
     const [showPassword, setShowPassword] = useState(false);
     const [slide, setSlide] = useState(0);
     const [error, setError] = useState("");
@@ -67,7 +71,7 @@ function SignUpSection() {
         setSubmitting(true);
         try {
             await register(form.get("username"), form.get("email"), form.get("password"));
-            navigate(homeForRole("user"), { replace: true });
+            navigate(after, { replace: true });
         } catch (err) {
             setError(err.message);
             setSubmitting(false);
@@ -167,7 +171,7 @@ function SignUpSection() {
 
                         <p className="ctw-alt-text">
                             Already have an Account?{" "}
-                            <Link to="/login" className="ctw-alt-link">
+                            <Link to={`/login${location.search}`} className="ctw-alt-link">
                                 Log in
                             </Link>
                         </p>

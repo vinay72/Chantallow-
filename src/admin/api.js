@@ -56,6 +56,11 @@ export const api = {
   deleteHighlight: (id) => request(`/admin/about/highlights/${id}`, { method: 'DELETE' }),
   reorderHighlights: (ids) => request('/admin/about/highlights/reorder', { method: 'PUT', body: { ids } }),
 
+  listReviews: () => request('/admin/reviews'),
+  // an empty reply removes the reply
+  replyToReview: (id, reply) => request(`/admin/reviews/${id}/reply`, { method: 'PUT', body: { reply } }),
+  deleteReview: (id) => request(`/admin/reviews/${id}`, { method: 'DELETE' }),
+
   listCombos: () => request('/admin/combos'),
   getCombo: (id) => request(`/admin/combos/${id}`),
   createCombo: (formData) => request('/admin/combos', { method: 'POST', body: formData }),

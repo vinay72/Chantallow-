@@ -75,6 +75,7 @@ export default function AddToCart() {
     removeFromWishlist,
     moveToCart,
     showToast,
+    requireLoginForCheckout,
   } = useShop();
 
   const [couponCode, setCouponCode] = useState("");
@@ -309,7 +310,7 @@ export default function AddToCart() {
                 type="button"
                 className="sc-place-order-btn"
                 disabled={cartItems.length === 0}
-                onClick={() => navigate("/checkout")}
+                onClick={() => !requireLoginForCheckout() && navigate("/checkout")}
               >
                 Place Order
               </button>

@@ -63,14 +63,14 @@ const ABOUT_DEFAULT = {
     paragraph:
       "At Chantallow, we believe in empowering your beauty journey through ancestral wisdom. Our curated collection of nutrient-dense, tallow-based products is designed to enhance your natural allure, fostering timeless confidence by nourishing your skin at a cellular level. Discover the glow within, effortlessly.",
     items: [
-      { name: "Malachite Fusion", desc: "Moringa & Butterfly Pea For Deep Botanical Support." },
-      { name: "Jasper Revive", desc: "Colombian Coffee Infusion To Refresh And Hydrate." },
-      { name: "Amber Glow", desc: "Manuka Honey & Royal Jelly For Ultimate Skin Food." },
-      { name: "Amethyst Relief", desc: "Organic Lavender For A Soothing, Peaceful Aroma." },
-      { name: "Obsidian Infusion", desc: "Organic Cacao & Hazelnut For Comforting Moisture." },
-      { name: "Olivine Relief", desc: "Magnesium & Arnica For Restorative Muscle Care." },
-      { name: "Bare Whipped Tallow", desc: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil." },
-      { name: "Taluma Hair Care", desc: "Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil." },
+      { name: "Malachite Fusion", desc: "Moringa & Butterfly Pea for deep botanical support." },
+      { name: "Jasper Revive", desc: "Colombian Coffee infusion to refresh and hydrate." },
+      { name: "Amber Glow", desc: "Manuka Honey & Royal Jelly for ultimate skin food." },
+      { name: "Amethyst Relief", desc: "Organic Lavender for a soothing, peaceful aroma." },
+      { name: "Obsidian Infusion", desc: "Organic Cacao & Hazelnut for comforting moisture." },
+      { name: "Olivine Relief", desc: "Magnesium & Arnica for restorative muscle care." },
+      { name: "Bare Whipped Tallow", desc: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil ." },
+      { name: "Taluma Hair Care", desc: "Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil ." },
     ],
     mainImage: null,
     tagImage: null,
@@ -171,7 +171,7 @@ export default function AboutUs() {
             </div>
 
             <div className="ct-collage-row">
-              <div className="ct-collage-small dark">
+              <div className={illuminate.tagImage ? "ct-collage-small dark" : "ct-collage-small dark is-banner"}>
                 <img src={illuminate.tagImage ? mediaUrl(illuminate.tagImage) : pic4} alt="Skin Care" />
                 <div className="tag">
                   <div className="eyebrow">{illuminate.tagEyebrow}</div>

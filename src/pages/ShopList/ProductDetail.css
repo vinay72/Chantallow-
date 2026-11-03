@@ -476,13 +476,19 @@ img {
   justify-content: center;
 }
 
-.ct-qty-stepper input {
+.ct-page .ct-qty-stepper input {
   width: 46px;
   text-align: center;
   border: 1px solid var(--ct-hairline);
   border-radius: var(--ct-radius-sm);
   height: 36px;
-  font-size: 14px;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 36px;
+  color: #1C1C1A;
+  -webkit-text-fill-color: #1C1C1A;
+  opacity: 1;
   background: var(--ct-surface);
 }
 

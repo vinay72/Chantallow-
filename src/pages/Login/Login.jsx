@@ -65,7 +65,7 @@ function SignInSection() {
     const [submitting, setSubmitting] = useState(false);
 
     // Page they were bounced from (e.g. /admin/products), or ?redirect=/product/11
-    // from the "Login First" modal. Only same-site paths are accepted.
+    // when a page needs an account (e.g. checkout). Only same-site paths are accepted.
     const redirectParam = new URLSearchParams(location.search).get("redirect");
     const safeRedirect = redirectParam && redirectParam.startsWith("/") && !redirectParam.startsWith("//") ? redirectParam : null;
     const from = location.state?.from || safeRedirect;
@@ -103,7 +103,9 @@ function SignInSection() {
             <div className="ctw-signin-left">
                 <div className="ctw-signin-form-wrap">
                     <h2 className="ctw-signin-title">Sign in</h2>
-                    <p className="ctw-signin-subtitle">welcome please login to your account</p>
+                    <p className="ctw-signin-subtitle">
+                            {safeRedirect === "/checkout" ? "please sign in to continue to checkout" : "welcome please login to your account"}
+                        </p>
 
                     <div className="ctw-social-row">
                         <button type="button" className="ctw-btn ctw-social-btn">
@@ -181,7 +183,7 @@ function SignInSection() {
 
                         <p className="ctw-signup-text">
                             Don't Have an Account?{" "}
-                            <Link to="/register" className="ctw-signup-link">
+                            <Link to={`/register${location.search}`} className="ctw-signup-link">
                                 Sign up For Free
                             </Link>
                         </p>

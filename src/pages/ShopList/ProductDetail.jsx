@@ -7,9 +7,10 @@ import sealNatural from "../../assets/b.png";
 import sealMadeWithLove from "../../assets/c.png";
 import SiteFooter from "../../components/SiteFooter";
 import { useShop } from "../../context/ShopContext";
-import { formatPrice, fromServerProduct, sizeKey, DEFAULT_DIRECTIONS, DEFAULT_DIRECTIONS_NOTE } from "../../data/products";
+import { formatPrice, fromServerProduct, getProductMedia, sizeKey, DEFAULT_DIRECTIONS, DEFAULT_DIRECTIONS_NOTE } from "../../data/products";
 import { api } from "../../api/client";
 import Header from "../../components/Header";
+import ProductReviews, { RatingSummary, useProductReviews } from "../../components/ProductReviews";
 
 // "Bare Whipped Tallow" -> "bare-whipped-tallow", so older /product/<name> links still find the product
 const slugify = (s) => String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
@@ -20,7 +21,7 @@ const LINE = "#D5E2DA";
 
 // Font + colour overrides so this page matches the original design:
 // Marcellus for titles, Lufga for all body text, green primary buttons.
-const PAGE_STYLES = `
+export const PAGE_STYLES = `
   .ct-page, .ct-page p, .ct-page li, .ct-page span, .ct-page a,
   .ct-page button, .ct-page input, .ct-page label, .ct-page legend,
   .ct-page h3, .ct-page h4, .ct-page h5, .ct-page h6, .ct-page strong {
@@ -136,7 +137,7 @@ const PAGE_STYLES = `
   }
 `;
 
-const sb = {
+export const sb = {
   box: { border: `1px solid ${LINE}`, padding: "28px 26px", alignSelf: "start", background: "transparent" },
   outlineBtn: {
     width: "100%",
@@ -196,7 +197,7 @@ const sb = {
  * The product comes from Admin → Products (GET /api/products).
  */
 
-function ScrollTopButton() {
+export function ScrollTopButton() {
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
@@ -244,6 +245,9 @@ export default function ProductDetail() {
   const product =
     catalogue &&
     (catalogue.find((p) => String(p.dbId) === String(slug)) || catalogue.find((p) => slugify(p.name) === slug));
+
+  // ratings + reviews are keyed by the product's database id
+  const reviews = useProductReviews(product ? String(product.dbId) : null);
 
   const [activeImage, setActiveImage] = useState(0);
   const [selectedSize, setSelectedSize] = useState("4oz");
@@ -355,9 +359,24 @@ export default function ProductDetail() {
   const descriptionParas = String(product.description || "").split(/\n\s*\n/).filter(Boolean);
   const directions = product.directions || DEFAULT_DIRECTIONS;
   const directionsNote = product.directions ? null : DEFAULT_DIRECTIONS_NOTE;
-  // every photo uploaded for this product in the admin panel, cover first
-  const views = product.gallery.map((src, i) => ({ role: `photo-${i}`, label: `Photo ${i + 1}`, type: "image", src }));
+  // Front (the admin cover) → back labels (ingredients, description) → 360° turn.
+  // A product with no back-label photos falls back to its admin gallery photos.
   const cover = product.cardImage;
+  const media = getProductMedia(product.name);
+  const backs = [
+    media.ingredients && { role: "ingredients", label: "Ingredients", type: "image", src: media.ingredients },
+    media.description && { role: "description", label: "Description", type: "image", src: media.description },
+  ].filter(Boolean);
+  const extras = backs.length
+    ? backs
+    : product.gallery.filter((src) => src !== cover).map((src, i) => ({ role: `photo-${i}`, label: `Photo ${i + 2}`, type: "image", src }));
+  const views = [
+    { role: "front", label: "Front", type: "image", src: cover },
+    ...extras,
+    media.spin
+      ? { role: "spin", label: "360°", ...media.spin }
+      : { role: "spin", label: "360°", type: "turntable", front: cover, back: backs[0]?.src || extras[0]?.src || cover },
+  ];
   const safeIndex = Math.min(activeImage, Math.max(0, views.length - 1));
   const current = views[safeIndex] || { role: "photo-0", label: "Photo", type: "image", src: cover };
   const related = (catalogue || []).filter((p) => p.id !== product.id).slice(0, 4);
@@ -434,6 +453,7 @@ export default function ProductDetail() {
           {product.badge && <span className="ct-badge">{product.badge}</span>}
           <h2 className="ct-info__title">{product.name}</h2>
           {product.subtitle && <p className="ct-info__subtitle">{product.subtitle}</p>}
+          <RatingSummary reviews={reviews} />
 
           {descriptionParas.length > 0 && (
             <div className="ct-copy-block">
@@ -569,6 +589,9 @@ export default function ProductDetail() {
           </button>
         </aside>
       </main>
+
+      {/* ---------------- Ratings & Reviews ---------------- */}
+      <ProductReviews productKey={String(product.dbId)} reviews={reviews} />
 
       {/* ---------------- Related Products ---------------- */}
       <section className="ct-container ct-related">
@@ -728,7 +751,7 @@ function SpinFrames({ frames, alt }) {
   );
 }
 
-function RelatedCard({ product }) {
+export function RelatedCard({ product }) {
   const navigate = useNavigate();
   const { addToCart, addToWishlist, isInWishlist } = useShop();
   const liked = isInWishlist(product.id);
@@ -780,7 +803,7 @@ function RelatedCard({ product }) {
   );
 }
 
-function HeartIcon({ small, filled }) {
+export function HeartIcon({ small, filled }) {
   const size = small ? 16 : 20;
   return (
     <svg width={size} height={size} viewBox="0 0 20 20" fill={filled ? "#7A0000" : "none"} xmlns="http://www.w3.org/2000/svg">
@@ -800,7 +823,7 @@ function CartIcon({ small }) {
   );
 }
 
-function CheckIcon() {
+export function CheckIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
       <path d="M18.3327 9.2415V9.99984C18.3317 11.8153 17.7438 13.5819 16.6562 15.0364C15.5686 16.4909 14.0403 17.5555 12.2988 18.0717C10.5572 18.5879 8.69569 18.5279 6.99098 17.9004C5.28627 17.273 3.82868 16.1124 2.83801 14.5912C1.84733 13.0701 1.37559 11.2698 1.49356 9.45778C1.61152 7.64575 2.31294 5.92137 3.49353 4.54122C4.67413 3.16106 6.27132 2.19883 8.04565 1.79539C9.81998 1.39194 11.6767 1.56876 13.3427 2.29984" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />

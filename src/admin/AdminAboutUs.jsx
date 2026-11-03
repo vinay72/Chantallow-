@@ -70,18 +70,19 @@ function HighlightForm({ initial = EMPTY_HIGHLIGHT, busy, onSave, onCancel, subm
       <input
         className="label-input"
         value={name}
-        maxLength={60}
-        placeholder="Product name, e.g. Malachite Fusion"
+        maxLength={90}
+        placeholder="Title, e.g. Malachite Fusion – Moringa & Butterfly Pea"
         aria-label="Highlight name"
         onChange={(e) => setName(e.target.value)}
         autoFocus
         required
       />
-      <input
+      <textarea
         className="label-input"
+        rows={4}
         value={desc}
-        maxLength={160}
-        placeholder="Description, e.g. Moringa & Butterfly Pea For Deep Botanical Support."
+        maxLength={700}
+        placeholder="Description paragraph"
         aria-label="Highlight description"
         onChange={(e) => setDesc(e.target.value)}
         required

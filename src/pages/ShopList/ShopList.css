@@ -678,6 +678,33 @@
   line-height: 1.75;
   color: #5A5A52;
   margin: 0 0 18px;
+  text-align: justify;
+  hyphens: auto;
+}
+
+.ctw-product-desc.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 8px;
+}
+
+.ctw-view-more {
+  margin: 0 0 18px;
+  padding: 0;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid #2C7A55;
+  font-family: 'Lufga', 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: #2C7A55;
+  cursor: pointer;
+}
+
+.ctw-view-more:hover {
+  color: #1C1C1A;
+  border-color: #1C1C1A;
 }
 
 .ctw-product-desc strong {

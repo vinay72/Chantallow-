@@ -27,6 +27,8 @@ import olivineReliefJar from "../assets/beauty/olivine-relief.jpg";
 import obsidianInfusionJar from "../assets/beauty/obsidian-infusion.jpg";
 import talumaHairCareJar from "../assets/beauty/taluma-hair-care.jpg";
 import bareWhippedTallowJar from "../assets/beauty/bare-whipped-tallow.jpg";
+import furkindFront2oz from "../assets/productdetailimages/Furkind/front 2oz.jpg";
+import furkindFront4oz from "../assets/productdetailimages/Furkind/front 4oz.png";
 
 const skinDescription = (infusion) =>
     `A rich, nourishing tallow crème made with grass-fed, grass-finished beef tallow${
@@ -53,14 +55,7 @@ export const PRODUCTS = [
         badge: "SALE 20% OFF",
         cardImage: amethystReliefCard,
         gallery: [amberGlowJar, amberGlowCard],
-        description: [
-            "Amber Glow is an ultra-nourishing tallow crème crafted with grass-fed suet tallow, premium 1122+ MGO Manuka honey, organic lavender, royal jelly, bee pollen, pure honey, and jojoba oil. This luxurious blend provides intense hydration while helping maintain smooth, healthy-looking skin.",
-            "Grass-fed tallow delivers skin-loving fatty acids and naturally occurring Vitamins A, D, E, and K that help support skin barrier function, improve moisture retention, and promote softness and elasticity.",
-            "Premium Manuka honey is naturally rich in enzymes, amino acids, and antioxidants that help support skin hydration and maintain a balanced, healthy-looking complexion. Royal jelly contains beneficial proteins, B vitamins, amino acids, and minerals that help nourish and revitalize the skin. Bee pollen contributes antioxidants, vitamins, and trace minerals that support skin conditioning and environmental protection.",
-            "Pure honey acts as a natural humectant, helping attract and retain moisture within the skin. Jojoba oil closely resembles the skin's natural sebum, helping provide lightweight hydration without feeling greasy while supporting moisture balance.",
-            "Organic lavender offers calming botanical support while helping comfort dry, stressed skin. Vitamin A supports skin renewal, B-complex vitamins help maintain healthy skin function, Vitamin C supports collagen production and radiance, while Vitamin E helps protect against oxidative stress and moisture loss.",
-            "Ideal for tattoo care, Amber Glow helps maintain softness, hydration, and the appearance of tattoo vibrancy while supporting healthy-looking skin during everyday tattoo maintenance.",
-        ],
+        description: "Premium 1122+ MGO Manuka Honey helps hydrate and nourish skin with natural antioxidants and amino acids. Royal Jelly and Bee Pollen provide vitamins and minerals that support skin vitality and a healthy-looking glow. Lavender, jojoba oil, and grass-fed tallow help soothe dryness, lock in moisture, and maintain supple skin.",
         ingredients: "Grass-Fed Suet Tallow, 1122+ MGO Manuka Honey, Organic Lavender, Royal Jelly, Bee Pollen, Pure Honey, Jojoba Oil",
         attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Dry skin"],
     },
@@ -75,12 +70,7 @@ export const PRODUCTS = [
         oldPrice: 0,
         cardImage: olivineReliefCard,
         gallery: [amethystReliefJar, amethystReliefCard],
-        description: [
-            "Amethyst Relief is a light, airy whipped tallow crème handcrafted to provide deep nourishment with a soothing botanical touch. Made with grass-fed, grass-finished beef tallow infused with organic lavender, this luxurious moisturizer melts effortlessly into the skin, leaving it feeling soft, hydrated, and comforted.",
-            "Grass-fed tallow naturally contains fatty acids that closely resemble those found in healthy skin, helping support moisture retention, strengthen the skin barrier, and promote long-lasting softness. It is also naturally rich in Vitamins A, D, E, and K. Vitamin A helps support skin renewal and texture, Vitamin D supports skin barrier health, Vitamin E provides antioxidant protection, and Vitamin K helps maintain healthy-looking skin tone.",
-            "Organic lavender is valued for its calming aroma and skin-conditioning properties. It helps soothe dry, irritated skin while contributing to a relaxing self-care experience.",
-            "The whipped texture allows for easy absorption and comfortable daily use. Designed with tattoo care in mind, Amethyst Relief helps keep tattooed skin moisturized, smooth, and healthy-looking while supporting long-term softness and maintaining the appearance of vibrant, well-conditioned tattoos.",
-        ],
+        description: "Organic Lavender helps soothe dry, irritated skin while providing a calming botanical aroma. Grass-fed tallow delivers skin-loving fatty acids and Vitamins A, D, E, and K to support skin renewal and barrier health. Together, they provide lasting hydration, softness, and comfort for healthy-looking skin.",
         ingredients: "Grass-Fed/Grass-Finished Beef Tallow, Organic Lavender",
         attributes: ["Skin Type: Dry", "Item Form: Whipped Cream", "Used For: Soothing"],
     },
@@ -96,12 +86,7 @@ export const PRODUCTS = [
         badge: "SALE 20% OFF",
         cardImage: jasperReviveCard,
         gallery: [jasperReviveJar, jasperReviveCard],
-        description: [
-            "Jasper Revive is a rich, handcrafted tallow crème infused with organic whole bean Colombian coffee to deeply nourish, hydrate, and revitalize the skin. Combining the nutrient-dense benefits of grass-fed tallow with the antioxidant-rich properties of coffee, this luxurious formula helps promote a refreshed, radiant appearance.",
-            "Coffee naturally contains antioxidants and beneficial plant compounds that help protect the skin from environmental stressors while supporting smoother-looking skin texture and tone. The invigorating botanical profile of coffee helps leave skin looking refreshed and energized.",
-            "Grass-fed tallow provides essential fatty acids and naturally occurring Vitamins A, D, E, and K. Vitamin A helps support healthy skin renewal, Vitamin D supports barrier function, Vitamin E provides antioxidant protection, and Vitamin K helps maintain overall skin vitality and appearance.",
-            "Perfect for everyday skincare, Jasper Revive delivers lasting hydration and softness while leaving behind a warm, comforting coffee aroma. It is particularly beneficial for dry skin, rough areas, hands, elbows, and daily body care rituals.",
-        ],
+        description: "Colombian Coffee is rich in antioxidants that help protect skin from environmental stressors and promote a refreshed complexion. Its beneficial plant compounds support smoother-looking skin texture and tone. Vitamin-rich grass-fed tallow deeply moisturizes, softens rough areas, and helps maintain skin elasticity.",
         ingredients: "Grass-Fed/Grass-Finished Beef Tallow, Organic Whole Bean Colombian Coffee",
         attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Revitalizing"],
     },
@@ -117,13 +102,7 @@ export const PRODUCTS = [
         badge: "SALE 20% OFF",
         cardImage: amberGlowCard,
         gallery: [malachiteFusionJar, malachiteFusionCard],
-        description: [
-            "Malachite Fusion is a luxurious botanical tallow crème crafted from grass-fed, grass-finished beef tallow infused with nutrient-rich moringa and butterfly pea flower. This deeply nourishing formula helps moisturize, soften, and support healthy-looking skin while promoting a radiant, revitalized complexion.",
-            "Grass-fed tallow is naturally rich in skin-compatible fatty acids that help strengthen the skin barrier, lock in moisture, and improve softness and elasticity. It also naturally contains Vitamins A, D, E, and K. Vitamin A supports skin renewal and smoothness, Vitamin D helps support skin barrier function, Vitamin E provides antioxidant protection against environmental stressors, and Vitamin K helps maintain healthy-looking skin tone.",
-            "Moringa is prized for its abundance of Vitamins A, C, and E, along with essential minerals and antioxidants. Vitamin C supports collagen production, helping improve the appearance of skin firmness and brightness, while Vitamins A and E help maintain hydration and protect against visible signs of dryness and environmental damage.",
-            "Butterfly pea flower contributes powerful flavonoids and antioxidants that help defend the skin from oxidative stress while promoting a balanced, vibrant complexion. Rosemary provides additional antioxidant support, while frankincense and myrrh help soothe and condition the skin, supporting overall skin comfort and resilience.",
-            "Specially formulated for tattoo care, Malachite Fusion helps keep tattooed skin deeply hydrated, supple, and vibrant-looking. Regular use helps support healthy skin, maintain moisture balance, and preserve the appearance of crisp, colorful tattoos.",
-        ],
+        description: "Vitamin-rich Moringa helps support collagen production, skin firmness, and a brighter complexion. Antioxidant-rich Butterfly Pea Flower helps protect against environmental stress and promotes radiant-looking skin. Rosemary provides additional antioxidant support, while grass-fed tallow delivers deep hydration and lasting softness.",
         ingredients: "Grass-Fed/Grass-Finished Beef Tallow, Moringa, Butterfly Pea Flower, Rosemary, Frankincense, Myrrh",
         attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Hydration"],
     },
@@ -138,12 +117,7 @@ export const PRODUCTS = [
         oldPrice: 0,
         cardImage: talumaHairCareCard,
         gallery: [obsidianInfusionJar, obsidianInfusionCard],
-        description: [
-            "Obsidian Infusion is a decadent tallow crème infused with organic cacao nibs, cacao powder, and hazelnut ground coffee to provide rich nourishment and luxurious hydration. Crafted with grass-fed, grass-finished beef tallow, this indulgent formula helps support smooth, healthy-looking skin while delivering a comforting sensory experience.",
-            "Cacao is naturally abundant in antioxidants, magnesium, iron, and beneficial plant compounds that help protect the skin from oxidative stress while promoting a radiant, youthful-looking complexion. These antioxidants help support smoother skin texture and improved overall skin appearance.",
-            "Hazelnut coffee contributes additional antioxidant compounds while creating a rich, warm aroma that enhances the skincare experience. Grass-fed tallow provides fatty acids and Vitamins A, D, E, and K that help support moisture balance, skin barrier health, elasticity, and long-lasting hydration.",
-            "Suitable for both face and body care, Obsidian Infusion leaves skin feeling deeply moisturized, conditioned, and velvety smooth while helping support a healthy, radiant complexion.",
-        ],
+        description: "Organic Cacao provides antioxidants and minerals that support smoother, radiant, youthful-looking skin. Hazelnut Coffee adds antioxidant benefits while delivering a warm, comforting aroma. Grass-fed tallow nourishes with essential fatty acids and vitamins to maintain deep hydration, softness, and skin elasticity.",
         ingredients: "Grass-Fed/Grass-Finished Beef Tallow, Organic Cacao Nibs, Organic Cacao Powder, Hazelnut Ground Coffee",
         attributes: ["Skin Type: Dry", "Item Form: Cream", "Used For: Dry skin"],
     },
@@ -158,13 +132,7 @@ export const PRODUCTS = [
         oldPrice: 0,
         cardImage: malachiteFusionCard,
         gallery: [olivineReliefJar, olivineReliefCard],
-        description: [
-            "Olivine Relief is a powerful restorative tallow balm designed to provide targeted comfort, deep nourishment, and intensive body care support. Crafted with grass-fed, grass-finished beef tallow and infused with Zechstein magnesium chloride, Arnica Montana, willow bark, lavender, frankincense, myrrh, and gingko biloba, this rich balm helps soothe, comfort, and revitalize both skin and body.",
-            "Zechstein magnesium chloride is widely valued for helping support muscle relaxation, physical recovery, and overall body comfort. Arnica Montana has been traditionally used to help soothe areas of tension, soreness, and overworked muscles following physical activity.",
-            "Willow bark naturally contains salicin compounds and has long been used in herbal wellness practices to support comfort and relaxation. Lavender provides calming botanical benefits for both skin and senses, while frankincense and myrrh help condition the skin and support overall skin health.",
-            "Gingko biloba contributes antioxidant compounds that help support circulation and skin vitality. Grass-fed tallow provides nourishing fatty acids along with Vitamins A, D, E, and K to help maintain hydration, skin resilience, and moisture balance.",
-            "Ideal for massage, post-workout recovery, daily body care, and areas needing extra comfort, Olivine Relief helps leave muscles feeling relaxed, skin deeply moisturized, and the body refreshed and restored.",
-        ],
+        description: "Zechstein Magnesium helps ease muscle tension and promote relaxation, providing soothing comfort to tired, overworked muscles. Arnica Montana and Willow Bark are traditionally used to help relieve soreness, aches, and discomfort after physical activity. Lavender, Frankincense, and Myrrh provide calming botanical benefits, while grass-fed tallow deeply nourishes and moisturizes the skin.",
         ingredients: "Grass-Fed/Grass-Finished Beef Tallow, Zechstein Magnesium Chloride, Arnica Montana, Willow Bark, Lavender, Frankincense, Myrrh, Ginkgo Biloba",
         attributes: ["Skin Type: All", "Item Form: Balm", "Used For: Muscle relief"],
     },
@@ -180,8 +148,7 @@ export const PRODUCTS = [
         badge: "SALE 10% OFF",
         cardImage: obsidianInfusionCard,
         gallery: [talumaHairCareJar, talumaHairCareCard],
-        description:
-            "Taluma Hair Care is a deeply nourishing blend crafted with grass-fed grass-finished beef tallow, raw Honduran Batana oil, rosemary, argan oil, castor oil, black seed oil, and black cumin seed oil to help restore moisture, strengthen hair, and promote a healthier-looking scalp. Grass-Fed Beef Tallow is naturally rich in Vitamins A, D, E & K, essential fatty acids, and skin-compatible lipids that deeply condition the scalp, help reduce dryness, support healthy follicles, and improve softness and shine. Raw Honduran Batana Oil contains Vitamin E, Omega-3, Omega-6 & Omega-9 fatty acids, helping nourish damaged hair, improve elasticity, reduce breakage, and restore the appearance of thicker, fuller hair. Rosemary is rich in antioxidants such as rosmarinic acid and carnosic acid, which help support a healthy scalp environment, reduce oxidative stress, and promote stronger-looking hair. Argan Oil provides Vitamin E, antioxidants, and essential fatty acids that help smooth frizz, repair dryness, improve shine, and protect hair from environmental damage. Castor Oil is naturally rich in ricinoleic acid, Vitamin E, and Omega-6 & Omega-9 fatty acids, helping lock in moisture, reduce split ends, and improve the appearance of stronger, healthier hair. Black Seed Oil and Black Cumin Seed Oil contain thymoquinone, Vitamin E, antioxidants, and essential fatty acids that help soothe the scalp, nourish hair roots, improve moisture retention, and support healthy hair growth.",
+        description: "Raw Honduran Batana Oil, rich in Vitamin E and Omega fatty acids, helps nourish damaged hair, improve elasticity, and reduce breakage. Rosemary, Argan Oil, and Castor Oil support scalp health, smooth frizz, and enhance natural shine. Black Seed Oil and grass-fed tallow deeply condition the scalp, strengthen the appearance of hair, and support fuller, healthier-looking strands.",
         ingredients:
             "Grass-Fed/Grass-Finished Beef Tallow, Raw Honduran Batana Oil, Organic: Rosemary Argan Oil, Castor Oil, Black Seed Oil, Black Cumin Seed Oil",
         directions:
@@ -201,16 +168,27 @@ export const PRODUCTS = [
         badge: "SALE 10% OFF",
         cardImage: bareWhippedTallowCard,
         gallery: [bareWhippedTallowJar, bareWhippedTallowCard],
-        description: [
-            "Bare Whipped Tallow is a minimalist, deeply nourishing moisturizer crafted with only two skin-loving ingredients: grass-fed, grass-finished beef tallow and organic unrefined jojoba oil. Created for those who appreciate simple, nutrient-dense skincare, this balm helps replenish moisture, support skin health, and restore softness without the use of synthetic fragrances, preservatives, or fillers.",
-            "Grass-fed beef tallow is naturally rich in Vitamins A, D, E, and K, as well as essential fatty acids that closely resemble the lipids found in healthy human skin. Vitamin A helps support skin renewal and promotes a smoother, healthier complexion. Vitamin D supports skin barrier function and overall skin resilience. Vitamin E acts as a powerful antioxidant that helps protect the skin from environmental stressors and supports moisture retention. Vitamin K contributes to overall skin health and appearance. The naturally occurring saturated and monounsaturated fats in tallow help soften rough, dry skin and lock in moisture without disrupting the skin's natural balance.",
-            "Organic unrefined jojoba oil is highly compatible with the skin because its composition closely resembles human sebum. It is rich in Vitamin E, antioxidants, and nourishing fatty acids that help moisturize, soothe, and condition the skin without feeling greasy. Jojoba oil absorbs easily, helps maintain skin elasticity, and supports a healthy moisture barrier, making it suitable for delicate and sensitive skin. Free from fragrances, essential oils, preservatives, and unnecessary additives, Bare Whipped Tallow is ideal for daily skincare routines for all ages.",
-        ],
+        description: "Grass-fed tallow provides Vitamins A, D, E, and K to support skin renewal, moisture retention, and barrier health. Organic unrefined Jojoba Oil, rich in Vitamin E and antioxidants, helps soothe dryness and maintain skin elasticity. Together, these two pure ingredients deliver lightweight, long-lasting nourishment without added fragrances or fillers.",
         ingredients: "Grass-Fed/Grass-Finished Beef Tallow, Organic Unrefined Jojoba Oil",
         directions:
             "Apply a fingertip scoop of Bare Whipped Tallow to clean skin and gently massage until absorbed. Use on the face, hands, body, dry patches, elbows, knees, or any area needing extra moisture and nourishment. Apply daily or as needed as part of your regular skincare routine. Suitable for sensitive skin and safe for all ages, including babies. For external use only. Perform a patch test before first use. Store in a cool, dry place away from direct sunlight and excessive heat.",
         directionsNote: "Use within 12 months of opening for optimal freshness and performance.",
         attributes: ["Skin Type: Sensitive", "Item Form: Whipped Cream", "Used For: Everyday moisture"],
+    },
+    {
+        id: 9,
+        slug: "furkind-pet-tallow",
+        name: "Furkind Pet Tallow",
+        displayName: "Furkind Pet Tallow",
+        subtitle: "Grass-Fed/Grass-Finished Beef Tallow, Organic Raw Unrefined Coconut Oil",
+        price: 0,
+        oldPrice: 0,
+        badge: "SALE 10% OFF",
+        cardImage: furkindFront2oz,
+        gallery: [furkindFront2oz, furkindFront4oz],
+        description: "Grass-fed tallow provides natural vitamins and fatty acids that help nourish dry skin and soften rough paws. Organic raw Coconut Oil contains lauric, caprylic, and capric acids that condition skin and support moisture retention. Together, they help soothe dryness, reduce cracking, and protect your pet's paws and skin.",
+        ingredients: "Grass-Fed/Grass-Finished Beef Tallow, Organic Raw Unrefined Coconut Oil",
+        attributes: ["Used For: Pets", "Item Form: Balm"],
     },
 ];
 
@@ -262,6 +240,7 @@ export function fromServerProduct(row) {
     const img = mediaUrl(row.main_image || row.images?.find((m) => m.type === "image")?.url || "");
     const photos = (row.images || []).filter((m) => m.type !== "video").map((m) => mediaUrl(m.url));
     const gallery = [...new Set([img, ...photos].filter(Boolean))];
+    const img2oz = row.main_image_2oz ? mediaUrl(row.main_image_2oz) : "";
     const price = Number(row.price);
     const compare = row.compare_at_price == null ? null : Number(row.compare_at_price);
     const was = compare && compare > price ? compare : null;
@@ -281,6 +260,7 @@ export function fromServerProduct(row) {
         size: row.size || "",
         inStock: row.stock_status !== "out_of_stock",
         cardImage: img || gallery[0] || "",
+        cardImage2oz: img2oz,
         gallery,
         attributes: [row.category && `Category: ${row.category}`].filter(Boolean),
         slug: null,
@@ -425,6 +405,16 @@ export function getProductViews(product, size = "4oz") {
         });
     }
     return views;
+}
+
+/**
+ * Back-label photos + 360° view for a product, found by its name (admin-added
+ * products are matched to their folder in productdetailimages/ by name).
+ * Returns { ingredients, description, spin } — any of them may be null.
+ */
+export function getProductMedia(name) {
+    const slug = String(name || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+    return MEDIA_BY_SLUG[slug] || {};
 }
 
 /** Cover photo for a product (its front jar photo for the given size). */

@@ -24,6 +24,7 @@ export default function AdminProductForm({ mode }) {
   const navigate = useNavigate();
   const fileInput = useRef(null);
   const coverInput = useRef(null);
+  const cover2ozInput = useRef(null);
 
   const [values, setValues] = useState(BLANK);
   const [meta, setMeta] = useState({ categories: [], sizes: [] });
@@ -31,6 +32,8 @@ export default function AdminProductForm({ mode }) {
   const [files, setFiles] = useState([]); // newly picked File objects
   const [savedCover, setSavedCover] = useState(null); // cover url already saved
   const [coverFile, setCoverFile] = useState(null); // newly picked cover File
+  const [savedCover2oz, setSavedCover2oz] = useState(null); // optional 2 oz photo already saved
+  const [cover2ozFile, setCover2ozFile] = useState(null); // newly picked 2 oz File
   const [errors, setErrors] = useState([]);
   const [loading, setLoading] = useState(mode === 'edit');
   const [busy, setBusy] = useState(false);
@@ -59,6 +62,7 @@ export default function AdminProductForm({ mode }) {
           stock_status: p.stock_status || 'in_stock',
         });
         setSavedCover(p.main_image || null);
+        setSavedCover2oz(p.main_image_2oz || null);
         setExisting((Array.isArray(p.images) ? p.images : []).map((m) => ({ ...m, keep: true })));
       })
       .catch((err) => setErrors([err.message]))
@@ -113,6 +117,22 @@ export default function AdminProductForm({ mode }) {
     }
   };
 
+  const pickCover2oz = (file) => {
+    if (!file) return;
+    if (cover2ozFile?._preview) URL.revokeObjectURL(cover2ozFile._preview);
+    file._preview = URL.createObjectURL(file);
+    setCover2ozFile(file);
+  };
+
+  const removeCover2oz = () => {
+    if (cover2ozFile) {
+      URL.revokeObjectURL(cover2ozFile._preview);
+      setCover2ozFile(null);
+    } else {
+      setSavedCover2oz(null);
+    }
+  };
+
   const submit = async (e) => {
     e.preventDefault();
     if (!coverFile && !savedCover) {
@@ -133,6 +153,8 @@ export default function AdminProductForm({ mode }) {
     files.forEach((f) => fd.append('media', f));
     if (coverFile) fd.append('main_image', coverFile);
     else if (mode === 'edit' && !savedCover) fd.append('remove_main_image', '1');
+    if (cover2ozFile) fd.append('main_image_2oz', cover2ozFile);
+    else if (mode === 'edit' && !savedCover2oz) fd.append('remove_main_image_2oz', '1');
 
     try {
       if (mode === 'create') await api.createProduct(fd);
@@ -297,6 +319,49 @@ export default function AdminProductForm({ mode }) {
                 const picked = e.target.files[0];
                 e.target.value = '';
                 pickCover(picked);
+              }}
+            />
+          </div>
+        </div>
+
+        {/* 2 oz cover image */}
+        <div className="form-card">
+          <h2>
+            2 oz cover image <span className="sub">— optional</span>
+          </h2>
+          <p className="hint">
+            Upload the 2 oz jar photo and the shop shows a 2 oz tag next to the 4 oz one so
+            customers can switch between the two photos.
+          </p>
+
+          {cover2ozFile || savedCover2oz ? (
+            <div className="media-grid">
+              <div className="media-item">
+                <img src={cover2ozFile ? cover2ozFile._preview : mediaUrl(savedCover2oz)} alt="" />
+                <span className="kind">{cover2ozFile ? 'new' : '2 oz'}</span>
+                <button
+                  type="button"
+                  className="drop"
+                  onClick={removeCover2oz}
+                  aria-label="Remove 2 oz image"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ) : null}
+          <div className="dropzone" onClick={() => cover2ozInput.current.click()}>
+            <strong>{cover2ozFile || savedCover2oz ? 'Replace 2 oz image' : 'Choose 2 oz image'}</strong>
+            <span>JPG, PNG, WEBP, GIF · up to 50MB</span>
+            <input
+              ref={cover2ozInput}
+              type="file"
+              accept="image/*"
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => {
+                const picked = e.target.files[0];
+                e.target.value = '';
+                pickCover2oz(picked);
               }}
             />
           </div>

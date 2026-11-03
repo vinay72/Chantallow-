@@ -58,6 +58,7 @@ import AdminComboDetail from "../admin/AdminComboDetail";
 const AdminDashboard = lazy(() => import("../admin/AdminDashboard"));
 // FAQs bring in the rich text editor + Word import, so they load on demand too.
 const AdminFaqs = lazy(() => import("../admin/AdminFaqs"));
+const AdminReviews = lazy(() => import("../admin/AdminReviews"));
 const AdminBlogForm = lazy(() => import("../admin/AdminBlogForm"));
 const loadingEditor = <div className="empty-state">Loading editor…</div>;
 
@@ -145,6 +146,7 @@ function AppRouter() {
           <Route path="home/combos/:id" element={<AdminComboDetail />} />
           <Route path="home/combos/:id/edit" element={<AdminComboForm mode="edit" />} />
           <Route path="home/faqs" element={<Suspense fallback={<div className="empty-state">Loading FAQs…</div>}><AdminFaqs /></Suspense>} />
+          <Route path="reviews" element={<Suspense fallback={<div className="empty-state">Loading reviews…</div>}><AdminReviews /></Suspense>} />
           <Route path="about" element={<AdminAboutUs />} />
           <Route path="terms" element={<AdminTerms />} />
           <Route path="privacy" element={<AdminPrivacy />} />

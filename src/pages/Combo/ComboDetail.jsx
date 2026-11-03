@@ -11,6 +11,7 @@ import "../../components/SiteFooter.css";
 import { api } from "../../api/client";
 import { useShop } from "../../context/ShopContext";
 import { formatPrice, fromServerCombo } from "../../data/products";
+import ProductReviews, { useProductReviews } from "../../components/ProductReviews";
 import "./ComboDetail.css";
 
 export default function ComboDetail() {
@@ -19,6 +20,7 @@ export default function ComboDetail() {
   const [combo, setCombo] = useState(null);
   const [status, setStatus] = useState("loading"); // loading | ready | missing | error
   const [qty, setQty] = useState(1);
+  const reviews = useProductReviews(`combo-${id}`);
 
   useEffect(() => {
     let cancelled = false;
@@ -136,6 +138,8 @@ export default function ComboDetail() {
           </div>
         )}
       </main>
+
+      {status === "ready" && <ProductReviews productKey={`combo-${id}`} reviews={reviews} />}
 
       <SiteFooter />
     </div>
