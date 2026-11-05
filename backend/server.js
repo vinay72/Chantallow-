@@ -9,6 +9,7 @@ const { upload } = require('./upload');
 const { seedHomeContent } = require('./seed');
 const { sendPasswordResetEmail } = require('./mailer');
 const sanitizeHtml = require('sanitize-html');
+const Stripe = require('stripe');
 const {
   ROLES,
   publicUser,
@@ -27,6 +28,7 @@ const app = express();
 
 const PORT = process.env.PORT || 3000;
 const CLIENT_ORIGIN = process.env.CLIENT_ORIGIN || 'http://localhost:5173';
+const stripe = process.env.STRIPE_SECRET_KEY ? new Stripe(process.env.STRIPE_SECRET_KEY) : null;
 
 // ---------- middleware ----------
 
@@ -1033,6 +1035,42 @@ api.post('/auth/login', async (req, res, next) => {
       return res.status(401).json({ success: false, error: 'Invalid email or password' });
     }
     res.json(tokenResponse(rows[0]));
+  } catch (err) {
+    next(err);
+  }
+});
+
+// --- POST /api/stripe/create-payment-intent ---
+api.post('/stripe/create-payment-intent', async (req, res, next) => {
+  try {
+    if (!stripe) {
+      return res.status(400).json({ success: false, error: 'Stripe is not configured on the server.' });
+    }
+
+    const amount = Number(req.body?.amount ?? 0);
+    const currency = String(req.body?.currency || 'usd').toLowerCase();
+    const orderNo = String(req.body?.orderNo || '').trim();
+    const email = String(req.body?.email || '').trim();
+
+    if (!Number.isFinite(amount) || amount <= 0) {
+      return res.status(400).json({ success: false, error: 'Payment amount must be greater than zero.' });
+    }
+
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount),
+      currency,
+      automatic_payment_methods: { enabled: true },
+      description: orderNo ? `Chantallow order ${orderNo}` : 'Chantallow order',
+      receipt_email: email || undefined,
+      metadata: { orderNo },
+    });
+
+    res.json({
+      success: true,
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      status: paymentIntent.status,
+    });
   } catch (err) {
     next(err);
   }
