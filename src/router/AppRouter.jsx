@@ -1,5 +1,7 @@
 import React, { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Elements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import AboutUs from "../pages/AboutUs/AboutUs";
 import Home from "../pages/Home/Home";
 import ShopSection from "../pages/ShopList/ShopList";
@@ -14,7 +16,7 @@ import ComboDetail from "../pages/Combo/ComboDetail";
 import Faq from "../pages/Faq/Faq";
 import BlogPost from "../pages/BlogPost/BlogPost";
 import AddToCart from "../pages/ShopList/AddToCart";
-import CheckOut from "../pages/ShopList/CheckOut";
+import CheckOut, { PaymentStatusPage } from "../pages/ShopList/CheckOut";
 // import Register from "../components/Register";
 import PrivacyPolicy from "../pages/Privacy/PrivacyPolicy";
 import TermsConditionsPage from "../pages/Terms&Conditions/Terms&Conditions";
@@ -61,6 +63,9 @@ const AdminFaqs = lazy(() => import("../admin/AdminFaqs"));
 const AdminReviews = lazy(() => import("../admin/AdminReviews"));
 const AdminBlogForm = lazy(() => import("../admin/AdminBlogForm"));
 const loadingEditor = <div className="empty-state">Loading editor…</div>;
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
 
 function AppRouter() {
   return (
@@ -77,7 +82,8 @@ function AppRouter() {
         <Route path="/wishlist" element={<AddToCart />} />
 
         {/* Check out */}
-        <Route path="/checkout" element={<CheckOut />} />
+        <Route path="/checkout" element={stripePromise ? <Elements stripe={stripePromise}><CheckOut /></Elements> : <CheckOut />} />
+        <Route path="/checkout/payment-status" element={<PaymentStatusPage />} />
 
         {/* Dynamic product detail — e.g. /product/malachite-fusion */}
         <Route path="/product/:slug" element={<ProductDetail />} />

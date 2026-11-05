@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, Navigate, useNavigate } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { CardCvcElement, CardExpiryElement, CardNumberElement, Elements, useElements, useStripe } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
 import "./CheckOut.css";
 import paymentCards from "../../assets/footer/footer.png";
 import SiteFooter from "../../components/SiteFooter";
@@ -8,6 +10,22 @@ import { useAuth } from "../../context/AuthContext";
 import { formatPrice } from "../../data/products";
 import { placeOrder } from "../../data/account";
 import Header from "../../components/Header";
+
+const stripePromise = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY
+  ? loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY)
+  : null;
+
+const stripeCardStyle = {
+  base: {
+    color: "#1c1c1a",
+    fontFamily: "Lufga, Poppins, Arial, sans-serif",
+    fontSize: "15px",
+    lineHeight: "1.5",
+    iconColor: "#1b4d3e",
+    "::placeholder": { color: "#4a4e4b" },
+  },
+  invalid: { color: "#b23b3b", iconColor: "#b23b3b" },
+};
 
 /**
  * Chantallow — Check Out page
@@ -63,6 +81,57 @@ const Chevron = ({ open, size = 14, weight = 2 }) => (
     <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth={weight} strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+
+export function PaymentStatusPage() {
+  const [params] = useSearchParams();
+  const status = params.get("status") === "paid" ? "paid" : "unpaid";
+  const paymentIntentId = params.get("payment_intent_id") || "N/A";
+  const orderId = params.get("order_id") || "N/A";
+
+  return (
+    <div className="co-page">
+      <Header />
+      <div className="co-banner">
+        <div className="co-banner__inner">
+          <h1>Payment Status</h1>
+          <nav className="co-breadcrumb" aria-label="Breadcrumb">
+            <Link to="/">Home</Link>
+            <span className="co-breadcrumb__sep">◆</span>
+            <span aria-current="page">Payment Status</span>
+          </nav>
+        </div>
+      </div>
+      <section className="co-content">
+        <div className="co-thanks">
+          <h2>Stripe Payment Result</h2>
+          <p>
+            <strong>Status:</strong> {status === "paid" ? "paid" : "unpaid"}
+          </p>
+          <p>
+            <strong>Payment intent:</strong> {paymentIntentId}
+          </p>
+          <p>
+            <strong>Order ID:</strong> {orderId}
+          </p>
+          {status === "paid" ? (
+            <p className="co-thanks__note">Your Stripe payment was successful and the order has been recorded.</p>
+          ) : (
+            <p className="co-thanks__note">Your Stripe payment is still unpaid or was not completed.</p>
+          )}
+          <div className="co-thanks__actions">
+            <button type="button" className="co-btn co-btn--primary" onClick={() => window.location.assign("/checkout")}>
+              Back to Checkout
+            </button>
+            <button type="button" className="co-btn co-btn--outline" onClick={() => window.location.assign("/shop-list")}>
+              Continue Shopping
+            </button>
+          </div>
+        </div>
+      </section>
+      <SiteFooter />
+    </div>
+  );
+}
 
 /* ---------------- Small form helpers ---------------- */
 function Field({ label, required, error, children, full }) {
@@ -194,6 +263,8 @@ function AddressFields({ data, set, errors, prefix }) {
 /* ---------------- Page ---------------- */
 export default function CheckOut() {
   const navigate = useNavigate();
+  const stripe = useStripe();
+  const elements = useElements();
   const { cartItems, subtotal, clearCart, showToast } = useShop();
   const { user, loading: authLoading, login: authLogin, register: authRegister } = useAuth();
 
@@ -218,12 +289,16 @@ export default function CheckOut() {
 
   // order box
   const [shippingMethod, setShippingMethod] = useState("free");
-  const [payment, setPayment] = useState("bank");
+  const [payment, setPayment] = useState("cod");
   const [agree, setAgree] = useState(false);
+  const [cardDetails, setCardDetails] = useState({ name: "", email: "" });
 
   const [errors, setErrors] = useState({});
   const [placedOrder, setPlacedOrder] = useState(null);
   const [placing, setPlacing] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+
+  const apiBaseUrl = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
   const shippingCost = shippingMethod === "flat" ? FLAT_RATE : 0;
   const total = subtotal + shippingCost;
@@ -276,9 +351,15 @@ export default function CheckOut() {
     if (!agree) out.agree = "Please accept the terms and conditions to continue.";
     if (cartItems.length === 0) out.cart = "Your cart is empty.";
 
+    if (payment === "card") {
+      const cardName = (cardDetails.name || "").trim();
+      const cardEmail = (cardDetails.email || email || "").trim();
+      if (!cardName) out.cardName = "Please enter the cardholder name.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cardEmail)) out.cardEmail = "Please enter a valid billing email.";
+    }
+
     setErrors(out);
     if (Object.keys(out).length) {
-      // scroll to the first problem
       requestAnimationFrame(() => {
         const el = document.querySelector(".co-page .has-error, .co-page .co-error");
         if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -286,12 +367,7 @@ export default function CheckOut() {
       return;
     }
 
-    setPlacing(true);
     let signedIn = Boolean(user);
-
-    // "Create an account?" — sign them up and in first, so the order below
-    // is placed with their token and lands in their new account's history
-    // (and the admin panel), the way checking out with an account would.
     if (!user && createAccount) {
       try {
         const name = [billing.firstName, billing.lastName].filter(Boolean).join(" ").trim() || email.trim();
@@ -299,7 +375,6 @@ export default function CheckOut() {
         signedIn = true;
       } catch (err) {
         setErrors({ email: err.message });
-        setPlacing(false);
         requestAnimationFrame(() => {
           const el = document.querySelector(".co-page .has-error, .co-page .co-error");
           if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -308,36 +383,95 @@ export default function CheckOut() {
       }
     }
 
-    // Save the order on the server (shows in My Account → Orders and the admin panel)
-    let saved;
+    const orderPayload = {
+      items: cartItems.map((line) => ({
+        productId: line.product.id,
+        name: line.product.displayName || line.product.name,
+        img: line.product.cardImage || line.product.gallery[0],
+        size: line.size,
+        qty: line.qty,
+        price: line.product.price,
+      })),
+      address: shipDifferent ? shipping : billing,
+      email: email.trim(),
+      phone: phone.trim(),
+      payment,
+      shippingCost,
+      notes,
+    };
+
     try {
-      saved = await placeOrder({
-        items: cartItems.map((line) => ({
-          productId: line.product.id,
-          name: line.product.displayName || line.product.name,
-          img: line.product.cardImage || line.product.gallery[0],
-          size: line.size,
-          qty: line.qty,
-          price: line.product.price,
-        })),
-        address: shipDifferent ? shipping : billing,
-        email: email.trim(),
-        phone: phone.trim(),
-        payment,
-        shippingCost,
-        notes,
-      });
+      if (payment === "card") {
+        if (!stripe || !elements) {
+          throw new Error("Stripe is not configured. Please add VITE_STRIPE_PUBLISHABLE_KEY.");
+        }
+        const cardNumber = elements.getElement(CardNumberElement);
+        const cardExpiry = elements.getElement(CardExpiryElement);
+        const cardCvc = elements.getElement(CardCvcElement);
+        if (!cardNumber || !cardExpiry || !cardCvc) {
+          throw new Error("Card details are incomplete. Please enter your card information.");
+        }
+
+        setPlacing(true);
+        setProcessingPayment(true);
+
+        const paymentIntentResponse = await fetch(`${apiBaseUrl}/api/stripe/create-payment-intent`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            amount: Math.round(total * 100),
+            currency: "usd",
+            orderNo: `CHK-${Date.now()}`,
+            email: (cardDetails.email || email).trim(),
+          }),
+        });
+        const paymentIntentData = await paymentIntentResponse.json();
+        if (!paymentIntentResponse.ok || !paymentIntentData?.clientSecret) {
+          throw new Error(paymentIntentData?.error || "Stripe payment intent could not be created.");
+        }
+
+        const paymentResult = await stripe.confirmCardPayment(paymentIntentData.clientSecret, {
+          payment_method: {
+            card: cardNumber,
+            billing_details: {
+              name: (cardDetails.name || "").trim() || `${billing.firstName} ${billing.lastName}`.trim(),
+              email: (cardDetails.email || email).trim(),
+            },
+          },
+        });
+
+        if (paymentResult.error) {
+          throw new Error(paymentResult.error.message || "Your card payment was declined.");
+        }
+
+        const saved = await placeOrder(orderPayload);
+        const paymentStatus = paymentResult.paymentIntent?.status === "succeeded" ? "paid" : "unpaid";
+        navigate(`/checkout/payment-status?status=${paymentStatus}&payment_intent_id=${paymentResult.paymentIntent?.id || ""}&order_id=${saved.id}`);
+        clearCart();
+        showToast && showToast("Payment complete — thank you!");
+        return;
+      }
+
+      setPlacing(true);
+      const saved = await placeOrder(orderPayload);
+      const orderNo = `#${saved.id}`;
+      setPlacedOrder({ id: saved.id, orderNo, total, email: email.trim(), payment, signedIn });
+      clearCart();
+      showToast && showToast("Order placed — thank you!");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch (err) {
-      setErrors({ submit: `Your order wasn't placed: ${err.message}` });
-      return;
-    } finally {
+      setErrors({ submit: payment === "card" ? `Card payment couldn't be completed: ${err.message}` : `Your order wasn't placed: ${err.message}` });
       setPlacing(false);
+      setProcessingPayment(false);
+      requestAnimationFrame(() => {
+        const el = document.querySelector(".co-page .has-error, .co-page .co-error");
+        if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
+      });
+    } finally {
+      if (payment !== "card") {
+        setPlacing(false);
+      }
     }
-    const orderNo = `#${saved.id}`;
-    setPlacedOrder({ id: saved.id, orderNo, total, email: email.trim(), payment, signedIn });
-    clearCart();
-    showToast && showToast("Order placed — thank you!");
-    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const applyCoupon = (e) => {
@@ -396,10 +530,14 @@ export default function CheckOut() {
               Your order <strong>{placedOrder.orderNo}</strong> for <strong>{formatPrice(placedOrder.total)}</strong> has been
               received. A confirmation will be sent to <strong>{placedOrder.email}</strong>.
             </p>
-            {placedOrder.payment === "bank" && (
+            {placedOrder.payment === "cod" && (
               <p className="co-thanks__note">
-                Please use <strong>{placedOrder.orderNo}</strong> as the payment reference for your bank transfer. Your order will
-                be shipped once the funds have cleared.
+                We will collect the payment in cash when your order is delivered.
+              </p>
+            )}
+            {placedOrder.payment === "card" && (
+              <p className="co-thanks__note">
+                Stripe payment was processed successfully for this order. Your card receipt is attached to the order.
               </p>
             )}
             {!placedOrder.signedIn && (
@@ -611,32 +749,68 @@ export default function CheckOut() {
                 {/* Payment */}
                 <div className="co-pay">
                   <label className="co-radio co-radio--lg">
-                    <input type="radio" name="payment" checked={payment === "bank"} onChange={() => setPayment("bank")} />
-                    <span>Direct bank transfer</span>
-                  </label>
-                  {payment === "bank" && (
-                    <p className="co-pay__desc">
-                      Make your payment directly into our bank account. Please use your Order ID as the payment reference. Your
-                      order will not be shipped until the funds have cleared in our account.
-                    </p>
-                  )}
-
-                  <label className="co-radio co-radio--lg">
                     <input type="radio" name="payment" checked={payment === "cod"} onChange={() => setPayment("cod")} />
                     <span>Cash on delivery</span>
                   </label>
                   {payment === "cod" && <p className="co-pay__desc">Pay with cash when your order is delivered.</p>}
 
-                  <label className="co-radio co-radio--lg co-radio--paypal">
-                    <input type="radio" name="payment" checked={payment === "paypal"} onChange={() => setPayment("paypal")} />
-                    <span>Paypal</span>
+                  <label className="co-radio co-radio--lg co-radio--card">
+                    <input type="radio" name="payment" checked={payment === "card"} onChange={() => setPayment("card")} />
+                    <span>Card</span>
                     <img src={paymentCards} alt="Accepted cards" />
-                    <a href="https://www.paypal.com/webapps/mpp/paypal-popup" target="_blank" rel="noreferrer">
-                      What is PayPal?
-                    </a>
                   </label>
-                  {payment === "paypal" && (
-                    <p className="co-pay__desc">Pay via PayPal; you can pay with your credit card if you don't have a PayPal account.</p>
+                  {payment === "card" && (
+                    <div className="co-pay__card-form">
+                      <Field label="Cardholder name" error={errors.cardName}>
+                        <input
+                          className="co-input"
+                          value={cardDetails.name}
+                          onChange={(e) => setCardDetails((p) => ({ ...p, name: e.target.value }))}
+                          placeholder="Name on card"
+                        />
+                      </Field>
+                      <Field label="Billing email" error={errors.cardEmail}>
+                        <input
+                          className="co-input"
+                          type="email"
+                          value={cardDetails.email || email}
+                          onChange={(e) => setCardDetails((p) => ({ ...p, email: e.target.value }))}
+                          placeholder="billing@example.com"
+                        />
+                      </Field>
+
+                      {stripePromise ? (
+                        <>
+                          <div className="co-stripe-field-group">
+                            <label className="co-label">Card Number</label>
+                            <div className="co-stripe-input">
+                              <CardNumberElement options={{ style: stripeCardStyle, placeholder: "4242 4242 4242 4242" }} />
+                            </div>
+                          </div>
+
+                          <div className="co-row co-row--compact">
+                            <div className="co-stripe-field-group">
+                              <label className="co-label">Expiry</label>
+                              <div className="co-stripe-input">
+                                <CardExpiryElement options={{ style: stripeCardStyle }} />
+                              </div>
+                            </div>
+                            <div className="co-stripe-field-group">
+                              <label className="co-label">CVC</label>
+                              <div className="co-stripe-input">
+                                <CardCvcElement options={{ style: stripeCardStyle }} />
+                              </div>
+                            </div>
+                          </div>
+
+                          <p className="co-pay__desc">
+                            Secure payment powered by Stripe. The response from Stripe will be displayed on the next page as paid or unpaid.
+                          </p>
+                        </>
+                      ) : (
+                        <p className="co-pay__desc">Set the Stripe publishable key in your environment to enable card payments.</p>
+                      )}
+                    </div>
                   )}
                 </div>
 
@@ -658,8 +832,8 @@ export default function CheckOut() {
                     {errors.submit}
                   </p>
                 )}
-                <button type="submit" className="co-btn co-btn--primary co-btn--block" disabled={orderLines.length === 0 || placing}>
-                  {placing ? "Placing Order…" : "Place Order"}
+                <button type="submit" className="co-btn co-btn--primary co-btn--block" disabled={orderLines.length === 0 || placing || processingPayment}>
+                  {processingPayment ? "Processing payment…" : placing ? "Placing Order…" :  "Place Order"}
                 </button>
               </div>
             </aside>
